@@ -319,35 +319,37 @@ class RDATFile:
 		print 'Wrong version number %s' % version
     
     def validate(self):
+        messages = []
         for name in self.constructs:
 	    c = self.constructs[name]
 	    if len(name) == 0:
-		print '\nWARNING! Must give a name!\n'
+		messages.append( 'WARNING! Must give a name!')
 	    if len(c.sequence) == 0:
-		print '\nWARNING! Must supply sequence!'
+		messages.append( 'WARNING! Must supply sequence!')
 	    if 'T' in c.sequence:
-		print '\nWARNING! Warning: you have a T instead of a U in the sequence!!\n'
+		messages.append( 'WARNING! Warning: you have a T instead of a U in the sequence!!')
 	    if min(c.seqpos) - c.offset < 1:
-		print '\nWARNING! Offset/seqpos does not look right -- at least one index is too low for sequence\n' 
+		messages.append( 'WARNING! Offset/seqpos does not look right -- at least one index is too low for sequence')
 	    if max(c.seqpos) - c.offset > len(c.sequence):
-		print '\nWARNING! Offset/seqpos does not look right -- at least one index is too high for sequence\n' 
+		messages.append( 'WARNING! Offset/seqpos does not look right -- at least one index is too high for sequence') 
 	    if len(c.data[0].values) != len(c.seqpos):
-                print '\nWARNING! Number of bands in area_peak [%s] does not match len of seqpos [%s]\n' % (len(c.data[0].values), len(c.seqpos)) 
+                messages.append( 'WARNING! Number of bands in area_peak [%s] does not match len of seqpos [%s]' % (len(c.data[0].values), len(c.seqpos))) 
             for i, d in enumerate(c.data):
 		if not 'annotations' in d.__dict__:
-		    print '\nWARNING! Data for index %s has no annotations\n' % i
+		    messages.append( 'WARNING! Data for index %s has no annotations' % i)
 		if not 'values' in d.__dict__:
-		    print '\nWARNING! Data for index %s has no values for area peaks\n' % i
+		    messages.append( 'WARNING! Data for index %s has no values for area peaks' % i)
 		if not 'trace' in d.__dict__:
-		    print '\nWARNING! Data for index %s has no trace\n' % i
+		    messages.append( 'WARNING! Data for index %s has no trace' % i)
 		if len(self.xsels) > 0 and not 'xsel' in d.__dict__:
-		    print '\nWARNING! Data for index %s has no xsel refine\n' % i
+		    messages.append( 'WARNING! Data for index %s has no xsel refine' % i)
 		if 'xsel' in c.__dict__:
 		    if len(c.xsel) != len(d.values):
-                        print '\nWARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s\n' % (len(c.xsel), len(d.values), i )
+                        messages.append( 'WARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s' % (len(c.xsel), len(d.values), i ))
 	        if 'xsel' in d.__dict__: 
 		    if len(d.xsel) != 0 and len(d.xsel) != len(d.values):
-                        print '\nWARNING! Number of bands in xsel indexed %s  [%s] does not match number of bands in values area peak [%s]\n' % (i, len(d.xsel), len(d.values) )
+                        messages.append( 'WARNING! Number of bands in xsel indexed %s  [%s] does not match number of bands in values area peak [%s]' % (i, len(d.xsel), len(d.values) ))
+	    return messages
  
 		
     def toISATAB(self):
@@ -814,46 +816,50 @@ class ISATABFile:
 	    print 'Unrecognized type %s for loading isatab file' % type
 
     def validate(self):
+        messages = []
         def check_terms(d, prefix, ontdict):
+	    m = []
 	    for i, t in enumerate(d[prefix]):
 	        if not t.replace(' ','-') in ontdict:
 		    if t.strip() == '':
 			pass
 		    else:
-			print '\nWARNING! For %s, term %s is unknown for its respective ontology\n' % (prefix, t)
+			m.append( 'WARNING! For %s, term %s is unknown for its respective ontology' % (prefix, t))
 		else:
 		    r = d[prefix + ' Term Accession Number'][i].strip().replace('_',':')
 		    if ontdict[t.replace(' ','-')] != r:
-			print '\nWARNING! For %s, term %s and accession number %s do not match\n' % (prefix, t, r)
+			m.append( 'WARNING! For %s, term %s and accession number %s do not match' % (prefix, t, r))
 	    for i, t in enumerate(d[prefix + ' Term Accession Number']):
 		if not d[prefix + ' Term Source REF'][i] in t:
-		    print '\nWARNING! For %s, accession number and REF ontology do not match.\n' % prefix
+		    m.append( 'WARNING! For %s, accession number and REF ontology do not match.' % prefix)
+	    return m
 
         if len(self.data) != len(self.assays_dict['Source Name']):
-	    print '\nWARNING! Number of samples in assays and data file do not match\n'
+	    messages.append( 'WARNING! Number of samples in assays and data file do not match')
         for k in self.data:
 	    if not self.sample_id_name_map[k] in self.assays_dict['Source Name']:
-		print '\nWARNING! Sample %s in data file not referenced from assays file\n' % k
+		messages.append( 'WARNING! Sample %s in data file not referenced from assays file' % k)
 	for i, k in enumerate(self.assays_dict['Source Name']):
 	    if not k + '_' + str(i) in self.data:
-		print '\nWARNING! Sample %s in assays file is missing from data file\n' % k
+		messages.append( 'WARNING! Sample %s in assays file is missing from data file' % k)
         for p in self.investigation_dict['Study Protocol Name']:
 	    if p.strip() != '' and not p.strip().lower() in [x.strip().lower() for x in self.assays_dict['Protocol REF']]:
-	        print '\nWARNING! Protocol %s in investigation file is not in assays file\n' % p
-        check_terms(self.investigation_dict, 'Study Assay Measurement Type', ontology.protocols) 
-        check_terms(self.investigation_dict, 'Study Factor Type', ontology.chemicals) 
+	        messages.append( 'WARNING! Protocol %s in investigation file is not in assays file' % p)
+        messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ontology.protocols) 
+        messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ontology.chemicals) 
 	for i, seq in enumerate(self.assays_dict['Characteristics[Nucleotide Sequence]']):
 	    if i >= len(self.assays_dict['Source Name']):
-		print '\nERROR! Cannot continue validation as list of source names and sequences do not match in number!\n'
+		messages.append( 'ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
 		return
             idn = self.assays_dict['Source Name'][i] + '_' + str(i)
             sn = self.assays_dict['Source Name'][i]
 	    m = int(self.assays_dict['Parameter Value[Data Starts at Sequence Position]'][i])
 	    if len(self.data[idn]) != len(seq) - m + 1:
-		print '\nWARNING! Length of data lane %s [%s] and length of respective sequence [%s] do not match\n' % (sn, len(self.data[idn]), len(seq) - m + 1)
+		messages.append( 'WARNING! Length of data lane %s [%s] and length of respective sequence [%s] do not match' % (sn, len(self.data[idn]), len(seq) - m + 1))
 	    chartype = self.assays_dict['Characteristics[Nucleotide Type]'][i]
 	    if chartype == 'RNA' and 'T' in seq:
-		print '\nWARNING! Sequence for %s specified as RNA but looks like DNA.\n' % n
+		messages.append( 'WARNING! Sequence for %s specified as RNA but looks like DNA.' % n)
 	    if chartype == 'DNA' and 'U' in seq:
-		print '\nWARNING! Sequence for %s specified as DNA but looks like RNA.\n' % n
+		messages.append( 'WARNING! Sequence for %s specified as DNA but looks like RNA.' % n)
+        return messages
 
