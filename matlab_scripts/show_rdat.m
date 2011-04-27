@@ -52,7 +52,7 @@ d_filter = filter_ERROR_lanes( d, rdat.data_annotations );
 seq_order = [1:length( rdat.seqpos )];
 if ( length(rdat.seqpos) > 1 & rdat.seqpos( 2 ) < rdat.seqpos( 1 ) ) seq_order = length( rdat.seqpos ):-1:1;end;
 
-image( 40 * d_filter( seq_order, :)' /mean(mean(max(d_filter,0)))  )
+image( 20 * d_filter( seq_order, :)' /mean(mean(max(d_filter,0)))  )
 
 % sorry for the x-y switch; decided in the end to transpose everything.
 set(gca, 'xTick', [1:length(ylabpos)],'xTickLabel', char(ylab(seq_order)) );
@@ -68,6 +68,16 @@ if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
 set(gca,'fontsize',10,'fontweight','bold');
 set( h, 'interpreter','none','fontsize',10,'fontweight','bold');
+
+if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & length( rdat.seqpos ) > 1
+  hold on
+  for i = 1:length( seq_order )
+    if rdat.structure( rdat.seqpos( seq_order(i) ) - rdat.offset ) == '.'
+      plot( [i i], [0, size( d_filter, 1 )], 'k', 'linewidth', 0.25 );
+    end
+  end
+  hold off
+end
 
 if ( print_postscript & length( filename )  > 0 ); 
   eps_file = [filename,'.eps']; fprintf( 'Outputting: %s\n',eps_file );
@@ -109,7 +119,7 @@ if length( t ) > 0
     xticklabel_rotate_rdat();
   end
   
-  make_lines_horizontal( [0:1:size(t,2)],'k',0.5  )
+  make_lines_horizontal( [0:1:size(t,2)],'k',0.25  )
   %title( ['Traces: ', rdat.name ] );
 end
 
