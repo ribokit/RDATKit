@@ -159,9 +159,11 @@ if length( rdat.area_peak_error ) > 0
 
     plot( [min_x max_x ], [0 0 ],'k' );
     hold off
-    
+   
     set(gca,'fontsize',12,'fontweight','bold');
-    axis( [ min_x max_x minval maxval ] );
+    if (maxval > minval )
+      axis( [ min_x max_x minval maxval ] );
+    end
     colormap( 1 - gray(100) );
     if length( xlab ) >= i; title( xlab{i} ); end;
     
