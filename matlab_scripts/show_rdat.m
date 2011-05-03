@@ -171,10 +171,13 @@ if length( rdat.area_peak_error ) > 0
       h = text( min_x, maxval+(maxval-minval)*0.2, xlab{i} ); 
       set(h,'interpreter','none','fontsize',8);
     end
+    %set(gca,'xgrid','on','ytick',[]);
     axis off
   end
-  
-  xlabel( 'sequence position' );
+
+  axis on; box off
+  set(gca,'ytick',[]);
+  %xlabel( 'sequence position' );
 end
 
 
