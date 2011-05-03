@@ -165,20 +165,31 @@ if length( rdat.area_peak_error ) > 0
       axis( [ min_x max_x minval maxval ] );
     end
     colormap( 1 - gray(100) );
-    if length( xlab ) >= i; title( xlab{i} ); end;
-    
+    %if length( xlab ) >= i; title( xlab{i} ); end;
+
+    if length( xlab ) >= i;
+      h = text( min_x, maxval+(maxval-minval)*0.2, xlab{i} ); 
+      set(h,'interpreter','none','fontsize',8);
+    end
+    axis off
   end
+  
   xlabel( 'sequence position' );
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % stripping off the 'mutation' tag makes the labels easier to read.
 % If there are more than one annotation, we should fix this function...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tag = remove_tag_before_colon( annotations )
-[t,r] = strtok( annotations, ':' );
-tag = r(2:end);
+%[t,r] = strtok( annotations, ':' );
+tag = annotations;
 
+colon_pos = strfind( annotations, ':' );
+if ~isempty( colon_pos )
+  tag = annotations((colon_pos(end)+1):end);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tag = remove_tag_before_colon_cell( annotations )
