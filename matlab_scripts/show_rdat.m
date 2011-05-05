@@ -23,6 +23,7 @@ t = rdat.trace;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Set up some labels.
 xlab = {};
+xlab_full = {};
 ylab = {};
 ylabpos = rdat.seqpos - rdat.offset;
 for j = 1:length( ylabpos )
@@ -35,6 +36,7 @@ if length( rdat.data_annotations ) > 0
   for j=1:length(rdat.data_annotations )
     d_annot = rdat.data_annotations{j};
     xlab{j} = remove_tag_before_colon_cell( d_annot );
+    xlab_full{j} = strrep(xlab{j},' ',', ');
     % truncate? 
     max_x =  min( length( xlab{j} ), 40 );
     xlab{j} = xlab{j}(1:max_x);
@@ -168,7 +170,7 @@ if length( rdat.area_peak_error ) > 0
     %if length( xlab ) >= i; title( xlab{i} ); end;
 
     if length( xlab ) >= i;
-      h = text( min_x, maxval+(maxval-minval)*0.2, xlab{i} ); 
+      h = text( min_x, maxval+(maxval-minval)*0.2, xlab_full{i} ); 
       set(h,'interpreter','none','fontsize',8);
     end
     %set(gca,'xgrid','on','ytick',[]);
