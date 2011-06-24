@@ -845,17 +845,26 @@ class ISATABFile:
         for p in self.investigation_dict['Study Protocol Name']:
 	    if p.strip() != '' and not p.strip().lower() in [x.strip().lower() for x in self.assays_dict['Protocol REF']]:
 	        messages.append( 'WARNING! Protocol %s in investigation file is not in assays file' % p)
-        messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ontology.protocols) 
-        messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ontology.chemicals) 
+        # Checks for ontology term consistency
+        #messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ontology.protocols) 
+        #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ontology.chemicals) 
 	for i, seq in enumerate(self.assays_dict['Characteristics[Nucleotide Sequence]']):
 	    if i >= len(self.assays_dict['Source Name']):
 		messages.append( 'ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
-		return
-            idn = self.assays_dict['Source Name'][i] + '_' + str(i)
+		return messages
+	    for k in ['Source Name', 'Parameter Value[Data Starts at Sequence Position]', 'Characteristics[Nucleotide Type]']:
+		stop = False
+		if len(self.assays_dict[k]) == 0:
+		    messages.append('ERROR! Cannot continue validation as "%s" column is not present in assays tab! (check any spelling inconsistencies in column names)' % k)
+		    stop = True
+		if stop:
+		    return messages
+ 
             sn = self.assays_dict['Source Name'][i]
+            idn = sn + '_' + str(i)
 	    m = int(self.assays_dict['Parameter Value[Data Starts at Sequence Position]'][i])
-	    if len(self.data[idn]) != len(seq) - m + 1:
-		messages.append( 'WARNING! Length of data lane %s [%s] and length of respective sequence [%s] do not match' % (sn, len(self.data[idn]), len(seq) - m + 1))
+	    if idn in self.data and len(self.data[idn]) != len(seq) - m + 1:
+		    messages.append('WARNING! Length of data lane %s [%s] and length of respective sequence [%s] do not match' % (sn, len(self.data[idn]), len(seq) - m + 1))
 	    chartype = self.assays_dict['Characteristics[Nucleotide Type]'][i]
 	    if chartype == 'RNA' and 'T' in seq:
 		messages.append( 'WARNING! Sequence for %s specified as RNA but looks like DNA.' % n)

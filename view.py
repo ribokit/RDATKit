@@ -1,7 +1,32 @@
 import settings
 import pdb
+import os
+
 
 class VARNA:
+    
+    @classmethod
+    def get_colorMapStyle(self, values):
+        if reduce(lambda x,y: x and y, [x < 0 for x in values]):
+	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
+	else:
+	    return '0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
+    
+    @classmethod
+    def cmd(self, sequence, structure, outfile, options={}):
+        option_str = ''
+	for key in options:
+	    val = options[key]
+	    if type(val) == list:
+		argval = str(val).strip('[]').replace('L', '').replace('u','')
+	    else:
+		argval = str(val)
+	    option_str += '-%s "%s" ' % (key, argval)
+	print('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
+		  (settings.VARNA, sequence, structure, option_str, outfile))
+	os.popen('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
+		  (settings.VARNA, sequence, structure, option_str, outfile))
+
     def __init__(self, sequences=[], structures=[]):
         self.sequences = sequences
 	self.structures = structures
