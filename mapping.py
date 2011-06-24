@@ -24,8 +24,15 @@ class MappingData:
 	for i, dat in enumerate(mdata):
 	    self._data[self.seqpos[i]] = dat
 	    
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
 
     def __getitem__(self, k):
+        if k >= len(self._data):
+	    return None
         return self._data[k]
 
     def __str__(self):

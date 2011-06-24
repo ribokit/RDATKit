@@ -208,9 +208,15 @@ def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1):
 	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
 	if mapping_data:
 	    tmp = tempfile.NamedTemporaryFile(delete=False)
-	    tmp.write(str(mapping_data))
+	    if type(mapping_data) == list:
+		for data in mapping_data:
+		    tmp.write(' '.join([0 if not x else x for x in data]) + '\n')
+		bonus_opt = '-x'
+            else:
+		tmp.write(str(mapping_data))
+		bonus_opt = '-sh'
 	    tmp.close()
-	    CMD += '-sh %s ' % tmp.name
+	    CMD += '%s %s ' % (bonus_opt, tmp.name)
         os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
     return structs

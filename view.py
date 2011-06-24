@@ -6,7 +6,9 @@ import os
 class VARNA:
     
     @classmethod
-    def get_colorMapStyle(self, values):
+    def get_colorMapStyle(self, values, sequence=''):
+        if len(sequence) > len(values):
+	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
         if reduce(lambda x,y: x and y, [x < 0 for x in values]):
 	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
 	else:
@@ -27,9 +29,10 @@ class VARNA:
 	os.popen('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
 		  (settings.VARNA, sequence, structure, option_str, outfile))
 
-    def __init__(self, sequences=[], structures=[]):
+    def __init__(self, sequences=[], structures=[], mapping_data=[]):
         self.sequences = sequences
 	self.structures = structures
+        self.mapping_data = mapping_data
 	self.rows = 1
 	self.columns = 1
 	self.width = 522
@@ -89,6 +92,7 @@ class VARNA:
 	param_string = ''
 	param_string += '<param name="rows" value="%d"/>\n' % rows
 	param_string += '<param name="columns" value="%d"/>\n' % columns
+	do_default_colormapstyle = 'colorMapStyle' not in self.__dict__
 	for att in self.__dict__:
 	    if overlap_structures and att == 'structures':
 		param_string += struct_string
@@ -97,13 +101,25 @@ class VARNA:
 		    name = 'structureDBN'
 		elif att == 'sequences':
 		    name = 'sequenceDBN'
+		elif att == 'mapping_data':
+		    name = 'colorMap'
 		else:
 		    name = att
 		for i, val in enumerate(self.get_values(att)):
 		    if frames > 1:
-			param_string += '<param name="%s%d" value="%s" />\n' % (name, i+1, val)
+			frame_idx = str(i+1)
 		    else:
-			param_string += '<param name="%s" value="%s" />\n' % (name, val)
+			frame_idx = ''
+                    if name == 'colorMap': 
+			if len(self.sequences) == len(self.mapping_data):
+			    idx = i
+			else:
+			    idx = 0
+			if do_default_colormapstyle:
+			    param_string += '<param name="colorMapStyle%s" value="%s" />\n' % (frame_idx, VARNA.get_colorMapStyle(val, sequence=self.sequences[idx]))
+			val = [val[x] if val[x] != None else -0.001 for x in range(len(self.sequences[idx]))]
+			val = str(val).strip('[]').replace(' ','')
+		    param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, val)
 	applet_string += param_string
 	applet_string += '</applet>'
 	return applet_string
