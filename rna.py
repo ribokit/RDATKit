@@ -4,6 +4,9 @@ import secondary_structure
 class RNA:
     def __init__(self, sequence=''):
         self.sequence = sequence
+    
+    def __len__(self):
+        return len(self.sequence)
 
     def bootstrap(self, mapping_data, nboot, nsamples=-1, algorithm='rnastructure', replacement=False):
         print 'Starting bootstrap...'

@@ -22,7 +22,7 @@ class SecondaryStructure:
 	    if s == '(':
 		stack.append(i)
 	    if s == ')':
-		bps.append((i, stack.pop()))
+		bps.append((stack.pop(), i))
         return bps
 
     def helices(self):
@@ -202,15 +202,15 @@ def _get_dot_structs(ctname, nstructs, unique=False):
     return structs
 
 
-def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1):
+def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold_opts=''):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
-	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
+	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s %s' % (seqname, ctname, fold_opts)
 	if mapping_data:
 	    tmp = tempfile.NamedTemporaryFile(delete=False)
 	    if type(mapping_data) == list:
 		for data in mapping_data:
-		    tmp.write(' '.join([0 if not x else x for x in data]) + '\n')
+		    tmp.write(' '.join(['0' if not x else str(x) for x in data]) + '\n')
 		bonus_opt = '-x'
             else:
 		tmp.write(str(mapping_data))

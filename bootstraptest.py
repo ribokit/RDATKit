@@ -13,7 +13,7 @@ ba = molecule.bootstrap(data, 5, nsamples=1, replacement=True)
 for b in ba:
     ba[b] = str(ba[b]) +'%'
 applet = view.VARNA(sequences=[molecule.sequence], structures=structures, mapping_data=[data])
-html = applet.render(base_annotations=ba, annotation_by_helix=True, \
+html = applet.render(base_annotations=[ba], annotation_by_helix=True, \
                     helix_function=(lambda x, y: max(x,y)))
 
 f = open('test.html', 'w')

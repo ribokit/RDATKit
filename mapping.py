@@ -1,5 +1,12 @@
-import random
 import settings
+from numpy import *
+import random as rand
+
+def matrix_to_mapping(matrix):
+    md = []
+    for i in range(shape(matrix)[0]):
+            md.append(MappingData(data=matrix[i,:]))
+    return md
 
 class MappingData:
     def __init__(self, data=[], seqpos=[], type=''):
@@ -39,17 +46,17 @@ class MappingData:
         s = ''
         for pos in self.seqpos:
 	    if self._data[pos] is not None:
-		s += '%d %d\n' % (pos + 1, float(self._data[pos]))
+		s += '%d %f\n' % (pos + 1, float(self._data[pos]))
         return s
     
     def sample(self, numsamples, replacement=False):
         if replacement:
 	    nseqpos = [0]*numsamples
 	    for i in range(numsamples):
-		idx = random.choice(self.seqpos)
+		idx = rand.choice(self.seqpos)
 		nseqpos[i] = idx
 	else:
-	    nseqpos = random.sample(self.seqpos, numsamples)
+	    nseqpos = rand.sample(self.seqpos, numsamples)
 	ndata = [None]*len(nseqpos)
 	for i, pos in enumerate(nseqpos):
 	    ndata[i] = self._data[pos]

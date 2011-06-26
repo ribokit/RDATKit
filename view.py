@@ -9,7 +9,7 @@ class VARNA:
     def get_colorMapStyle(self, values, sequence=''):
         if len(sequence) > len(values):
 	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
-        if reduce(lambda x,y: x and y, [x < 0 for x in values]):
+        if reduce(lambda x,y: x or y, [x < 0 for x in values]):
 	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
 	else:
 	    return '0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
@@ -51,7 +51,7 @@ class VARNA:
 		res = max(res, len(val))
 	return res
 
-    def render(self, base_annotations={}, annotation_by_helix=False, helix_function=(lambda x,y:x), overlap_structures=False):
+    def render(self, base_annotations=[], annotation_by_helix=False, helix_function=(lambda x,y:x), map_data_function=(lambda x:x), overlap_structures=False):
         struct_string = ''
 	applet_string = '<applet  code="VARNA.class" codebase="http://varna.lri.fr/bin"\n'
 	applet_string += 'archive="VARNA.jar" width="%d" height="%d">\n' % (self.width, self.height)
@@ -67,15 +67,20 @@ class VARNA:
 			struct_string += '%s:edge5=s, edge3=h, stericity=cis;'
 	    struct_string += '"/>\n'
 	base_annotation_string = ''
-	if len(base_annotations) > 0:
-	    base_annotation_string = '<param name="annotations" value=\n\t"'
+	for i, ba in enumerate(base_annotations):
+	    if len(base_annotations) > 1:
+		idx = str(i+1)
+	    else:
+		idx = ''
+	    base_annotation_string += '<param name="annotations%s" value=\n\t"' % idx
 	    if annotation_by_helix:
-		for helix in self.structures[0].helices():
+		print self.structures[i].helices()
+		for helix in self.structures[i].helices():
 		    anchor = helix[0][0] + 1 + (helix[-1][0] - helix[0][0])/2 
-		    annotation_value = base_annotations.values()[0]
+		    annotation_value = ba.values()[0]
 		    for bp in helix:
-			if bp in base_annotations:
-			    nextval = base_annotations[bp]
+			if bp in ba:
+			    nextval = ba[bp]
 			    annotation_value = helix_function(annotation_value, nextval)
 		    base_annotation_string += '%s:type=L,anchor=%d,size=%d;\n' % (annotation_value, anchor, self.annotation_font_size)
 	    else:
@@ -117,7 +122,7 @@ class VARNA:
 			    idx = 0
 			if do_default_colormapstyle:
 			    param_string += '<param name="colorMapStyle%s" value="%s" />\n' % (frame_idx, VARNA.get_colorMapStyle(val, sequence=self.sequences[idx]))
-			val = [val[x] if val[x] != None else -0.001 for x in range(len(self.sequences[idx]))]
+			val = [map_data_function(val[x]) if val[x] != None and val[x] > 0 else -0.001 for x in range(len(self.sequences[idx]))]
 			val = str(val).strip('[]').replace(' ','')
 		    param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, val)
 	applet_string += param_string
