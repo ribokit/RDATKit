@@ -14,6 +14,9 @@ from rdatkit.likelihood.helpers import normalize
 class SecondaryStructure:
     def __init__(self, dbn=''):
         self.dbn = dbn
+    
+    def __len__(self):
+        return len(self.dbn)
 
     def base_pairs(self):
         stack = []
@@ -22,7 +25,7 @@ class SecondaryStructure:
 	    if s == '(':
 		stack.append(i)
 	    if s == ')':
-		bps.append((stack.pop(), i))
+		bps.append((i, stack.pop()))
         return bps
 
     def helices(self):
@@ -202,33 +205,15 @@ def _get_dot_structs(ctname, nstructs, unique=False):
     return structs
 
 
-def fold(sequence, algorithm='rnastructure', mapping_data=None, mapping_file='', nstructs=1, fold_opts='', bonus_type='1D'):
+def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1):
     if algorithm == 'rnastructure':
-        bonus_opt = ''
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
-	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s %s' % (seqname, ctname, fold_opts)
-        if mapping_file:
-            fname = mapping_file
-            if bonus_type == '1D':
-                bonus_opt = '-sh'
-            if bonus_type == '2D':
-                bonus_opt = '-x'
-	    CMD += '%s %s ' % (bonus_opt, fname)
-	elif mapping_data:
+	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
+	if mapping_data:
 	    tmp = tempfile.NamedTemporaryFile(delete=False)
-            fname = tmp.name
-	    if type(mapping_data) == list:
-		for data in mapping_data:
-		    tmp.write(' '.join(['0' if not x else str(x) for x in data]) + '\n')
-		bonus_opt = '-x'
-            else:
-		tmp.write(str(mapping_data))
-		bonus_opt = '-sh'
+	    tmp.write(str(mapping_data))
 	    tmp.close()
-	    CMD += '%s %s ' % (bonus_opt, fname)
-        else:
-            pass
-        print CMD
+	    CMD += '-sh %s ' % tmp.name
         os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
     return structs

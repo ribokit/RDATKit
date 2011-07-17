@@ -1,7 +1,7 @@
 import settings
 import pdb
 import os
-
+from secondary_structure import SecondaryStructure
 
 class VARNA:
     
@@ -24,8 +24,6 @@ class VARNA:
 	    else:
 		argval = str(val)
 	    option_str += '-%s "%s" ' % (key, argval)
-	print('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
-		  (settings.VARNA, sequence, structure, option_str, outfile))
 	os.popen('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
 		  (settings.VARNA, sequence, structure, option_str, outfile))
 
@@ -44,27 +42,29 @@ class VARNA:
 	    return [struct.dbn for struct in self.structures]
         return self.__dict__[att]
     
-    def get_frames(self):
+    def get_frames(self, overlap_structures):
         res = -1
-        for val in self.__dict__.values():
+        for key, val in self.__dict__.items():
+	    if overlap_structures and key == 'structures':
+		continue
 	    if type(val) == list:
 		res = max(res, len(val))
 	return res
 
-    def render(self, base_annotations=[], annotation_by_helix=False, helix_function=(lambda x,y:x), map_data_function=(lambda x:x), overlap_structures=False):
+    def render(self, base_annotations=[], annotation_by_helix=False, helix_function=(lambda x,y:x), map_data_function=(lambda x:x), overlap_structures=False, reference_structure=SecondaryStructure()):
         struct_string = ''
 	applet_string = '<applet  code="VARNA.class" codebase="http://varna.lri.fr/bin"\n'
 	applet_string += 'archive="VARNA.jar" width="%d" height="%d">\n' % (self.width, self.height)
-	frames = self.get_frames()
+	frames = self.get_frames(overlap_structures=overlap_structures)
 	if overlap_structures:
 	    struct_string += '<param name="structureDBN" value="%s"/>\n' % self.structures[0].dbn
 	    bps = self.structures[0].base_pairs()
 	    struct_string += '<param name="auxBPs" value="'
 	    for i in range(1, len(self.structures)):
-		for bp in self.structures[0].base_pairs():
+		for bp in self.structures[i].base_pairs():
 		    if bp not in bps:
 			bps.append(bp)
-			struct_string += '%s:edge5=s, edge3=h, stericity=cis;'
+			struct_string += '(%s,%s):edge5=s,edge3=h,stericity=cis;' % (bp[0]+1, bp[1]+1)
 	    struct_string += '"/>\n'
 	base_annotation_string = ''
 	for i, ba in enumerate(base_annotations):
@@ -74,7 +74,6 @@ class VARNA:
 		idx = ''
 	    base_annotation_string += '<param name="annotations%s" value=\n\t"' % idx
 	    if annotation_by_helix:
-		print self.structures[i].helices()
 		for helix in self.structures[i].helices():
 		    anchor = helix[0][0] + 1 + (helix[-1][0] - helix[0][0])/2 
 		    annotation_value = ba.values()[0]
@@ -103,7 +102,28 @@ class VARNA:
 		param_string += struct_string
 	    if type(self.get_values(att)) == list:
 		if att == 'structures':
+		    if overlap_structures:
+			continue
 		    name = 'structureDBN'
+		    if len(reference_structure) > 0:
+			for i in range(len(self.structures)):
+			    if len(self.structures) > 1:
+				frame_idx = str(i+1)
+			    else:
+				frame_idx = ''
+			    param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, self.structures[i].dbn)
+			    auxbps_string = '<param name="auxBPs%s" value="' % (frame_idx)
+			    refbps = reference_structure.base_pairs()
+			    bps = self.structures[i].base_pairs()
+			    for bp in bps:
+				if bp not in refbps:
+				    auxbps_string += '(%s,%s):color=#00CCFF;' % (bp[0]+1, bp[1]+1)
+			    for bp in refbps:
+				if bp not in bps:
+				    auxbps_string += '(%s,%s):color=#FF6600;' % (bp[0]+1, bp[1]+1)
+			    auxbps_string += '"/>\n'
+			    param_string += auxbps_string
+			continue
 		elif att == 'sequences':
 		    name = 'sequenceDBN'
 		elif att == 'mapping_data':
