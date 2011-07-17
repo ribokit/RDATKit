@@ -397,7 +397,10 @@ class RDATFile:
 	else:
 	    tech = 'capillary electrophoresis'
 	if 'modifier' in self.annotations:
-	    general_protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+	    if self.annotations['modifier'][0] in ontology.modifier_protocol:
+		general_protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+            else:
+		general_protocol = self.annotations['modifier'][0]
 	    protocols.add(general_protocol)
 
 	"""
@@ -431,8 +434,12 @@ class RDATFile:
 			mutlabel = d.annotations['mutation'][j].strip('\t')
 			name = name + '_' + mutlabel
 			if mutlabel != 'WT':
-			    index = int(mutlabel[1:-1]) - construct.offset
-			    seq = seq[:index-1]+mutlabel[-1]+seq[index:]
+			    try:
+				index = int(mutlabel[1:-1]) - construct.offset
+				seq = seq[:index-1]+mutlabel[-1]+seq[index:]
+			    except ValueError:
+			        # The mutation label is not in standard format, default to normal sequence and make a note
+				seq += ' Note, mutation=%s' % mutlabel
 		else:
 		    name = name + '_WT'
 		idname = name + '_' + str(i+1)
@@ -448,12 +455,22 @@ class RDATFile:
 		else:
 		    isatabfile.assays_dict['Characteristics[RNA Production]'].append('in vitro synthesis')
 		if 'modifier' in d.annotations:
-		    isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[d.annotations['modifier'][0]].replace('-',' '))
-		    protocol = ontology.modifier_protocol[d.annotations['modifier'][0]]
+		    modifier = d.annotations['modifier'][0]
+		    if modifier in ontology.modifier_protocol:
+			isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[d.annotations['modifier'][0]].replace('-',' '))
+			protocol = ontology.modifier_protocol[d.annotations['modifier'][0]]
+		    else:
+			isatabfile.assays_dict['Protocol REF'].append(modifier)
+			protocol = modifier
 		    protocols.add(protocol)
 		elif 'modifier' in self.annotations:
-		    isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[self.annotations['modifier'][0]].replace('-',' '))
-		    protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+                    modifier = self.annotations['modifier'][0]
+		    if modifier in ontology.modifier_protocol:
+			isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[self.annotations['modifier'][0]].replace('-',' '))
+			protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+	            else:
+			isatabfile.assays_dict['Protocol REF'].append(modifier)
+			protocol = modifier
 		    protocols.add(protocol)
 		elif general_protocol:
 		    isatabfile.assays_dict['Protocol REF'].append(general_protocol)
@@ -476,12 +493,18 @@ class RDATFile:
 		else:
 		    isatabfile.assays_dict['Date'].append('')
 		isatabfile.assays_dict['Term Source REF'].append('OBI')
-		isatabfile.assays_dict['Term Accession Number'].append(ontology.protocols[protocol])
+		if protocol in ontology.protocols:
+		    isatabfile.assays_dict['Term Accession Number'].append(ontology.protocols[protocol])
+		else:
+		    isatabfile.assays_dict['Term Accession Number'].append(protocol)
 		for k in ['chemical', 'folding-salt', 'buffer', 'salt']:
 		    if k in d.annotations:
 			chemical, concentration = d.annotations[k][0].split(':')
 			concentration, units = parse_concentration(concentration)
-			term = ontology.chemicals[chemical]
+                        if chemical in ontology.chemicals:
+		            term = ontology.chemicals[chemical]
+			else:
+			    term = chemical
 			if not k in isatabfile.assays_factors:
 			    isatabfile.assays_factors[k] = {}
 			    isatabfile.assays_factors[k]['value'] = []
@@ -509,7 +532,10 @@ class RDATFile:
 		    else:
 			isatabfile.assays_dict[p[0]] = [p[1]]
 	    for p in protocols:
-		term = ontology.protocols[p]
+		if p in ontology.protocols:
+		    term = ontology.protocols[p]
+		else:
+		    term = p
 		isatabfile.investigation_dict['Study Protocol Name'].append(p.replace('-',' '))
 		isatabfile.investigation_dict['Study Protocol Type Term Source REF'].append('OBI')
 		isatabfile.investigation_dict['Study Assay Measurement Type'].append(p.replace('-',' '))
@@ -720,12 +746,13 @@ class ISATABFile:
 			    line.append('')
 			else:
 			    line.append(self.assays_dict[k][i]) 
-		for k in self.assays_factors:
-		    line .append( self.assays_factors[k]['value'][i])	
-		    line .append( self.assays_factors[k]['ref'][i])	
-		    line .append( self.assays_factors[k]['accession'][i])	
-		    line .append( self.assays_factors[k]['concentration'][i])	
-		    line .append( self.assays_factors[k]['unit'][i])	
+	        if i < len(self.assays_factors):
+		    for k in self.assays_factors:
+			line .append( self.assays_factors[k]['value'][i])	
+			line .append( self.assays_factors[k]['ref'][i])	
+			line .append( self.assays_factors[k]['accession'][i])	
+			line .append( self.assays_factors[k]['concentration'][i])	
+			line .append( self.assays_factors[k]['unit'][i])	
 		for j in range(len(line)):
 		    assayssh.write(assayrow, j, line[j])
 		assayrow += 1

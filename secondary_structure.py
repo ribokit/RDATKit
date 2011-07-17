@@ -202,12 +202,21 @@ def _get_dot_structs(ctname, nstructs, unique=False):
     return structs
 
 
-def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold_opts=''):
+def fold(sequence, algorithm='rnastructure', mapping_data=None, mapping_file='', nstructs=1, fold_opts='', bonus_type='1D'):
     if algorithm == 'rnastructure':
+        bonus_opt = ''
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
 	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s %s' % (seqname, ctname, fold_opts)
-	if mapping_data:
+        if mapping_file:
+            fname = mapping_file
+            if bonus_type == '1D':
+                bonus_opt = '-sh'
+            if bonus_type == '2D':
+                bonus_opt = '-x'
+	    CMD += '%s %s ' % (bonus_opt, fname)
+	elif mapping_data:
 	    tmp = tempfile.NamedTemporaryFile(delete=False)
+            fname = tmp.name
 	    if type(mapping_data) == list:
 		for data in mapping_data:
 		    tmp.write(' '.join(['0' if not x else str(x) for x in data]) + '\n')
@@ -216,7 +225,10 @@ def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold
 		tmp.write(str(mapping_data))
 		bonus_opt = '-sh'
 	    tmp.close()
-	    CMD += '%s %s ' % (bonus_opt, tmp.name)
+	    CMD += '%s %s ' % (bonus_opt, fname)
+        else:
+            pass
+        print CMD
         os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
     return structs

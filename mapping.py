@@ -1,6 +1,27 @@
 import settings
+from scipy.stats import stats
 from numpy import *
 import random as rand
+
+def normalize(bonuses):
+    l = len(bonuses)
+    wtdata = array(bonuses)
+    if wtdata.min() < 0:
+	wtdata -= wtdata.min()
+    interquart = stats.scoreatpercentile(wtdata, 75) - stats.scoreatpercentile(wtdata, 25)
+    for i in range(l):
+	if wtdata[i] > interquart*1.5:
+	    wtdata[i] = 999
+    tenperc = stats.scoreatpercentile(wtdata, 90)
+    maxcount = 0
+    maxav = 0.
+    for i in range(l):
+	if wtdata[i] >= tenperc:
+	    maxav += wtdata[i]
+	    maxcount += 1
+    maxav /= maxcount
+    wtdata = wtdata/maxav
+    return wtdata
 
 def matrix_to_mapping(matrix):
     md = []
@@ -9,7 +30,7 @@ def matrix_to_mapping(matrix):
     return md
 
 class MappingData:
-    def __init__(self, data=[], seqpos=[], type=''):
+    def __init__(self, data=[], seqpos=[], type='', norm=False):
 	if seqpos:
 	    self._data = [None]*(max(seqpos) + 1)
 	    self.seqpos = seqpos
@@ -18,6 +39,8 @@ class MappingData:
 	else:
 	    self._data = data
 	    self.seqpos = range(len(data))
+        if norm:
+            self._data = normalize(self._data)
 	self.type = type
     
     def load(self, shapefile):
