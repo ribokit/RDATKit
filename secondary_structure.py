@@ -193,6 +193,8 @@ def _get_dot_structs(ctname, nstructs, unique=False):
 	dbnfile.close()
 	os.popen(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
 		 (ctname, i+1, dbnname))
+	print(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
+		 (ctname, i+1, dbnname))
 	dbn = open(dbnname).readlines()[-1].strip()
 	# Append only non trivial structures
 	if '(' in dbn:
@@ -205,7 +207,7 @@ def _get_dot_structs(ctname, nstructs, unique=False):
     return structs
 
 
-def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1):
+def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold_opts=''):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
 	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
@@ -214,6 +216,8 @@ def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1):
 	    tmp.write(str(mapping_data))
 	    tmp.close()
 	    CMD += '-sh %s ' % tmp.name
+        CMD += fold_opts
+        print(CMD)
         os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
     return structs
