@@ -42,4 +42,16 @@ rdat.xsel = xsel;
 rdat.xsel_refine = xsel_refine;
 rdat.trace = trace_in;
 
+% reorder if seqpos is in weird order!
+if rdat.seqpos(1) > rdat.seqpos(2); rdat = reverse_rdat_seqpos_order( rdat ); end
+
 check_rdat( rdat );
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rdat = reverse_rdat_seqpos_order( rdat ); 
+
+rdat.seqpos          = rdat.seqpos( end:-1:1 );
+rdat.area_peak       = rdat.area_peak( end:-1:1, : );
+rdat.area_peak_error = rdat.area_peak_error( end:-1:1, : );  
+rdat.xsel            = rdat.xsel( end:-1:1, : );
+

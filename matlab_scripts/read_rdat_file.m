@@ -53,24 +53,24 @@ while 1
     elseif strfind(line, 'STRUCTURE') > 0
       rdat.structure = strrep(strrep(line(1:end-1), 'STRUCTURE ',''), ' ', '');
     elseif strfind(line, 'ANNOTATION_DATA') > 0
-      line = strrep(line(1:end-1), 'ANNOTATION_DATA ','');
-	[t,r] = strtok( line, ' ' );
-        idx = str2num(t);
-        rdat.data_annotations{idx} = str2cell( r );
+      line = remove_tag( line, 'ANNOTATION_DATA' );
+      [t,r] = strtok( line, ' ' );
+      idx = str2num(t);
+      rdat.data_annotations{idx} = str2cell( r );
     elseif strfind(line, 'AREA_PEAK_ERROR') > 0
-      line = strrep(line, 'AREA_PEAK_ERROR','');
+      line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
       rdat.area_peak_error(:, line_read(1) ) = line_read(2:end);
     elseif strfind(line, 'AREA_PEAK') > 0
-      line = strrep(line, 'AREA_PEAK ','');
+      line = remove_tag( line, 'AREA_PEAK' );
       line_read = strread( line );
       rdat.area_peak(:, line_read(1) ) = line_read(2:end);
     elseif strfind(line, 'TRACE') > 0
-      line = strrep(line, 'TRACE ','');
+      line = remove_tag( line, 'TRACE' );
       line_read = strread( line );
       rdat.trace(:, line_read(1) ) = line_read(2:end);
     elseif strfind(line, 'XSEL_REFINE') > 0
-      line = strrep(line, 'XSEL_REFINE ','');
+      line = remove_tag( line, 'XSEL_REFINE' );
       line_read = strread( line );
       rdat.xsel_refine(:,line_read(1)) = line_read(2:end);
     elseif strfind(line, 'XSEL') > 0
@@ -105,3 +105,11 @@ while length(rest)
     i = i + 1;
 end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function  line = remove_tag( line, tag );
+if strfind( line, [tag,':'] ) % new format v0.23
+  line = strrep(line(1:end-1), [tag,':'],'');
+else
+  line = strrep(line(1:end-1), [tag,' '],'');
+end

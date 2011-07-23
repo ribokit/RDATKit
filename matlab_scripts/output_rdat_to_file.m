@@ -13,7 +13,8 @@ fprintf( 'About to create file: %s\n', filename );
 s = '';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s, 'RDAT_VERSION 0.22\n'];
+%s = [s, 'RDAT_VERSION 0.22\n'];
+s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME ', rdat.name,'\n'];
@@ -51,7 +52,7 @@ end
 if  ~isempty( rdat.data_annotations ) 
   s = [s,'\n'];
   for i=1:length( rdat.data_annotations )
-    s = [s, 'ANNOTATION_DATA ', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
+    s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
   end
 end
 
@@ -61,7 +62,7 @@ end
 s = [s,'\n'];
 num_lanes = size( rdat.area_peak, 2  );
 for i=1:num_lanes
-  s = [s, 'AREA_PEAK       ', int2str_exact(i,6), '        ', num2str( rdat.area_peak(:,i)', ' %9.4f'),'\n'];
+    s = [s, 'AREA_PEAK:', int2str_exact(i,6), '              ', num2str( rdat.area_peak(:,i)', ' %9.4f'),'\n'];
 end
 
 
@@ -70,7 +71,7 @@ end
 if ~isempty( rdat.area_peak_error )
   s = [s,'\n'];
   for i=1:size( rdat.area_peak_error, 2 )
-    s = [s, 'AREA_PEAK_ERROR ', int2str_exact(i,6), '        ', num2str( rdat.area_peak_error(:,i)', ' %9.4f'),'\n'];
+    s = [s, 'AREA_PEAK_ERROR:', int2str_exact(i,6), '        ', num2str( rdat.area_peak_error(:,i)', ' %9.4f'),'\n'];
   end
 end
 
@@ -89,7 +90,7 @@ if ~isempty( rdat.xsel_refine )
   s = [s,'\n'];
   num_lanes = size( rdat.xsel_refine, 2 );
   for i=1:num_lanes
-    s = [s,   'XSEL_REFINE     ',  int2str_exact(i,6), '           ', num2str( rdat.xsel_refine(:,i)', ' %8.2f'),'\n'];     
+    s = [s,   'XSEL_REFINE:',  int2str_exact(i,6), '                ', num2str( rdat.xsel_refine(:,i)', ' %8.2f'),'\n'];     
   end
   s = [s,'\n'];
 end
@@ -102,7 +103,7 @@ if ~isempty( rdat.trace )
 
   s = [s,'\n'];
   for i=1:num_lanes
-    s = [s, 'TRACE           ',  int2str_exact(i,6), '           ', num2str( rdat.trace(:,i)', ' %9.4f'),'\n'];    
+    s = [s, 'TRACE:',  int2str_exact(i,6), '                      ', num2str( rdat.trace(:,i)', ' %9.4f'),'\n'];    
     % update progress bar.
     progress = update_progress_bar( progress, Nprogress, i, num_lanes );
   end
@@ -140,7 +141,8 @@ function s = int2str_exact( i, n )
 s = int2str( i );
 
 for j = 1:(n-length(s))
-  s = [' ',s];
+  %s = [' ',s];
+  s = [s,' '];  % for v0.23, where integer is attached to tag ('AREA_PEAK') with a colon.
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
