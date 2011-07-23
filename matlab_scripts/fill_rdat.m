@@ -53,5 +53,6 @@ function rdat = reverse_rdat_seqpos_order( rdat );
 rdat.seqpos          = rdat.seqpos( end:-1:1 );
 rdat.area_peak       = rdat.area_peak( end:-1:1, : );
 rdat.area_peak_error = rdat.area_peak_error( end:-1:1, : );  
-rdat.xsel            = rdat.xsel( end:-1:1, : );
+rdat.xsel            = rdat.xsel( end:-1:1 );
+rdat.xsel_refine            = rdat.xsel_refine( end:-1:1, : );
 
