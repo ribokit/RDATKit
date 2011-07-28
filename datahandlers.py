@@ -194,7 +194,10 @@ class RDATFile:
 		elif 'MUTPOS' in line:
 		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delim=' ')]
 		elif 'ANNOTATION_DATA' in line:
-		    fields = split(line.replace(':', ' ').replace('ANNOTATION_DATA ', '').strip(), delim=' ')
+		    if self.version == 0.23:
+			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delim=' ')
+		    else:
+			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delim=' ')
 		    data_idx = int(fields[0])-1
 		    annotations = self.parse_annotations(fields[1:])
                     self.append_a_new_data_section( current_construct )
