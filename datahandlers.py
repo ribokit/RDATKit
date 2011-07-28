@@ -154,7 +154,7 @@ class RDATFile:
 			    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		else:
 		    print 'Invalid section: '+line
-	    elif self.version == 0.2  or self.version == 0.21 or self.version == 0.22:
+	    elif self.version == 0.2  or self.version == 0.21 or self.version == 0.22 or self.version == 0.23:
 		if 'COMMENT' in line:
 		    self.comments += line.replace('COMMENTS','').replace('COMMENT ','') + '\n'
 		elif 'ANNOTATION' in line and not 'ANNOTATION_DATA' in line:
@@ -194,7 +194,7 @@ class RDATFile:
 		elif 'MUTPOS' in line:
 		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delim=' ')]
 		elif 'ANNOTATION_DATA' in line:
-		    fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delim=' ')
+		    fields = split(line.replace(':', ' ').replace('ANNOTATION_DATA ', '').strip(), delim=' ')
 		    data_idx = int(fields[0])-1
 		    annotations = self.parse_annotations(fields[1:])
                     self.append_a_new_data_section( current_construct )
@@ -204,34 +204,40 @@ class RDATFile:
 			    self.mutpos[current_construct][-1] = int(annotations['mutation'][0][1:-1])
 			except ValueError:
 			    pass
-		elif 'AREA_PEAK ' in line:
-		    fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delim=' ')
+		elif 'AREA_PEAK ' in line or 'REACTIVITY:' in line:
+		    if 'AREA_PEAK ' in line:
+			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delim=' ')
+		    if 'REACTIVITY:' in line: # Means we are in version 0.23
+			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delim=' ')
 		    data_idx = int(fields[0])-1
 		    peaks = [float(x) for x in fields[1:]]
                     if ( data_idx >= len(self.constructs[current_construct].data) ):
                         self.append_a_new_data_section( current_construct )
 		    self.constructs[current_construct].data[data_idx].values = peaks
 		    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
-		elif 'AREA_PEAK_ERROR' in line:
-		    fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delim=' ')
+		elif 'AREA_PEAK_ERROR' in line or 'REACTIVITY_ERROR ' in line:
+		    if 'AREA_PEAK_ERROR ' in line:
+			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delim=' ')
+		    if 'REACTIVITY_ERROR:' in line: #Means we are in version 0.23
+			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delim=' ')
 		    data_idx = int(fields[0])-1
 		    errors = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].errors = errors
 		    self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
 		elif 'TRACE' in line:
-		    fields = split(line.replace('TRACE ', '').strip('\n ,'),delim=' ')
+		    fields = split(line.replace(':', ' ').replace('TRACE ', '').strip('\n ,'),delim=' ')
 		    data_idx = int(fields[0])-1
 		    trace = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].trace = trace
 		    self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
 		elif 'XSEL_REFINE' in line:
-		    fields = split(line.replace('XSEL_REFINE ', '').strip('\n ,'),delim=' ')
+		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE ', '').strip('\n ,'),delim=' ')
 		    data_idx = int(fields[0])-1
 		    xsel = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].xsel = xsel
 		    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		elif 'XSEL' in line:
-		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace('XSEL ','').strip('\n ,'),delim=' ')]
+		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL ','').strip('\n ,'),delim=' ')]
 		else:
                     if line.strip():
 			    print 'Invalid section: '+line
