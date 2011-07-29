@@ -18,8 +18,8 @@ rdat.seqpos           = [];
 rdat.mutpos           = [];
 rdat.annotations      = {};
 rdat.data_annotations = {};
-rdat.area_peak        = [];
-rdat.area_peak_error  = [];
+rdat.reactivity        = [];
+rdat.reactivity_error  = [];
 rdat.trace            = [];
 rdat.xsel             = [];
 rdat.xsel_refine      = [];
@@ -57,14 +57,22 @@ while 1
       [t,r] = strtok( line, ' ' );
       idx = str2num(t);
       rdat.data_annotations{idx} = str2cell( r );
-    elseif strfind(line, 'AREA_PEAK_ERROR') > 0
+    elseif strfind(line, 'REACTIVITY_ERROR') > 0
+      line = remove_tag( line, 'REACTIVITY_ERROR' );
+      line_read = strread( line );
+      rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
+    elseif strfind(line, 'REACTIVITY') > 0
+      line = remove_tag( line, 'REACTIVITY' );
+      line_read = strread( line );
+      rdat.reactivity(:, line_read(1) ) = line_read(2:end);
+    elseif strfind(line, 'AREA_PEAK') > 0 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
-      rdat.area_peak_error(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'AREA_PEAK') > 0
+      rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
+    elseif strfind(line, 'AREA_PEAK') > 0 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK' );
       line_read = strread( line );
-      rdat.area_peak(:, line_read(1) ) = line_read(2:end);
+      rdat.reactivity(:, line_read(1) ) = line_read(2:end);
     elseif strfind(line, 'TRACE') > 0
       line = remove_tag( line, 'TRACE' );
       line_read = strread( line );
@@ -86,7 +94,7 @@ while 1
 end
 
 fprintf( 'Number of traces         : %d \n', size( rdat.trace, 2 ) );
-fprintf( 'Number of area_peak lines: %d \n', size( rdat.area_peak, 2 ) );
+fprintf( 'Number of reactivity lines: %d \n', size( rdat.reactivity, 2 ) );
 fclose( fid );
 
 check_rdat( rdat );

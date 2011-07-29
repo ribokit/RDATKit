@@ -11,26 +11,31 @@ if ( (min(rdat.seqpos) - rdat.offset) < 1 );                fprintf( '\nWARNING!
 
 if ( (max(rdat.seqpos) - rdat.offset > length(rdat.sequence)) ); fprintf( '\nWARNING! Offset/seqpos does not look right -- at least one index is too high for sequence\n' ); return;end;
 
-if ( size( rdat.area_peak, 1 ) ~= length( rdat.seqpos ) );
-  fprintf( '\nWARNING! Number of bands in area_peak [%d] does not match length of seqpos [%d]\n', size( rdat.area_peak, 1), length( rdat.seqpos ) ); return;
+%if ~exist( 'rdat.reactivity' )
+%  fprintf( '\nWARNING! No REACTIVITY data -- assuming these data are in AREA_PEAK\n');
+%  rdat.reactivity = rdat.area_peak;
+%end
+
+if ( size( rdat.reactivity, 1 ) ~= length( rdat.seqpos ) );
+  fprintf( '\nWARNING! Number of bands in reactivity [%d] does not match length of seqpos [%d]\n', size( rdat.reactivity, 1), length( rdat.seqpos ) ); return;
 end
 
-if ( length( rdat.data_annotations ) > 0 & length( rdat.data_annotations ) ~= size( rdat.area_peak, 2 ) )
-  fprintf( '\nWARNING! Number of bands in data_annotations [%d] does not match number of lanes in area_peak [%d]\n', length( rdat.data_annotations), size( rdat.area_peak, 2 ) ); return;
+if ( length( rdat.data_annotations ) > 0 & length( rdat.data_annotations ) ~= size( rdat.reactivity, 2 ) )
+  fprintf( '\nWARNING! Number of bands in data_annotations [%d] does not match number of lanes in reactivity [%d]\n', length( rdat.data_annotations), size( rdat.reactivity, 2 ) ); return;
 end
 
 if ( length( rdat.xsel ) > 0 ) 
-  if ( size( rdat.area_peak, 1) ~= length( rdat.xsel ) )
-    fprintf( '\nWARNING! Number of bands in xsel  [%d] does not match number of bands in area_peak [%d]\n', length( rdat.xsel), size( rdat.area_peak,1) );
+  if ( size( rdat.reactivity, 1) ~= length( rdat.xsel ) )
+    fprintf( '\nWARNING! Number of bands in xsel  [%d] does not match number of bands in reactivity [%d]\n', length( rdat.xsel), size( rdat.reactivity,1) );
   end
 end
    
 if ( length( rdat.xsel_refine ) > 0 )
-  if ( size( rdat.area_peak, 2) ~= size( rdat.xsel_refine, 2 ) )
-    fprintf( '\nWARNING! Number of lanes in xsel_refine  [%d] does not match number of lanes in area_peak [%d]\n', size( rdat.xsel_refine, 2), size( rdat.area_peak,2) );
+  if ( size( rdat.reactivity, 2) ~= size( rdat.xsel_refine, 2 ) )
+    fprintf( '\nWARNING! Number of lanes in xsel_refine  [%d] does not match number of lanes in reactivity [%d]\n', size( rdat.xsel_refine, 2), size( rdat.reactivity,2) );
   end
-  if ( size( rdat.area_peak, 1) ~= size( rdat.xsel_refine, 1 ) )
-    fprintf( '\nWARNING! Number of bands in xsel_refine  [%d] does not match number of bands in area_peak [%d]\n', size( rdat.xsel_refine, 1), size( rdat.area_peak,1) );
+  if ( size( rdat.reactivity, 1) ~= size( rdat.xsel_refine, 1 ) )
+    fprintf( '\nWARNING! Number of bands in xsel_refine  [%d] does not match number of bands in reactivity [%d]\n', size( rdat.xsel_refine, 1), size( rdat.reactivity,1) );
   end
 end
 

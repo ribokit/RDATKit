@@ -1,7 +1,7 @@
-function rdat = fill_rdat( name, sequence, offset, seqpos, area_peak, mutpos, structure, ...
-			   annotations, data_annotations, area_peak_error, trace_in, xsel, xsel_refine, comments );
-% rdat = fill_rdat( name, sequence, offset, seqpos, area_peak, mutpos, structure, ...
-%			   annotations, data_annotations, area_peak_error, trace, xsel, xsel_refine, comments );
+function rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, structure, ...
+			   annotations, data_annotations, reactivity_error, trace_in, xsel, xsel_refine, comments );
+% rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, structure, ...
+%			   annotations, data_annotations, reactivity_error, trace, xsel, xsel_refine, comments );
 %
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
 %
@@ -9,18 +9,18 @@ function rdat = fill_rdat( name, sequence, offset, seqpos, area_peak, mutpos, st
 rdat = RDATFile;
 rdat.name = ''; % signal that we're not filled yet.
 
-if ~exist( 'area_peak' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, area_peak'); end
+if ~exist( 'reactivity' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
 if ~exist( 'mutpos' ); mutpos = []; end;
 if ~exist( 'structure' ); structure=''; end;
 if ~exist( 'annotations' ); annotations = {}; end;
 if ~exist( 'data_annotations' ); data_annotations = {}; end;
-if ~exist( 'area_peak_error' ); area_peak_error = {}; end;
+if ~exist( 'reactivity_error' ); reactivity_error = {}; end;
 if ~exist( 'trace_in' ); trace_in = []; end;
 if ~exist( 'xsel' ); xsel = []; end;
 if ~exist( 'xsel_refine' ); xsel_refine = []; end;
 if ~exist( 'comments' ); comments = {}; end;
 
-if length( xsel_refine ) > 0 & ( size( area_peak, 2) ~= size( xsel_refine, 2 ) )
+if length( xsel_refine ) > 0 & ( size( reactivity, 2) ~= size( xsel_refine, 2 ) )
   xsel_refine = xsel_refine';
 end
 
@@ -36,8 +36,8 @@ rdat.seqpos = seqpos;
 rdat.mutpos = mutpos;
 rdat.annotations = annotations;
 rdat.data_annotations = data_annotations;
-rdat.area_peak = area_peak;
-rdat.area_peak_error = area_peak_error;
+rdat.reactivity = reactivity;
+rdat.reactivity_error = reactivity_error;
 rdat.xsel = xsel;
 rdat.xsel_refine = xsel_refine;
 rdat.trace = trace_in;
@@ -51,8 +51,8 @@ check_rdat( rdat );
 function rdat = reverse_rdat_seqpos_order( rdat ); 
 
 rdat.seqpos          = rdat.seqpos( end:-1:1 );
-rdat.area_peak       = rdat.area_peak( end:-1:1, : );
-rdat.area_peak_error = rdat.area_peak_error( end:-1:1, : );  
+rdat.reactivity       = rdat.reactivity( end:-1:1, : );
+rdat.reactivity_error = rdat.reactivity_error( end:-1:1, : );  
 rdat.xsel            = rdat.xsel( end:-1:1 );
 rdat.xsel_refine            = rdat.xsel_refine( end:-1:1, : );
 

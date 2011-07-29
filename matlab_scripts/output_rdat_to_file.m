@@ -14,7 +14,8 @@ s = '';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %s = [s, 'RDAT_VERSION 0.22\n'];
-s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
+%s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
+s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME ', rdat.name,'\n'];
@@ -60,18 +61,18 @@ end
 % OK, the good stuff.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s,'\n'];
-num_lanes = size( rdat.area_peak, 2  );
+num_lanes = size( rdat.reactivity, 2  );
 for i=1:num_lanes
-    s = [s, 'AREA_PEAK:', int2str_exact(i,6), '              ', num2str( rdat.area_peak(:,i)', ' %9.4f'),'\n'];
+    s = [s, 'REACTIVITY:', int2str_exact(i,6), '              ', num2str( rdat.reactivity(:,i)', ' %9.4f'),'\n'];
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Should be specified for standard states.
-if ~isempty( rdat.area_peak_error )
+if ~isempty( rdat.reactivity_error )
   s = [s,'\n'];
-  for i=1:size( rdat.area_peak_error, 2 )
-    s = [s, 'AREA_PEAK_ERROR:', int2str_exact(i,6), '        ', num2str( rdat.area_peak_error(:,i)', ' %9.4f'),'\n'];
+  for i=1:size( rdat.reactivity_error, 2 )
+    s = [s, 'REACTIVITY_ERROR:', int2str_exact(i,6), '        ', num2str( rdat.reactivity_error(:,i)', ' %9.4f'),'\n'];
   end
 end
 
@@ -142,7 +143,7 @@ s = int2str( i );
 
 for j = 1:(n-length(s))
   %s = [' ',s];
-  s = [s,' '];  % for v0.23, where integer is attached to tag ('AREA_PEAK') with a colon.
+  s = [s,' '];  % for v0.23, where integer is attached to tag ('REACTIVITY') with a colon.
 end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

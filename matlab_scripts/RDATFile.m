@@ -10,8 +10,8 @@ classdef RDATFile
         annotations
         comments
         data_annotations
-        area_peak
-        area_peak_error
+	reactivity
+        reactivity_error
         xsel
         xsel_refine
         trace

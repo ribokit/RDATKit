@@ -17,7 +17,7 @@ if ~exist( 'label_step' );  label_step = 1; end
 if ~exist( 'show_xsels' ); show_xsels = 1; end
 if ~exist( 'print_postscript' ); print_postscript = 0; end
 
-d = rdat.area_peak;
+d = rdat.reactivity;
 t = rdat.trace;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ for j = 1:length( ylabpos )
     ylab = [ylab, strcat( num2str( rdat.seqpos(j) ), rdat.sequence( ylabpos(j) ) )];
 end 
 
-for j=1:size(rdat.area_peak,2);  xlab{j} = ''; end
+for j=1:size(rdat.reactivity,2);  xlab{j} = ''; end
 
 if length( rdat.data_annotations ) > 0
   for j=1:length(rdat.data_annotations )
@@ -44,7 +44,7 @@ if length( rdat.data_annotations ) > 0
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% show values, i..e. fitted peak intensities or area_peak.
+% show values, i..e. fitted peak intensities or reactivity.
 figure(1)
 set(gcf,'color','white');
 clf
@@ -128,15 +128,15 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show bargraph with errors
-if length( rdat.area_peak_error ) > 0
+if length( rdat.reactivity_error ) > 0
   figure(3)
   set(gcf,'color','white');
-  num_lanes = size( rdat.area_peak, 2 );
+  num_lanes = size( rdat.reactivity, 2 );
   for i = 1: num_lanes
     subplot( num_lanes, 1, i );
         
     % this is a bit involved -- trying to set axes, but ignoring outliers.
-    vals = sort( max(rdat.area_peak(:,i),0) );
+    vals = sort( max(rdat.reactivity(:,i),0) );
     minval = vals( round(length(vals)/20) ); % 5th percentile
     maxval = vals( round(length(vals)*19/20) ); % 95th percentile
     valrange = maxval - minval;
@@ -146,11 +146,11 @@ if length( rdat.area_peak_error ) > 0
     min_x = min(rdat.seqpos) - 1;
     max_x = max(rdat.seqpos) + 1;
 
-    %errorbar( rdat.seqpos, rdat.area_peak(:,i), rdat.area_peak_error(:,i) )
-    bar( rdat.seqpos, rdat.area_peak(:,i), 'facecolor',[0.5 0.5 0.5] );%, rdat.area_peak_error(:,i) )
+    %errorbar( rdat.seqpos, rdat.reactivity(:,i), rdat.reactivity_error(:,i) )
+    bar( rdat.seqpos, rdat.reactivity(:,i), 'facecolor',[0.5 0.5 0.5] );%, rdat.reactivity_error(:,i) )
     hold on
     for j = 1:length( rdat.seqpos )
-      plot( rdat.seqpos(j) + [0 0 ], rdat.area_peak(j,i) + rdat.area_peak_error(j,i)*[-1 1], 'k','linewidth',2 )
+      plot( rdat.seqpos(j) + [0 0 ], rdat.reactivity(j,i) + rdat.reactivity_error(j,i)*[-1 1], 'k','linewidth',2 )
     end
     
     if ( length( rdat.structure ) > 0 )
@@ -193,7 +193,7 @@ tag = annotations;
 
 colon_pos = strfind( annotations, ':' );
 if ~isempty( colon_pos )
-  tag = annotations((colon_pos(end)+1):end);
+  tag = annotations((colon_pos(1)+1):end);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
