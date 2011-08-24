@@ -65,7 +65,7 @@ while 1
       line = remove_tag( line, 'REACTIVITY' );
       line_read = strread( line );
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'AREA_PEAK') > 0 % backwards compatibility
+    elseif strfind(line, 'AREA_PEAK_ERROR') > 0 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
       rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
