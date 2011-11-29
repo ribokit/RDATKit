@@ -8,7 +8,7 @@ from datahandlers import RDATFile
 from rdatkit.secondary_structure import SecondaryStructure
 from helpers import normalize
 
-fragtypes = ['helices', 'interiorloops', 'hairpins', 'dangles', 'bulges',\
+fragtypes = ['all', 'helices', 'interiorloops', 'hairpins', 'dangles', 'bulges',\
 	     '2wayjunctions', '3wayjunctions', '4wayjunctions', '5wayjunctions']
 rdatdir = sys.argv[1]
 if len(sys.argv) > 2 and sys.argv[2] == '--normalize':
@@ -37,6 +37,7 @@ for filename in os.listdir(rdatdir):
 			else:
 			    normvals = data.values
 			for fragtype in frags:
+                            db['all'].extend(normvals)
 			    fraglist = frags[fragtype]
 			    for frag in fraglist:
 				vals = []
