@@ -64,7 +64,7 @@ xticklabel_rotate_rdat();
 %  set(gca,'xTick',[1:length(ylabpos)],'xTickLabel', rdat.structure( ylabpos(seq_order) )','xaxislocation','top' );
 %end
 
-set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab));
+set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab),'yaxisloc','left');
 plot_title = [ rdat.name,'; ', remove_tag_before_colon_cell( rdat.annotations )];
 if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
@@ -113,7 +113,7 @@ if length( t ) > 0
     [ytickpos, reorder] = sort(x);
     set(gca, 'xTick', ytickpos, 'xTickLabel', char(ylab(reorder)),'fontweight','bold');
     set(gca, 'yTick',[1:length(xlab)],'yTicklabel',char(xlab));
-    ticklength = get(gca,'ticklength')
+    ticklength = get(gca,'ticklength');
     ticklength = [ 0.0 0.0 ];
     set(gca,'ticklength',ticklength,'tickdir','out' );
     
@@ -185,16 +185,20 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % stripping off the 'mutation' tag makes the labels easier to read.
-% If there are more than one annotation, we should fix this function...
+% If there is more than one annotation, we should fix this function...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tag = remove_tag_before_colon( annotations )
-%[t,r] = strtok( annotations, ':' );
-tag = annotations;
-
-colon_pos = strfind( annotations, ':' );
-if ~isempty( colon_pos )
-  tag = annotations((colon_pos(1)+1):end);
+[t,r] = strtok( annotations, ':' );
+if strcmp(t,'EteRNA')
+  [t,r] = strtok( t, ':' );
 end
+tag = r(2:end);
+
+%colon_pos = strfind( annotations, ':' );
+%if ~isempty( colon_pos )
+%  tag = annotations((colon_pos(1)+1):end);
+%end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tag = remove_tag_before_colon_cell( annotations )

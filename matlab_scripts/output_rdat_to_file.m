@@ -66,6 +66,8 @@ for i=1:num_lanes
     s = [s, 'REACTIVITY:', int2str_exact(i,6), '              ', num2str( rdat.reactivity(:,i)', ' %9.4f'),'\n'];
 end
 
+%fprintf( s )
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Should be specified for standard states.
