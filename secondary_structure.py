@@ -2,12 +2,12 @@ import pdb
 import pickle
 import os
 import tempfile
-import RNA as ViennaRNA
+#import RNA as ViennaRNA
 import scipy.stats as stats
 from numpy import *
 from random import *
 from rdatkit import settings
-from rdatkit.likelihood.helpers import normalize
+from rdatkit import mapping
  
 
 
@@ -159,7 +159,7 @@ class SecondaryStructure:
 	    db = pickle.load(open('%s/models/%s' % (settings.MAPPING_DATABASE_PATH, database)))
 	else:
 	    db = db_obj
-	data = normalize(mapping_data)
+	data = mapping.normalize(mapping_data)
 	probs = array([1.]*len(self.dbn))
 	for k in frags:
 	    if len(frags[k]) > 0 and k in db:
@@ -169,6 +169,7 @@ class SecondaryStructure:
                         if g.pdf(data[i]) > 0:
 			    probs[i] = g.pdf(data[i])
 	return probs, prod(probs)
+ 
 	    
 def to_seqfile(sequence, name='placeholder'):
     seqfile = tempfile.NamedTemporaryFile(delete=False)
@@ -221,22 +222,52 @@ def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold
         os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
     return structs
-    
 
-def sample(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1000, unique=False):
+def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts=''):
+    if algorithm == 'rnastructure':
+        seqname, ctname = _prepare_ct_and_seq_files(sequence)
+	CMD = settings.RNA_STRUCTURE_PARTITION + ' %s %s ' % (seqname, ctname)
+	if mapping_data:
+	    tmp = tempfile.NamedTemporaryFile(delete=False)
+	    tmp.write(str(mapping_data))
+	    tmp.close()
+	    CMD += '-sh %s ' % tmp.name
+        CMD += fold_opts
+        print(CMD)
+        os.popen(CMD)
+    return loadtxt(open(ctname))
+   
+
+def sample(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1000, unique=False, energies=False):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
 	CMD = settings.RNA_STRUCTURE_STOCHASTIC + ' -e %s --sequence %s %s ' % (nstructs, seqname, ctname)
 	os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs, unique=unique)
-    return structs
+	EFN2CMD = settings.RNA_STRUCTURE_ENERGY + ' %s /tmp/energy' % ctname
+	os.popen(EFN2CMD)
+	energyfile = open('/tmp/energy')
+	energies = [float(line.split(' ')[-1]) for line in energyfile.readlines()]
+    if energies:
+        return structs, energies
+    else:
+	return structs
 
-def subopt(sequence, algorithm='rnastructure', mapping_data=None, fraction=0.05, nstructs=1000):
+
+
+def subopt(sequence, algorithm='rnastructure', mapping_data=None, fraction=0.05, nstructs=1000, energies=False):
     if algorithm == 'rnastructure':
 	seqname, ctname = _prepare_ct_and_seq_files(sequence)
 	CMD = settings.RNA_STRUCTURE_ALLSUB + ' -p %d %s %s ' % (fraction*100, seqname, ctname)
 	os.popen(CMD)
 	structs = _get_dot_structs(ctname, nstructs)
+        EFN2CMD = settings.RNA_STRUCTURE_ENERGY + ' %s /tmp/energy' % ctname
+	os.popen(EFN2CMD)
+	energyfile = open('/tmp/energy')
+	energies = [float(line.split(' ')[-1]) for line in energyfile.readlines()]
+
+    if energies:
+        return structs, energies
     return structs
  
 def random(nstructs, length, nbp):

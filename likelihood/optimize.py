@@ -291,7 +291,7 @@ def by_decomvolution_using_CT_approx(sequence, data, structures, distdb, initcoe
 	if softmax_reparam:
 	    return exp(coeffs[k])/Z*(1 - exp(coeffs[k])/Z)*(sigma_ik_sq/sigma_i_sq - 2*sigma_ik_sq*(data[i] - mu_i)**2/((sigma_i_sq)**3))
 	else:
-	    return coeffs[k]*sigma_ik_sq/sigma_i_sq + (data[i] - mu_i)/(sigma_i_sq**3)*(-mu_ik*sigma_i_sq**2 - 2*coeffs[k]*sigma_ik_sq*(data[i] - mu_i))
+	    return coeffs[k]*sigma_ik_sq/sigma_i_sq + (data[i] - mu_i)/(sigma_i_sq**3)*(-mu_ik*sigma_i_sq - 2*coeffs[k]*sigma_ik_sq*(data[i] - mu_i))
 
     def likelihood_grad(coeffs):
         res = zeros(len(coeffs))
@@ -324,7 +324,7 @@ def by_decomvolution_using_CT_approx(sequence, data, structures, distdb, initcoe
     print 'Doing optimization with scipy'
     x0 = np.random.rand(len(initcoeffs))
     print 'Starting x0 for scipy fmin_bfgs %s' % x0
-    scipyres = scipy.optimize.fmin_l_bfgs_b(likelihood_fun, x0, fprime=likelihood_grad, iprint=0, pgtol=1e-20, factr=10, bounds=[(0, None) for x in initcoeffs])
+    scipyres = scipy.optimize.fmin_l_bfgs_b(likelihood_fun, x0, fprime=likelihood_grad, iprint=0, pgtol=1e-20, factr=1, bounds=[(0, None) for x in initcoeffs])
     scipyres = scipyres[0]
     print 'Scipy results %s' % scipyres
     if plot_likelihood:
@@ -383,11 +383,6 @@ def by_decomvolution_using_CT_approx(sequence, data, structures, distdb, initcoe
 	print 'Converted coefficients to probabilities %s' % coeffres
     return coeffres
 
-    
-
-
-
-    
     
 def by_decomvolution_using_scipy(sequence, data, structures, distdb, initcoeffs):
     structdistparams = get_structdistparams(structures, distdb)

@@ -154,7 +154,7 @@ class RDATFile:
 			    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		else:
 		    print 'Invalid section: '+line
-	    elif self.version in [0.2, 0.21, 0.22, 0.,23, 0.24]:
+	    elif self.version >= 0.2:
 		if 'COMMENT' in line:
 		    self.comments += line.replace('COMMENTS','').replace('COMMENT ','') + '\n'
 		elif 'ANNOTATION' in line and not 'ANNOTATION_DATA' in line:
@@ -194,7 +194,7 @@ class RDATFile:
 		elif 'MUTPOS' in line:
 		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delim=' ')]
 		elif 'ANNOTATION_DATA' in line:
-		    if self.version in [0.23, 0.24]:
+		    if self.version >= 0.23:
 			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delim=' ')
 		    else:
 			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delim=' ')
@@ -204,13 +204,16 @@ class RDATFile:
 		    self.constructs[current_construct].data[data_idx].annotations = annotations
 		    if 'mutation' in annotations:
 			try:
-			    self.mutpos[current_construct][-1] = int(annotations['mutation'][0][1:-1])
+			    if len(self.mutpos[current_construct]) > 0:
+				self.mutpos[current_construct][-1] = int(annotations['mutation'][0][1:-1])
+		            else:
+				self.mutpos[current_construct].append(int(annotations['mutation'][0][1:-1]))
 			except ValueError:
 			    pass
 		elif 'AREA_PEAK ' in line or 'REACTIVITY:' in line:
 		    if 'AREA_PEAK ' in line:
 			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delim=' ')
-		    if 'REACTIVITY:' in line: # Means we are in version 0.24
+		    if 'REACTIVITY:' in line: # Means we are in version >= 0.23
 			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delim=' ')
 		    data_idx = int(fields[0])-1
 		    peaks = [float(x) for x in fields[1:]]
@@ -221,7 +224,7 @@ class RDATFile:
 		elif 'AREA_PEAK_ERROR' in line or 'REACTIVITY_ERROR:' in line:
 		    if 'AREA_PEAK_ERROR ' in line:
 			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delim=' ')
-		    if 'REACTIVITY_ERROR:' in line: #Means we are in version 0.24
+		    if 'REACTIVITY_ERROR:' in line: #Means we are in version >= 0.23
 			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delim=' ')
 		    data_idx = int(fields[0])-1
 		    errors = [float(x) for x in fields[1:]]
@@ -295,56 +298,35 @@ class RDATFile:
 			file.write('SEQPOS: '+','.join([str(x) for x in d.seqpos])+'\n')
 			file.write('ANNOTATION: '+self.annotation_str(d.annotations)+'\n')
 			file.write('VALUES: '+','.join([str(x) for x in d.values])+'\n')
-            elif version == 0.2 or version == 0.21 or version == 0.24:
+            elif version == 0.2 or version == 0.21 :
 	        file = open(filename, 'w')
 		file.write('VERSION '+str(version)+'\n')
 		file.write('COMMENTS '+str(self.comments)+'\n')
 		for name in self.constructs:
 		    construct = self.constructs[name]
-		    if version in [0.2, 0.21]:
-			file.write('CONSTRUCT\n')
+		    file.write('CONSTRUCT\n')
 		    file.write('NAME '+name+'\n')
 		    file.write('SEQUENCE '+construct.sequence+'\n')
 		    file.write('STRUCTURE '+construct.structure+'\n')
 		    file.write('OFFSET '+str(construct.offset)+'\n')
 		    if construct.annotations:
 			file.write('ANNOTATION '+self.annotation_str(construct.annotations)+'\n')
-		    if construct.mutpos:
-			file.write('MUTPOS '+' '.join([str(x) for x in self.mutpos[name]])+'\n')
+		    file.write('MUTPOS '+' '.join([str(x) for x in self.mutpos[name]])+'\n')
 		    file.write('SEQPOS '+' '.join([str(x) for x in construct.seqpos])+'\n')
-		    if construct.data_types:
-			file.write('DATA_TYPE '+' '.join(self.data_types[name])+'\n')
+		    file.write('DATA_TYPE '+' '.join(self.data_types[name])+'\n')
 		    for i, d in enumerate(construct.data):
-			if version in [0.2, 0.21]:
-			    file.write('ANNOTATION_DATA %s %s\n' % (i+1, self.annotation_str(d.annotations)))
-			else:
-			    file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations)))
+			file.write('ANNOTATION_DATA %s %s\n' % (i+1, self.annotation_str(d.annotations)))
 		    for i,row in enumerate(self.values[name]):
-			if version in [0.2, 0.21]:
-			    file.write('AREA_PEAK %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
-			else:
-			    file.write('REACTIVITY:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
-		    for i, row in enumerate(self.traces[name]):
-			if row:
-			    if version in [0.2, 0.21]:
-				file.write('TRACE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
-			    else:
-				    file.write('TRACE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			file.write('AREA_PEAK %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+		    for i,row in enumerate(self.traces[name]):
+			file.write('TRACE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
 		    if self.errors:
-			for i, row in enumerate(self.errors[name]):
-			    if row:
-				if version in [0.2, 0.21]:
-				    file.write('AREA_PEAK_ERRORS %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
-				else:
-				    file.write('REACTIVITY_ERRORS:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			for i,row in enumerate(self.errors[name]):
+			    file.write('AREA_PEAK_ERRORS %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
 		    if construct.xsel:
 			file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
-		    for i, row in enumerate(self.xsels[name]):
-			if row:
-			    if version in [0.2, 0.21]:
-				file.write('XSEL_REFINE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
-			    else:
-				file.write('XSEL_REFINE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+		    for i,row in enumerate(self.xsels[name]):
+			file.write('XSEL_REFINE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
 	    else:
 		print 'Wrong version number %s' % version
     
@@ -457,7 +439,7 @@ class RDATFile:
 	    for i, d in enumerate(construct.data):
 		name = cname.replace(' ','-')
 		seq = ''
-		for j in construct.seqpos:
+		for j in construct.seqpos[::-1]:
 		    seq += construct.sequence[j - construct.offset - 1]
 		if 'mutation' in d.annotations:
 		    for j in range(len(d.annotations['mutation'])):
@@ -475,7 +457,7 @@ class RDATFile:
 		idname = name + '_' + str(i+1)
 		isatabfile.assays_dict['Assay Name'].append(idname)
 		isatabfile.sample_id_name_map[idname] = name
-		isatabfile.data[idname] = d.values
+		isatabfile.data[idname] = d.values[::-1]
 		isatabfile.data_id_order.append(idname)
 		isatabfile.assays_dict['Source Name'].append(name)
 		isatabfile.assays_dict['Characteristics[Nucleotide Sequence]'].append(seq)
