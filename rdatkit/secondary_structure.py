@@ -2,7 +2,6 @@ import pdb
 import pickle
 import os
 import tempfile
-#import RNA as ViennaRNA
 import scipy.stats as stats
 from numpy import *
 from random import *
