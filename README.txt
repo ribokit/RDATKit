@@ -3,8 +3,13 @@ Authors: Pablo Cordero and Rhiju Das
 
 ===Installation instructions for python===
 
-cd rdatkit
-python setup.py install
+1) cd to rdatkit folder
+
+2) Edit settings.py.example and change the relevant paths to your local installation paths
+of RNAstructure, ViennaRNA, and VARNA where necessary. Save to a new file settings.py in 
+the rdatkit folder 
+
+3)python setup.py install
 
 ===Installation instructions for MATLAB===
 
