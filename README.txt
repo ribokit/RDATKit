@@ -9,7 +9,7 @@ Authors: Pablo Cordero and Rhiju Das
 of RNAstructure, ViennaRNA, and VARNA where necessary. Save to a new file settings.py in 
 the rdatkit folder 
 
-3)python setup.py install
+3) python setup.py install (for system-wide installations, you must have necessary permissions, e.g. "sudo python setup.py install")
 
 ===Installation instructions for MATLAB===
 
