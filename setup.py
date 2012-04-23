@@ -7,5 +7,5 @@ setup(name='RDATkit',
         author_email='tsuname@stanford.edu',
         url='http://rmdb.stanford.edu/rdatkit',
         packages=['rdatkit', 'rdatkit.likelihood', 'rdatkit.mutate_and_map'],
-        install_requires=['xlwt', 'xlrd']
+        install_requires=['xlrd', 'xlwt']
         )
