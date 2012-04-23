@@ -1,11 +1,11 @@
 """
-datahandlers is a module that contains classes for representing tapestry data in python.
+datahandlers is a module that contains classes for representing structure mapping file formats in python.
 @author Pablo Sanchez Cordero
 """
 import ontology
 import xlwt
 import xlrd
-from Bio import Entrez, Medline
+#from Bio import Entrez, Medline
 import os
 import pdb
 from collections import defaultdict
@@ -13,10 +13,8 @@ from collections import defaultdict
 #from scipy.cluster.vq import vq, kmeans
 """
 Please put your email for Entrez
+Entrez.email = ''
 """
-
-Entrez.email = 'tsuname@stanford.edu'
-
 def split(s, delim=None):
     return [x for x in s.split(delim) if x]
 
@@ -415,7 +413,8 @@ class RDATFile:
 	general_protocol = ''
 	chemicals = set()
 	isatabfile.investigation_dict['Study File Name'].append(self.filename + ' (check entry ' + self.filename[:self.filename.find('.')] + ' at http://rmdb.stanford.edu for details)')
-	if 'pmid' in self.annotations:
+	"""
+        if 'pmid' in self.annotations:
 	    pmid = self.annotations['pmid'][0]
 	    h = Entrez.efetch(db='pubmed', id=[pmid], rettype='medline', retmode='text')
 	    records = Medline.parse(h)
@@ -433,7 +432,7 @@ class RDATFile:
 	    isatabfile.investigation_dict['Study Public Release Date'].append(record.get('DP', '?'))
 	    isatabfile.investigation_dict['Study PubMed ID'].append(pmid)
 	    isatabfile.investigation_dict['Study Publication Status'].append('indexed in pubmed')
-
+        """
 	for k in ['chemical', 'salt', 'buffer', 'temperature']:
 	    if k in self.annotations:
 		isatabfile.investigation_dict['Study Factor Name'].append('%s %s (constant for all assays)' % (k,self.annotations[k]))
