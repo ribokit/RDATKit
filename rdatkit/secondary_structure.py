@@ -207,15 +207,21 @@ def _get_dot_structs(ctname, nstructs, unique=False):
     return structs
 
 
-def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold_opts=''):
+def fold(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1, fold_opts='', bonus2d=False):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
 	CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
-	if mapping_data:
-	    tmp = tempfile.NamedTemporaryFile(delete=False)
-	    tmp.write(str(mapping_data))
-	    tmp.close()
-	    CMD += '-sh %s ' % tmp.name
+	if len(mapping_data) > 0:
+            if bonus2d:
+		tmp = tempfile.NamedTemporaryFile(delete=False)
+		savetxt(tmp, mapping_data)
+		tmp.close()
+		CMD += '-x %s ' % tmp.name
+            else:
+		tmp = tempfile.NamedTemporaryFile(delete=False)
+		tmp.write(str(mapping_data))
+		tmp.close()
+		CMD += '-sh %s ' % tmp.name
         CMD += fold_opts
         print(CMD)
         os.popen(CMD)

@@ -51,9 +51,9 @@ class VARNA:
 		res = max(res, len(val))
 	return res
 
-    def render(self, base_annotations=[], annotation_by_helix=False, helix_function=(lambda x,y:x), map_data_function=(lambda x:x), overlap_structures=False, reference_structure=SecondaryStructure()):
+    def render(self, base_annotations=[], annotation_by_helix=False, helix_function=(lambda x,y:x), map_data_function=(lambda x:x), overlap_structures=False, reference_structure=SecondaryStructure(), annotation_def_val=''):
         struct_string = ''
-	applet_string = '<applet  code="VARNA.class" codebase="http://varna.lri.fr/bin"\n'
+	applet_string = '<applet  code="VARNA.class" codebase="http://rmdb.stanford.edu/site_media/bin"\n'
 	applet_string += 'archive="VARNA.jar" width="%d" height="%d">\n' % (self.width, self.height)
 	frames = self.get_frames(overlap_structures=overlap_structures)
 	if overlap_structures:

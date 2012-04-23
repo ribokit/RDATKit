@@ -43,6 +43,9 @@ class MappingData:
             self._data = normalize(self._data)
 	self.type = type
     
+    def data(self):
+        return self._data
+    
     def load(self, shapefile):
         self.seqpos = []
 	mdata = []

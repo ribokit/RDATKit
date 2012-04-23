@@ -8,6 +8,7 @@ import xlrd
 from Bio import Entrez, Medline
 import os
 import pdb
+from collections import defaultdict
 #uncomment if you have scipy installed
 #from scipy.cluster.vq import vq, kmeans
 """
@@ -35,26 +36,23 @@ class RDATSection:
 
 class RDATFile:
     def __init__(self):
-        self.constructs = {}
-        self.traces = {}
-        self.values = {}
-        self.xsels = {}
-        self.data_types = {}
-        self.mutpos = {}
-	self.errors = {}
-	self.annotations = {}
+        self.constructs = defaultdict(list)
+        self.traces = defaultdict(list)
+        self.values = defaultdict(list)
+        self.xsels = defaultdict(list)
+        self.data_types = defaultdict(list)
+        self.mutpos = defaultdict(list)
+	self.errors = defaultdict(list)
+	self.annotations = defaultdict(list)
         self.loaded = False
-        pass
 
     def append_a_new_data_section( self, current_construct ):
         d = RDATSection()
-        d.xsel = []
         d.seqpos = []
         d.errors = []
         d.values = []
         d.xsel = []
         d.trace = []
-        d.seqpos = []
         d.annotations = {}
         self.constructs[current_construct].data.append(d)
 
@@ -181,9 +179,9 @@ class RDATFile:
 		    self.errors[current_construct] = []
 		    self.constructs[current_construct].structure = ''
 		elif 'SEQUENCE' in line:
-		    self.constructs[current_construct].sequence = line.replace('SEQUENCE ', '').strip()
+		    self.constructs[current_construct].sequence = line.replace('SEQUENCE', '').strip()
 		elif 'STRUCTURE' in line:
-		    self.constructs[current_construct].structure = line.replace('STRUCTURE ', '').strip()
+		    self.constructs[current_construct].structure = line.replace('STRUCTURE', '').strip()
 		elif 'OFFSET' in line:
 		    self.constructs[current_construct].offset = int(line.replace('OFFSET',''))
 		elif 'DATA_TYPE' in line:
@@ -273,7 +271,9 @@ class RDATFile:
     def annotation_str(self, a):
         s = ''
         for k in a:
-	    s += k + ':' + a[k] + ' '
+	    for i in range(len(a)):
+	        print a[k]
+	        s += k + ':' + a[k][i] + ' '
 	return s
 
     def save(self, filename, version=0.1):
@@ -327,6 +327,43 @@ class RDATFile:
 			file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
 		    for i,row in enumerate(self.xsels[name]):
 			file.write('XSEL_REFINE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+            elif version >= 0.24 :
+	        file = open(filename, 'w')
+		file.write('VERSION '+str(version)+'\n')
+		file.write('COMMENTS '+str(self.comments)+'\n')
+		for name in self.constructs:
+		    construct = self.constructs[name]
+		    file.write('NAME '+name+'\n')
+		    file.write('SEQUENCE '+construct.sequence+'\n')
+		    file.write('STRUCTURE '+construct.structure+'\n')
+		    file.write('OFFSET '+str(construct.offset)+'\n')
+		    if construct.annotations:
+			file.write('ANNOTATION '+self.annotation_str(construct.annotations)+'\n')
+                    if name in self.mutpos:
+			file.write('MUTPOS '+' '.join([str(x) for x in self.mutpos[name]])+'\n')
+		    else:
+			file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
+		    file.write('SEQPOS '+' '.join([str(x) for x in construct.seqpos])+'\n')
+		    for i, d in enumerate(construct.data):
+			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations)))
+		    if name in self.values:
+			for i,row in enumerate(self.values[name]):
+			    file.write('REACTIVITY:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+		    if name in self.traces:
+			for i,row in enumerate(self.traces[name]):
+			    if len(row) > 0:
+				file.write('TRACE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+		    if name in self.errors:
+			for i,row in enumerate(self.errors[name]):
+			    if len(row) > 0:
+				file.write('REACTIVITY_ERRORS:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+		    if construct.xsel:
+			file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
+		    if name in self.xsels:
+			for i,row in enumerate(self.xsels[name]):
+			    if len(row) > 0:
+				file.write('XSEL_REFINE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+
 	    else:
 		print 'Wrong version number %s' % version
     
@@ -439,7 +476,7 @@ class RDATFile:
 	    for i, d in enumerate(construct.data):
 		name = cname.replace(' ','-')
 		seq = ''
-		for j in construct.seqpos[::-1]:
+		for j in construct.seqpos:
 		    seq += construct.sequence[j - construct.offset - 1]
 		if 'mutation' in d.annotations:
 		    for j in range(len(d.annotations['mutation'])):
@@ -457,7 +494,7 @@ class RDATFile:
 		idname = name + '_' + str(i+1)
 		isatabfile.assays_dict['Assay Name'].append(idname)
 		isatabfile.sample_id_name_map[idname] = name
-		isatabfile.data[idname] = d.values[::-1]
+		isatabfile.data[idname] = d.values
 		isatabfile.data_id_order.append(idname)
 		isatabfile.assays_dict['Source Name'].append(name)
 		isatabfile.assays_dict['Characteristics[Nucleotide Sequence]'].append(seq)
@@ -810,14 +847,14 @@ class ISATABFile:
 	    datamatrixfile = open(name+'/'+self.assays_dict['Raw Data File'][0])
 	    data_keys = datamatrixfile.readline().strip().split('\t')
 	    for i, k in enumerate(data_keys):
-		self.data[k + '_' + str(i)] = []
-		self.sample_id_name_map[k + '_' + str(i)] = k
-		self.data_id_order.append(k+ '_' + str(i))
+		self.data[k + '_' + str(i+1)] = []
+		self.sample_id_name_map[k + '_' + str(i+1)] = k
+		self.data_id_order.append(k+ '_' + str(i+1))
 	    l = datamatrixfile.readline()
 	    while l:
 		for i, f in enumerate(l.strip().split('\t')):
 		    if f != '':
-			self.data[data_keys[i] + '_' + str(i)].append(float(f))
+			self.data[data_keys[i] + '_' + str(i+1)].append(float(f))
 		l = datamatrixfile.readline()
 	    assaysfile.close()
 	    datamatrixfile.close()
@@ -843,14 +880,14 @@ class ISATABFile:
 	    datamatrixsh = wb.sheet_by_name(self.assays_dict['Raw Data File'][0].replace('.txt',''))
 	    data_keys = datamatrixsh.row_values(0)
 	    for i, k in enumerate(data_keys):
-		self.data[k + '_' + str(i)] = []
-		self.sample_id_name_map[k + '_' + str(i)] = k
-		self.data_id_order.append(k+ '_' + str(i))
+		self.data[k + '_' + str(i+1)] = []
+		self.sample_id_name_map[k + '_' + str(i+1)] = k
+		self.data_id_order.append(k+ '_' + str(i+1))
 	    for j in range(1, datamatrixsh.nrows):
 		l = datamatrixsh.row_values(j)
 		for i, f in enumerate(l):
 		    if f != '':
-			self.data[data_keys[i] + '_' + str(i)].append(float(f))
+			self.data[data_keys[i] + '_' + str(i+1)].append(float(f))
 	else:
 	    print 'Unrecognized type %s for loading isatab file' % type
 
@@ -910,4 +947,36 @@ class ISATABFile:
 	    if chartype == 'DNA' and 'U' in seq:
 		messages.append( 'WARNING! Sequence for %s specified as DNA but looks like RNA.' % n)
         return messages
+
+    def toRDAT(self):
+	rdatfile = RDATFile()
+	rdatfile.comments = ''
+	general_annotations = defaultdict(list)
+	for i, name in enumerate(self.assays_dict['Assay Name']):
+	    rdatfile.constructs[name] = RDATSection()
+	    d = RDATSection()
+	    c = rdatfile.constructs[name]
+	    c.name = name
+	    c.annotations = {}
+	    for k, v in general_annotations.iteritems():
+		c.annotations[k] = v
+	    d.values = self.data[name]
+	    rdatfile.values[name] = [d.values]
+	    d.annotations = {}
+	    d.xsel = []
+	    d.errors = []
+	    d.trace = []
+	    d.seqpos = []
+	    c.sequence = self.assays_dict['Characteristics[Nucleotide Sequence]'][i]
+	    c.seqpos = range(len(c.sequence))
+	    c.xsel = []
+	    c.values = []
+	    c.traces = []
+	    c.mutpos = []
+	    c.data_types = []
+	    c.data = [d]
+	    c.offset = 0
+	    c.structure = '.'*len(c.sequence)
+	rdatfile.loaded = True
+	return rdatfile
 
