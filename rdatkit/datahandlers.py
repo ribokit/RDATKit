@@ -176,10 +176,21 @@ class RDATFile:
 		    self.mutpos[current_construct] = []
 		    self.errors[current_construct] = []
 		    self.constructs[current_construct].structure = ''
+		    self.constructs[current_construct].sequence = ''
+		    self.constructs[current_construct].structures =  defaultdict(int)
+		    self.constructs[current_construct].sequences =  defaultdict(int)
 		elif 'SEQUENCE' in line:
-		    self.constructs[current_construct].sequence = line.replace('SEQUENCE', '').strip()
+		    if ':' in line:
+			seqidx, seq = line.replace('SEQUENCE:','').strip().split()
+			self.constructs[current_construct].sequences[int(seqidx)] = seq.strip()
+		    else:
+			self.constructs[current_construct].sequence = line.replace('SEQUENCE', '').strip()
 		elif 'STRUCTURE' in line:
-		    self.constructs[current_construct].structure = line.replace('STRUCTURE', '').strip()
+		    if ':' in line:
+			structidx, struct = line.replace('STRUCTURE:','').strip().split()
+			self.constructs[current_construct].structures[int(structidx)] = struct.strip()
+		    else:
+			self.constructs[current_construct].structure = line.replace('STRUCTURE', '').strip()
 		elif 'OFFSET' in line:
 		    self.constructs[current_construct].offset = int(line.replace('OFFSET',''))
 		elif 'DATA_TYPE' in line:
@@ -269,12 +280,17 @@ class RDATFile:
     def annotation_str(self, a):
         s = ''
         for k in a:
-	    for i in range(len(a)):
+	    for i in range(len(a[k])):
 	        print a[k]
 	        s += k + ':' + a[k][i] + ' '
 	return s
 
-    def save(self, filename, version=0.1):
+    def save(self, filename, version=None):
+        if not version:
+	    if not self.version:
+		version = 0.3
+	    else:
+		version = self.version
         if not self.loaded:
 	    print 'No data to save...'
 	else:
@@ -285,7 +301,7 @@ class RDATFile:
 		file.write('ANNOTATION: '+self.annotation_str(self.annotations)+'\n')
 		for name in self.constructs:
 		    construct = self.constructs[name]
-		    file.write('CONSCTRUCT\n')
+		    file.write('CONSTRUCT\n')
 		    file.write('NAME: '+name+'\n')
 		    file.write('SEQUENCE: '+construct.sequence+'\n')
 		    file.write('WELLS: '+','.join([x for x in construct.wells])+'\n')
@@ -332,8 +348,14 @@ class RDATFile:
 		for name in self.constructs:
 		    construct = self.constructs[name]
 		    file.write('NAME '+name+'\n')
-		    file.write('SEQUENCE '+construct.sequence+'\n')
-		    file.write('STRUCTURE '+construct.structure+'\n')
+		    if construct.sequence:
+			file.write('SEQUENCE '+construct.sequence+'\n')
+		    for k, v in construct.sequences.iteritems():
+			file.write('SEQUENCE:%s %s\n' % (k, v))
+		    if construct.structure:
+			file.write('STRUCTURE '+construct.structure+'\n')
+		    for k, v in construct.structures.iteritems():
+			file.write('STRUCTURE:%s %s\n' % (k, v))
 		    file.write('OFFSET '+str(construct.offset)+'\n')
 		    if construct.annotations:
 			file.write('ANNOTATION '+self.annotation_str(construct.annotations)+'\n')
