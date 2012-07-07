@@ -13,6 +13,8 @@ rdat.comments         = {};
 rdat.name             = '';
 rdat.sequence         = '';
 rdat.structure        = '';
+rdat.sequences        = {};
+rdat.structures       = {};
 rdat.offset           =  0;
 rdat.seqpos           = [];
 rdat.mutpos           = [];
@@ -43,7 +45,13 @@ while 1
       rdat.name = strrep(line, 'NAME ', '');
       rdat.name = rdat.name( 1:end-1 );% remove endline.
     elseif strfind(line, 'SEQUENCE') > 0
-      rdat.sequence = strrep(strrep(line( 1:end-1 ), 'SEQUENCE ',''), ' ','');
+      if strfind(line, ':') > 0
+       line = strrep(line, 'SEQUENCE:', '');
+       line_read = strread( line, '%s');
+       rdat.sequences{str2num(line_read{1})} = line_read{2};
+      else  
+       rdat.sequence = strrep(strrep(line( 1:end-1 ), 'SEQUENCE ',''), ' ','');
+      end
     elseif strfind(line, 'OFFSET') > 0
       rdat.offset = str2num(strrep(line, 'OFFSET ',''));
     elseif strfind(line, 'SEQPOS') > 0
@@ -51,7 +59,13 @@ while 1
     elseif strfind(line, 'MUTPOS') > 0
       rdat.mutpos = strread(strrep(strrep(line, 'WT', 'NaN'), 'MUTPOS ',''), '');
     elseif strfind(line, 'STRUCTURE') > 0
-      rdat.structure = strrep(strrep(line(1:end-1), 'STRUCTURE ',''), ' ', '');
+      if strfind(line, ':') > 0
+       line = strrep(line, 'STRUCTURE:', '');
+       line_read = strread( line, '%s');
+       rdat.structures{str2num(line_read{1})} = line_read{2};
+      else  
+       rdat.structure = strrep(strrep(line(1:end-1), 'STRUCTURE ',''), ' ', '');
+      end
     elseif strfind(line, 'ANNOTATION_DATA') > 0
       line = remove_tag( line, 'ANNOTATION_DATA' );
       [t,r] = strtok( line, ' ' );
@@ -91,6 +105,21 @@ while 1
       end
     end 
 
+end
+
+if strcmp(rdat.sequence, '')
+ if isempty(rdat.sequences)
+  fprintf( 'No sequences detected or sequence indices do not start at one' );
+ else
+  rdat.sequence = rdat.sequences{1};
+ end
+end
+if strcmp(rdat.structure, '')
+ if isempty(rdat.structures)
+  fprintf( 'No structures detected or structure indices do not start at one' );
+ else
+  rdat.structure = rdat.structures{1};
+ end
 end
 
 fprintf( 'Number of traces         : %d \n', size( rdat.trace, 2 ) );

@@ -3,7 +3,9 @@ classdef RDATFile
         version
         name
         sequence
+	sequences
         structure
+	structures
         offset
         seqpos
         mutpos
