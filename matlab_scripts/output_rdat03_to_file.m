@@ -117,7 +117,7 @@ if ~isempty( rdat.trace )
 
   s = [s,'\n'];
   for i=1:num_lanes
-    s = [s, 'TRACE:',  int2str_exact(i,6), '                      ', num2str( rdat.trace(:,i)', ' %9.2f'),'\n'];    
+    s = [s, 'TRACE:',  int2str_exact(i,6), '                      ', num2str( rdat.trace(:,i)', ' %9.3f'),'\n'];    
     % update progress bar.
     progress = update_progress_bar( progress, Nprogress, i, num_lanes );
   end
