@@ -84,19 +84,31 @@ stats.distributions.rv_continuous.nnlf_fr = nnlf_fr
 ########## end patching scipy
 
 def KLD(p1, p2):
-    return log(scipy.special.gamma(p2[0])) - log(scipy.special.gamma(p1[0])) + p2[0]*(log(p2[2]) - log(p1[2])) + (p1[0] - p2[0])*scipy.special.digamma(p1[0]) + p1[0]*(p2[2]-p1[2])/p1[2] + abs(p1[1] - p2[1])
+    return log(scipy.special.gamma(p2[0])) - log(scipy.special.gamma(p1[0])) + p2[0]*(log(p2[2]) - log(p1[2])) + (p1[0]
+            - p2[0])*scipy.special.digamma(p1[0]) + p1[0]*(p1[2]-p2[2])/p2[2] + abs(p1[1] - p2[1])
 def JSD(p1, p2):
     return (KLD(p1, p2) + KLD(p2, p1))*0.5
 
 db = pickle.load(open(sys.argv[1]))
 params = {}
+ff = open('oto.txt','w')
 for k in db:
     if len(db[k]) > 0:
-	vals = array(db[k])
-	p = dists[k].fit_fr(vals[vals >= 0], frozen=[np.nan,  0.0, np.nan])
-	params[k] = [p[0], 0, p[1]]
-	print 'For %s' % k
-	print params[k]
+        vals = array(db[k])
+        if k == 'heli':
+            p = dists[k].fit_fr(vals[bitwise_and(vals >= 0, vals <= 4)], frozen=[1.0,  0.0, np.nan])
+            params[k] = [1, 0, p[0]]
+        else:
+            p = dists[k].fit_fr(vals[bitwise_and(vals >= 0, vals <= 4)], frozen=[np.nan,  0.0, np.nan])
+            params[k] = [p[0], 0, p[1]]
+        print 'For %s' % k
+        print params[k]
+        print 'Mean %s | Variance %s' % (params[k][0]*params[k][2], params[k][0]*(params[k][2]**2))
+if len(sys.argv) > 2:
+    rnastructfile = open(sys.argv[2] + 'dist.txt', 'w')
+    rnastructfile.write('# Gamma distribution parameters: first line is for paired reactivities, second line for unpaired. Order: shape, location and scale\n')
+    rnastructfile.write(' '.join([str(x) for x in params['helices']]) + '\n')
+    rnastructfile.write(' '.join([str(x) for x in params['unpaired']]) + '\n')
 print 'Jensen-Shannon divergence for paired and unpaired distributions: %s' % JSD(params['helices'], params['unpaired'])
 
 pickle.dump(params, open(sys.argv[1][:sys.argv[1].rfind('.')]+'.dists','w'))

@@ -9,9 +9,6 @@ def normalize(bonuses):
     if wtdata.min() < 0:
 	wtdata -= wtdata.min()
     interquart = stats.scoreatpercentile(wtdata, 75) - stats.scoreatpercentile(wtdata, 25)
-    for i in range(l):
-	if wtdata[i] > interquart*1.5:
-	    wtdata[i] = 999
     tenperc = stats.scoreatpercentile(wtdata, 90)
     maxcount = 0
     maxav = 0.
@@ -22,6 +19,24 @@ def normalize(bonuses):
     maxav /= maxcount
     wtdata = wtdata/maxav
     return wtdata
+
+"""
+Returns the maximum likelihood probabilities of adduct formation
+and RTase fall-off of the general model described in the paper
+of Aviran, et al. "RNA structure characterization from chemical mapping experiments".
+X - The data in the plus channel
+Y - The data in the minus channel
+returns - betas, gammas : the probabilities of adduct formation and RTase fall-off respectively
+"""
+def maximum_likelihood_probabilities(X, Y):
+    betas = [0]*len(X)
+    gammas = [0]*len(X)
+    sum_X = sum(X)
+    sum_Y = sum(Y)
+    for i in range(len(X)):
+        betas[i] = (X[i]/sum_X - Y[i]/sum_Y)/(1 - sum_Y)
+        gammas[i] = Y[i]/sum_Y
+    return betas, gammas
 
 def matrix_to_mapping(matrix):
     md = []
