@@ -15,66 +15,77 @@ s = '';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %s = [s, 'RDAT_VERSION 0.22\n'];
 %s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
-s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
+%s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
+s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s, 'NAME ', rdat.name,'\n'];
+s = [s, 'NAME\t', rdat.name,'\n'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s, 'SEQUENCE  ', rdat.sequence, '\n'];
+s = [s, 'SEQUENCE\t', rdat.sequence, '\n'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % its nice to put structure right after sequence, since it should be the same length.
 if length(rdat.structure ) > 0
-  s = [s, 'STRUCTURE ', rdat.structure, '\n'];
+  s = [s, 'STRUCTURE\t', rdat.structure, '\n'];
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s, 'OFFSET ', num2str( rdat.offset ),'\n'];
+s = [s, 'OFFSET\t', num2str( rdat.offset ),'\n'];
 
-s = [s, 'SEQPOS  ', num2str( rdat.seqpos, ' %d'),'\n'];
+s = [s, 'SEQPOS\t', num2str( rdat.seqpos, '\t%d'),'\n'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.mutpos ) > 0
-  s = [s, 'MUTPOS ', strrep( num2str(rdat.mutpos,' %d'), 'NaN', ' WT' ), '\n'];
+  s = [s, 'MUTPOS\t', strrep( num2str(rdat.mutpos,'\t%d'), 'NaN', ' WT' ), '\n'];
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.annotations )>0;    
-  s = [s, 'ANNOTATION ', cell2str( rdat.annotations,' '), '\n']; 
+  s = [s, 'ANNOTATION\t', cell2str( rdat.annotations,'\t'), '\n']; 
 end
 
 if length( rdat.comments ) > 0
   s = [s,'\n'];
-  for i = 1:length( rdat.comments );  s = [s, 'COMMENT   ', rdat.comments{i},'\n']; end;
+  for i = 1:length( rdat.comments );  s = [s, 'COMMENT\t', rdat.comments{i},'\n']; end;
 end
 
+fid = fopen(filename, 'w');
+fprintf( fid, s );
+s = '';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% this needs to happen line by line -- running out of memory actually.
 if  ~isempty( rdat.data_annotations ) 
-  s = [s,'\n'];
+  %s = [s,'\n'];
+  fprintf( fid, '\n' );
   for i=1:length( rdat.data_annotations )
-    s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
+    %s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
+    fprintf( fid, ['ANNOTATION_DATA:', int2str_exact(i,6),'\t',cell2str( rdat.data_annotations{i},'\t'),'\n'] );
   end
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OK, the good stuff.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s,'\n'];
+%s = [s,'\n'];
+fprintf( fid, '\n' );
 num_lanes = size( rdat.reactivity, 2  );
 for i=1:num_lanes
-    s = [s, 'REACTIVITY:', int2str_exact(i,6), '              ', num2str( rdat.reactivity(:,i)', ' %9.4f'),'\n'];
+  %s = [s, 'REACTIVITY:', int2str_exact(i,6), '              ', num2str( rdat.reactivity(:,i)', ' %9.4f'),'\n'];
+   fprintf( fid, ['REACTIVITY:', int2str_exact(i,6), '\t', num2str( rdat.reactivity(:,i)', '\t%9.4f'),'\n' ]);
 end
-
-%fprintf( s )
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Should be specified for standard states.
 if ~isempty( rdat.reactivity_error )
-  s = [s,'\n'];
+  %s = [s,'\n'];
+  fprintf( fid, '\n' );
   for i=1:size( rdat.reactivity_error, 2 )
-    s = [s, 'REACTIVITY_ERROR:', int2str_exact(i,6), '        ', num2str( rdat.reactivity_error(:,i)', ' %9.4f'),'\n'];
+    %s = [s, 'REACTIVITY_ERROR:', int2str_exact(i,6), '        ', num2str( rdat.reactivity_error(:,i)', ' %9.4f'),'\n'];
+    fprintf( fid, [ 'REACTIVITY_ERROR:', int2str_exact(i,6), '\t', num2str( rdat.reactivity_error(:,i)', '\t%9.4f'),'\n'] );
   end
 end
 
@@ -82,18 +93,17 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 'Raw data' -- optional
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if ~isempty( rdat.xsel )
   s = [s,'\n'];
   if length( rdat.xsel ) ~= length( rdat.seqpos ); fprintf(  'mismatch in length between xsel and seqpos!\n' ); return; end;
-  s = [s, 'XSEL ', num2str( rdat.xsel, ' %8.2f'), '\n'];
+  s = [s, 'XSEL', num2str( rdat.xsel, '\t%8.2f'), '\n'];
 end
 
 if ~isempty( rdat.xsel_refine )
   s = [s,'\n'];
   num_lanes = size( rdat.xsel_refine, 2 );
   for i=1:num_lanes
-    s = [s,   'XSEL_REFINE:',  int2str_exact(i,6), '                ', num2str( rdat.xsel_refine(:,i)', ' %8.2f'),'\n'];     
+    s = [s,   'XSEL_REFINE:',  int2str_exact(i,6), '\t', num2str( rdat.xsel_refine(:,i)', '\t%8.2f'),'\n'];     
   end
   s = [s,'\n'];
 end
@@ -106,7 +116,7 @@ if ~isempty( rdat.trace )
 
   s = [s,'\n'];
   for i=1:num_lanes
-    s = [s, 'TRACE:',  int2str_exact(i,6), '                      ', num2str( rdat.trace(:,i)', ' %9.4f'),'\n'];    
+    s = [s, 'TRACE:',  int2str_exact(i,6), '\t', num2str( rdat.trace(:,i)', '\t%9.4f'),'\n'];    
     % update progress bar.
     progress = update_progress_bar( progress, Nprogress, i, num_lanes );
   end
@@ -115,9 +125,8 @@ end
 
 %fprintf( s )
 
-fprintf( 'Outputting text\n' );
+fprintf( 'Finished outputting text\n' );
 % Print out the file.
-fid = fopen(filename, 'w');
 fprintf(fid, s);
 fprintf( '\n' );
 fclose( fid );
@@ -151,9 +160,12 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function s = cell2str( c, delim )
 s = '';
+c = strrep( c, '%','%%'); % otherwise % is assumed to be an escape string.
 if length(c) > 0
   s = c{1};
-  for i = 2:length(c); s = [s,delim,c{i}]; end
+  for i = 2:length(c); 
+    s = [s,delim,c{i} ]; 
+  end
 end
 s = char(s);
 

@@ -34,74 +34,71 @@ while 1
     if line == -1
         break;
     end
-    line = strrep(line, '\n', '');
-    if strfind(line, 'VERSION') > 0
-      rdat.version = strrep( strrep(line(1:end-1), 'RDAT_VERSION ',''),  'VERSION ','');
-     elseif strfind(line, 'COMMENT') > 0
-      rdat.comments = [ rdat.comments, strrep(line(1:end-1), 'COMMENT ','') ];
+    line = strrep(line, sprintf('\n'), '');
+    if strfind(line, 'VERSION') == 1
+      rdat.version = remove_tag( remove_tag( line, 'RDAT_VERSION'), 'VERSION');
+     elseif strfind(line, 'COMMENT') == 1
+      rdat.comments = [ rdat.comments, remove_tag(line, 'COMMENT') ];
     elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA'))
-      rdat.annotations = str2cell( strrep(line(1:end-1),'ANNOTATION','') );
-    elseif strfind(line, 'NAME') > 0
-      rdat.name = strrep(line, 'NAME ', '');
-      rdat.name = rdat.name( 1:end-1 );% remove endline.
-    elseif strfind(line, 'SEQUENCE') > 0
-      if strfind(line, ':') > 0
-       line = strrep(line, 'SEQUENCE:', '');
-       line_read = strread( line, '%s');
-       rdat.sequences{str2num(line_read{1})} = line_read{2};
+      rdat.annotations = str2cell( remove_tag(line,'ANNOTATION') );
+    elseif strfind(line, 'NAME') == 1
+      rdat.name = remove_tag(line, 'NAME');
+    elseif strfind(line, 'SEQUENCE') == 1
+      cols = str2cell( remove_tag( line, 'SEQUENCE' ) );
+      if length( cols ) > 1
+	rdat.sequences{str2num(cols{1})} = cols(2:end);
       else  
-       rdat.sequence = strrep(strrep(line( 1:end-1 ), 'SEQUENCE ',''), ' ','');
+	rdat.sequence = strrep(cols{1}, ' ','');
       end
-    elseif strfind(line, 'OFFSET') > 0
-      rdat.offset = str2num(strrep(line, 'OFFSET ',''));
-    elseif strfind(line, 'SEQPOS') > 0
-      rdat.seqpos = strread(strrep(line, 'SEQPOS ','') );
-    elseif strfind(line, 'MUTPOS') > 0
-      rdat.mutpos = strread(strrep(strrep(line, 'WT', 'NaN'), 'MUTPOS ',''), '');
-    elseif strfind(line, 'STRUCTURE') > 0
-      if strfind(line, ':') > 0
-       line = strrep(line, 'STRUCTURE:', '');
-       line_read = strread( line, '%s');
-       rdat.structures{str2num(line_read{1})} = line_read{2};
+    elseif strfind(line, 'OFFSET') == 1
+      rdat.offset = str2num( remove_tag(line,'OFFSET'));
+    elseif strfind(line, 'SEQPOS') == 1
+      rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
+    elseif strfind(line, 'MUTPOS') == 1
+      rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
+    elseif strfind(line, 'STRUCTURE') == 1
+      cols = str2cell( remove_tag( line, 'STRUCTURE' ) );
+      if length( cols ) > 1
+	rdat.structures{str2num(cols{1})} = cols(2:end);
       else  
-       rdat.structure = strrep(strrep(line(1:end-1), 'STRUCTURE ',''), ' ', '');
+	rdat.structure = strrep(cols{1}, ' ','');
       end
-    elseif strfind(line, 'ANNOTATION_DATA') > 0
+    elseif strfind(line, 'ANNOTATION_DATA') == 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
-      [t,r] = strtok( line, ' ' );
-      idx = str2num(t);
-      rdat.data_annotations{idx} = str2cell( r );
-    elseif strfind(line, 'REACTIVITY_ERROR') > 0
+      cols = str2cell( line );
+      idx = str2num( cols{1} );
+      rdat.data_annotations{idx} = cols(2:end);
+    elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
       line_read = strread( line );
       rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'REACTIVITY') > 0
+    elseif strfind(line, 'REACTIVITY') == 1
       line = remove_tag( line, 'REACTIVITY' );
       line_read = strread( line );
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'AREA_PEAK_ERROR') > 0 % backwards compatibility
+    elseif strfind(line, 'AREA_PEAK_ERROR') == 1 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
       rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'AREA_PEAK') > 0 % backwards compatibility
+    elseif strfind(line, 'AREA_PEAK') == 1 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK' );
       line_read = strread( line );
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'TRACE') > 0
+    elseif strfind(line, 'TRACE') == 1
       line = remove_tag( line, 'TRACE' );
       line_read = strread( line );
       rdat.trace(:, line_read(1) ) = line_read(2:end);
-    elseif strfind(line, 'XSEL_REFINE') > 0
+    elseif strfind(line, 'XSEL_REFINE') == 1
       line = remove_tag( line, 'XSEL_REFINE' );
       line_read = strread( line );
       rdat.xsel_refine(:,line_read(1)) = line_read(2:end);
-    elseif strfind(line, 'XSEL') > 0
+    elseif strfind(line, 'XSEL') == 1
       line = strrep(line, 'XSEL ', '');
       rdat.xsel = strread( line );
     else % might be a blank line
       [t,r] = strtok( line,' ' );
       if length(r) > 0
-	fprintf('Error parsing file %s', line);
+	fprintf('\nError parsing file %s\n', line);
       end
     end 
 
@@ -132,7 +129,16 @@ check_rdat( rdat );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %show_rdat_data(rdat)
 function c = str2cell(s, delim)
-if ~exist( 'delim' ) delim = ' '; end;
+
+if ~exist( 'delim' ) 
+  tabchar = sprintf( '\t' );
+  if ~isempty(strfind( s, tabchar ) ) 
+    delim = tabchar;
+  else
+    delim = ' '; 
+  end
+end;
+
 rest = s;
 i = 1;
 c = {};
@@ -145,8 +151,15 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function  line = remove_tag( line, tag );
+
+delim = ' ';
+
+% does this line include tabs between fields or spaces?
+tabchar = sprintf( '\t' );
+if ~isempty(strfind( line, tabchar ) );  delim = tabchar; end;
+
 if strfind( line, [tag,':'] ) % new format v0.23
-  line = strrep(line(1:end-1), [tag,':'],'');
+  line = strrep(line, [tag,':'],'');
 else
-  line = strrep(line(1:end-1), [tag,' '],'');
+  line = strrep(line, [tag,delim],'');
 end

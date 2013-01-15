@@ -75,7 +75,7 @@ if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & 
   hold on
   for i = 1:length( seq_order )
     if rdat.structure( rdat.seqpos( seq_order(i) ) - rdat.offset ) == '.'
-      plot( [i i], [0, size( d_filter, 2 )], 'k', 'linewidth', 0.25 );
+      plot( [i i], [0, size( d_filter, 2 )+1], 'k', 'linewidth', 0.25 );
     end
   end
   hold off
@@ -128,10 +128,10 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show bargraph with errors
-if length( rdat.reactivity_error ) > 0
+num_lanes = size( rdat.reactivity, 2 );
+if length( rdat.reactivity_error ) > 0 && num_lanes <= 16 % totally arbitrary cutoff;
   figure(3)
   set(gcf,'color','white');
-  num_lanes = size( rdat.reactivity, 2 );
   for i = 1: num_lanes
     subplot( num_lanes, 1, i );
         

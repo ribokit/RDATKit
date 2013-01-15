@@ -53,6 +53,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ok = check_annotations( annotations );
+
 for j = 1:length( annotations ) 
   if ~check_annotation( annotations{j} ) 
     fprintf( 'WARNING! Unrecognized annotation: %s\n', annotations{j} );
@@ -61,7 +62,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ok = check_annotation( annotation )
-ok_annotations = {'chemical','modifier','experimentType','temperature','chemical','mutation','processing','ERROR','warning','EteRNA','sequence','structure'};
+ok_annotations = {'chemical','modifier','experimentType','temperature','chemical','mutation','processing','ERROR','warning','EteRNA','sequence','structure','MAPseq'};
+
 ok = 0;
 
 t = strtok( annotation, ':' );
