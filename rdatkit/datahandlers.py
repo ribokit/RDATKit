@@ -15,8 +15,10 @@ from collections import defaultdict
 Please put your email for Entrez
 Entrez.email = ''
 """
-def split(s, delim=None):
-    return [x for x in s.split(delim) if x]
+def split(s, delims=None):
+    for d in delims:
+        if d in s:
+            return [x for x in s.split(d) if x]
 
 """
 Mapping between RDAT and ISATAB file formats (see sections below)
@@ -154,7 +156,7 @@ class RDATFile:
 		if 'COMMENT' in line:
 		    self.comments += line.replace('COMMENTS','').replace('COMMENT ','') + '\n'
 		elif 'ANNOTATION' in line and not 'ANNOTATION_DATA' in line:
-		    self.annotations = self.parse_annotations(split(line.replace('ANNOTATION', ''), delim=' '))
+		    self.annotations = self.parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t '))
 		elif 'CONSTRUCT' in line or 'NAME' in line:
 		    current_section = 'construct'
                     if 'CONSTRUCT' in line: line = file.readline().strip() # Advance to 'NAME' line.
@@ -185,9 +187,9 @@ class RDATFile:
 			self.constructs[current_construct].sequences[int(seqidx)] = seq.strip()
 		    else:
 			self.constructs[current_construct].sequence = line.replace('SEQUENCE', '').strip()
-		elif 'STRUCTURE' in line:
-		    if ':' in line:
-			structidx, struct = line.replace('STRUCTURE:','').strip().split()
+                elif 'STRUCTURE' in line:
+		    if 'STRUCTURE:' in line:
+			structidx, struct = split(line.replace('STRUCTURE:','').strip(), delims='\t ')
 			self.constructs[current_construct].structures[int(structidx)] = struct.strip()
 		    else:
 			self.constructs[current_construct].structure = line.replace('STRUCTURE', '').strip()
@@ -195,19 +197,20 @@ class RDATFile:
 		    self.constructs[current_construct].offset = int(line.replace('OFFSET',''))
 		elif 'DATA_TYPE' in line:
 		    current_section = 'data'
-		    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delim=' ')
+		    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t ')
 		elif 'SEQPOS' in line:
-		    self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delim=' ')]
+		    self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
 		elif 'MUTPOS' in line:
-		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delim=' ')]
+		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delims='\t ')]
 		elif 'ANNOTATION_DATA' in line:
 		    if self.version >= 0.23:
-			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delim=' ')
+			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delims='\t ')
 		    else:
-			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delim=' ')
+			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delims='\t ')
 		    data_idx = int(fields[0])-1
 		    annotations = self.parse_annotations(fields[1:])
-                    self.append_a_new_data_section( current_construct )
+                    for l in xrange(data_idx - len(self.constructs[current_construct].data) + 1):
+                        self.append_a_new_data_section( current_construct )
 		    self.constructs[current_construct].data[data_idx].annotations = annotations
 		    if 'mutation' in annotations:
 			try:
@@ -219,9 +222,9 @@ class RDATFile:
 			    pass
 		elif 'AREA_PEAK ' in line or 'REACTIVITY:' in line:
 		    if 'AREA_PEAK ' in line:
-			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delim=' ')
+			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delims='\t ')
 		    if 'REACTIVITY:' in line: # Means we are in version >= 0.23
-			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delim=' ')
+			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delims='\t ')
 		    data_idx = int(fields[0])-1
 		    peaks = [float(x) for x in fields[1:]]
                     if ( data_idx >= len(self.constructs[current_construct].data) ):
@@ -230,27 +233,27 @@ class RDATFile:
 		    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
 		elif 'AREA_PEAK_ERROR' in line or 'REACTIVITY_ERROR:' in line:
 		    if 'AREA_PEAK_ERROR ' in line:
-			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delim=' ')
+			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delims='\t ')
 		    if 'REACTIVITY_ERROR:' in line: #Means we are in version >= 0.23
-			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delim=' ')
+			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delims='\t ')
 		    data_idx = int(fields[0])-1
 		    errors = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].errors = errors
 		    self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
 		elif 'TRACE' in line:
-		    fields = split(line.replace(':', ' ').replace('TRACE ', '').strip('\n ,'),delim=' ')
+		    fields = split(line.replace(':', ' ').replace('TRACE ', '').strip('\n ,'),delims='\t ')
 		    data_idx = int(fields[0])-1
 		    trace = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].trace = trace
 		    self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
 		elif 'XSEL_REFINE' in line:
-		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE ', '').strip('\n ,'),delim=' ')
+		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE ', '').strip('\n ,'),delims='\t ')
 		    data_idx = int(fields[0])-1
 		    xsel = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].xsel = xsel
 		    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		elif 'XSEL' in line:
-		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL ','').strip('\n ,'),delim=' ')]
+		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL ','').strip('\n ,'),delims='\t ')]
 		else:
                     if line.strip():
 			    print 'Invalid section: '+line
@@ -277,15 +280,15 @@ class RDATFile:
 		    d[pair[0].strip()] = [':'.join(pair[1:])]
 	return d
 
-    def annotation_str(self, a):
+    def annotation_str(self, a, delim):
         s = ''
         for k in a:
 	    for i in range(len(a[k])):
 	        print a[k]
-	        s += k + ':' + a[k][i] + ' '
+	        s += k + ':' + a[k][i] + delim
 	return s
 
-    def save(self, filename, version=None):
+    def save(self, filename, version=None, delim='\t'):
         if not version:
 	    if not self.version:
 		version = 0.3
@@ -298,7 +301,7 @@ class RDATFile:
 		file = open(filename, 'w')
 		file.write('VERSION: '+str(self.version)+'\n')
 		file.write('COMMENTS: '+str(self.comments)+'\n')
-		file.write('ANNOTATION: '+self.annotation_str(self.annotations)+'\n')
+		file.write('ANNOTATION: '+self.annotation_str(self.annotations, delim)+'\n')
 		for name in self.constructs:
 		    construct = self.constructs[name]
 		    file.write('CONSTRUCT\n')
@@ -306,11 +309,11 @@ class RDATFile:
 		    file.write('SEQUENCE: '+construct.sequence+'\n')
 		    file.write('WELLS: '+','.join([x for x in construct.wells])+'\n')
 		    file.write('OFFSET: '+str(construct.offset)+'\n')
-		    file.write('ANNOTATION: '+self.annotation_str(construct.annotations)+'\n')
+		    file.write('ANNOTATION: '+self.annotation_str(construct.annotations, delim)+'\n')
 		    for d in construct.data:
 			file.write('DATA\n')
 			file.write('SEQPOS: '+','.join([str(x) for x in d.seqpos])+'\n')
-			file.write('ANNOTATION: '+self.annotation_str(d.annotations)+'\n')
+			file.write('ANNOTATION: '+self.annotation_str(d.annotations, delim)+'\n')
 			file.write('VALUES: '+','.join([str(x) for x in d.values])+'\n')
             elif version == 0.2 or version == 0.21 :
 	        file = open(filename, 'w')
@@ -324,23 +327,23 @@ class RDATFile:
 		    file.write('STRUCTURE '+construct.structure+'\n')
 		    file.write('OFFSET '+str(construct.offset)+'\n')
 		    if construct.annotations:
-			file.write('ANNOTATION '+self.annotation_str(construct.annotations)+'\n')
-		    file.write('MUTPOS '+' '.join([str(x) for x in self.mutpos[name]])+'\n')
-		    file.write('SEQPOS '+' '.join([str(x) for x in construct.seqpos])+'\n')
+			file.write('ANNOTATION '+self.annotation_str(construct.annotations, delim)+'\n')
+		    file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
+		    file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
 		    file.write('DATA_TYPE '+' '.join(self.data_types[name])+'\n')
 		    for i, d in enumerate(construct.data):
-			file.write('ANNOTATION_DATA %s %s\n' % (i+1, self.annotation_str(d.annotations)))
+			file.write('ANNOTATION_DATA %s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
 		    for i,row in enumerate(self.values[name]):
-			file.write('AREA_PEAK %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			file.write('AREA_PEAK %s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    for i,row in enumerate(self.traces[name]):
-			file.write('TRACE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			file.write('TRACE %s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    if self.errors:
 			for i,row in enumerate(self.errors[name]):
-			    file.write('AREA_PEAK_ERRORS %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			    file.write('AREA_PEAK_ERRORS %s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    if construct.xsel:
 			file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
 		    for i,row in enumerate(self.xsels[name]):
-			file.write('XSEL_REFINE %s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			file.write('XSEL_REFINE %s %s\n' % (i+1, delim.join([str(x) for x in row])))
             elif version >= 0.24 :
 	        file = open(filename, 'w')
 		file.write('VERSION '+str(version)+'\n')
@@ -358,31 +361,31 @@ class RDATFile:
 			file.write('STRUCTURE:%s %s\n' % (k, v))
 		    file.write('OFFSET '+str(construct.offset)+'\n')
 		    if construct.annotations:
-			file.write('ANNOTATION '+self.annotation_str(construct.annotations)+'\n')
+			file.write('ANNOTATION '+self.annotation_str(construct.annotations, delim)+'\n')
                     if name in self.mutpos:
-			file.write('MUTPOS '+' '.join([str(x) for x in self.mutpos[name]])+'\n')
+			file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
 		    else:
 			file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
-		    file.write('SEQPOS '+' '.join([str(x) for x in construct.seqpos])+'\n')
+		    file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
 		    for i, d in enumerate(construct.data):
-			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations)))
+			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
 		    if name in self.values:
 			for i,row in enumerate(self.values[name]):
-			    file.write('REACTIVITY:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+			    file.write('REACTIVITY:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    if name in self.traces:
 			for i,row in enumerate(self.traces[name]):
 			    if len(row) > 0:
-				file.write('TRACE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+				file.write('TRACE:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    if name in self.errors:
 			for i,row in enumerate(self.errors[name]):
 			    if len(row) > 0:
-				file.write('REACTIVITY_ERRORS:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+				file.write('REACTIVITY_ERRORS:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
 		    if construct.xsel:
-			file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
+			file.write('XSEL %s\n' % delim.join([str(x) for x in construct.xsel]))
 		    if name in self.xsels:
 			for i,row in enumerate(self.xsels[name]):
 			    if len(row) > 0:
-				file.write('XSEL_REFINE:%s %s\n' % (i+1, ' '.join([str(x) for x in row])))
+				file.write('XSEL_REFINE:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
 
 	    else:
 		print 'Wrong version number %s' % version
