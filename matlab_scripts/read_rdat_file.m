@@ -4,7 +4,7 @@ function rdat = read_rdat_file(filename)
 %
 %   rdat is 'rdat' file format for high-throughput RNA capillary electrophoresis data
 %
-% Copyright P. Cordero, R. Das, Stanford University, 2010.
+% Copyright P. Cordero, R. Das, Stanford University, 2010-2013.
 %
 
 rdat           = RDATFile;
@@ -35,9 +35,11 @@ while 1
         break;
     end
     line = strrep(line, sprintf('\n'), '');
-    if strfind(line, 'VERSION') == 1
-      rdat.version = remove_tag( remove_tag( line, 'RDAT_VERSION'), 'VERSION');
-     elseif strfind(line, 'COMMENT') == 1
+    if strfind(line, 'VERSION') == 1 
+      rdat.version = remove_tag( line, 'VERSION');
+    elseif strfind(line, 'RDAT_VERSION') == 1 
+      rdat.version = remove_tag( line, 'RDAT_VERSION');
+    elseif strfind(line, 'COMMENT') == 1
       rdat.comments = [ rdat.comments, remove_tag(line, 'COMMENT') ];
     elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA'))
       rdat.annotations = str2cell( remove_tag(line,'ANNOTATION') );
@@ -67,7 +69,15 @@ while 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
       cols = str2cell( line );
       idx = str2num( cols{1} );
-      rdat.data_annotations{idx} = cols(2:end);
+      anot = cols(2:end);
+      rdat.data_annotations{idx} = anot;
+      % look for a 'sequence' tag.
+      for j = 1:length( anot )
+	if ~isempty( strfind( anot{j}, 'sequence:' ) )
+	  [dummy, r ] = strtok( anot{j}, 'sequence:' );
+	  rdat.sequences{idx} = dummy;
+	end
+      end
     elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
       line_read = strread( line );
@@ -163,3 +173,31 @@ if strfind( line, [tag,':'] ) % new format v0.23
 else
   line = strrep(line, [tag,delim],'');
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function  d = fill_mutpos( d );
+
+% need to figure out where mutations are based on tags like "mutation:G64C" in data_annotation
+d.mutpos = []
+for k = 1:length( d.data_annotations )
+  d.mutpos(k) = NaN;
+  data_annotation = d.data_annotations{k};
+  for m = 1:length( data_annotation )
+    c = str2cell( data_annotation{m},':' );
+    if length(c)> 0 & strcmp( c{1}, 'mutation' )
+      num = str2num( remove_AGCTU( c{2} ) );
+      if length(num)>0;  d.mutpos(k) =  num; end;
+    end
+  end
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function x = remove_AGCTU( x )
+x = strrep( x, 'A', '');
+x = strrep( x, 'G', '');
+x = strrep( x, 'C', '');
+x = strrep( x, 'T', '');
+x = strrep( x, 'U', '');
+
