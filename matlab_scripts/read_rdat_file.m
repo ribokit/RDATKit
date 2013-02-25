@@ -103,7 +103,7 @@ while 1
       line_read = strread( line );
       rdat.xsel_refine(:,line_read(1)) = line_read(2:end);
     elseif strfind(line, 'XSEL') == 1
-      line = strrep(line, 'XSEL ', '');
+      line = remove_tag( line, 'XSEL' );
       rdat.xsel = strread( line );
     else % might be a blank line
       [t,r] = strtok( line,' ' );

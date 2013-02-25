@@ -96,7 +96,7 @@ end
 if ~isempty( rdat.xsel )
   s = [s,'\n'];
   if length( rdat.xsel ) ~= length( rdat.seqpos ); fprintf(  'mismatch in length between xsel and seqpos!\n' ); return; end;
-  s = [s, 'XSEL', num2str( rdat.xsel, '\t%8.2f'), '\n'];
+  s = [s, 'XSEL\t', num2str( rdat.xsel, '\t%8.2f'), '\n'];
 end
 
 if ~isempty( rdat.xsel_refine )
