@@ -78,6 +78,12 @@ while 1
 	  rdat.sequences{idx} = dummy;
 	end
       end
+      for j = 1:length( anot )
+	if ~isempty( strfind( anot{j}, 'structure:' ) )
+	  [dummy, r ] = strtok( anot{j}, 'structure:' );
+	  rdat.structures{idx} = dummy;
+	end
+      end
     elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
       line_read = strread( line );
@@ -116,6 +122,7 @@ end
 
 % let's try to fill the "sequences" field if it isn't there.
 rdat = fill_sequences_if_empty( rdat );
+rdat = fill_structures_if_empty( rdat );
 
 if strcmp(rdat.sequence, '')
  if isempty(rdat.sequences)
@@ -273,3 +280,12 @@ for i = 1:size(  rdat.reactivity, 2 )
   end
 end
   
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rdat = fill_structures_if_empty( rdat );
+
+for i = 1:size(  rdat.reactivity, 2 )
+  if i > length( rdat.structures )  |  length(rdat.structures{i} ) == 0
+    rdat.structure{i} = rdat.structure;
+  end
+end
