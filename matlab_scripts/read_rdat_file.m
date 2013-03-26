@@ -286,6 +286,6 @@ function rdat = fill_structures_if_empty( rdat );
 
 for i = 1:size(  rdat.reactivity, 2 )
   if i > length( rdat.structures )  |  length(rdat.structures{i} ) == 0
-    rdat.structure{i} = rdat.structure;
+    rdat.structures{i} = rdat.structure;
   end
 end
