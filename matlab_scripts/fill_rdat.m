@@ -43,7 +43,7 @@ rdat.xsel_refine = xsel_refine;
 rdat.trace = trace_in;
 
 % reorder if seqpos is in weird order!
-if rdat.seqpos(1) > rdat.seqpos(2); rdat = reverse_rdat_seqpos_order( rdat ); end
+if length(rdat.seqpos) > 1 & rdat.seqpos(1) > rdat.seqpos(2); rdat = reverse_rdat_seqpos_order( rdat ); end
 
 check_rdat( rdat );
 

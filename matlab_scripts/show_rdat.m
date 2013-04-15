@@ -68,7 +68,7 @@ set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab),'yaxisloc','left'
 plot_title = [ rdat.name,'; ', remove_tag_before_colon_cell( rdat.annotations )];
 if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
-set(gca,'fontsize',10,'fontweight','bold');
+set(gca,'fontsize',10,'fontweight','bold','tickdir','out');
 set( h, 'interpreter','none','fontsize',10,'fontweight','bold');
 
 if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & length( rdat.seqpos ) > 1
@@ -81,6 +81,8 @@ if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & 
   hold off
 end
 
+make_lines_horizontal( [0:1:size(d_filter,2)],'k',0.25  )
+  
 if ( print_postscript & length( filename )  > 0 ); 
   eps_file = [filename,'.eps']; fprintf( 'Outputting: %s\n',eps_file );
   print( eps_file, '-depsc2','-tiff' );
@@ -120,9 +122,11 @@ if length( t ) > 0
     set( gca,'xdir','reverse');
     xticklabel_rotate_rdat();
   end
-  
+
   make_lines_horizontal( [0:1:size(t,2)],'k',0.25  )
+
   %title( ['Traces: ', rdat.name ] );
+
 end
 
 
@@ -189,9 +193,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tag = remove_tag_before_colon( annotations )
 [t,r] = strtok( annotations, ':' );
-if strcmp(t,'EteRNA')
-  [t,r] = strtok( t, ':' );
+if strcmp(t,'EteRNA') | strcmp(t,'MAPseq' )
+  [t,r] = strtok( r, ':' );
 end
+%if strcmp(t,'tag')
+%  [t,r] = strtok( t, ':' );
+%end
 tag = r(2:end);
 
 %colon_pos = strfind( annotations, ':' );
@@ -204,6 +211,9 @@ tag = r(2:end);
 function tag = remove_tag_before_colon_cell( annotations )
 tag = '';
 for i = 1:length( annotations )
+  if ( length( annotations{i} ) > 8 & strcmp( annotations{i}(1:8), 'sequence' ) ) ; continue; end;
+  if ( length( annotations{i} ) > 9 & strcmp( annotations{i}(1:9), 'structure' ) ); continue; end;
+
   tag = [ tag, ' ',  remove_tag_before_colon( annotations{i}) ];
 end
 

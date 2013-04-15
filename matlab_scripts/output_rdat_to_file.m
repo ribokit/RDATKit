@@ -16,7 +16,8 @@ s = '';
 %s = [s, 'RDAT_VERSION 0.22\n'];
 %s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
 %s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
-s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
+%s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
+s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];
@@ -31,23 +32,15 @@ if length(rdat.structure ) > 0
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-s = [s, 'OFFSET\t', num2str( rdat.offset ),'\n'];
-
-s = [s, 'SEQPOS\t', num2str( rdat.seqpos, '\t%d'),'\n'];
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if length( rdat.mutpos ) > 0
-  s = [s, 'MUTPOS\t', strrep( num2str(rdat.mutpos,'\t%d'), 'NaN', ' WT' ), '\n'];
+if length( rdat.comments ) > 0
+  s = [s,'\n'];
+  for i = 1:length( rdat.comments );  s = [s, 'COMMENT\t', rdat.comments{i},'\n']; end;
+  s = [s,'\n'];
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.annotations )>0;    
   s = [s, 'ANNOTATION\t', cell2str( rdat.annotations,'\t'), '\n']; 
-end
-
-if length( rdat.comments ) > 0
-  s = [s,'\n'];
-  for i = 1:length( rdat.comments );  s = [s, 'COMMENT\t', rdat.comments{i},'\n']; end;
 end
 
 fid = fopen(filename, 'w');
@@ -67,10 +60,21 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fprintf( fid, '\n' );
+fprintf( fid,  ['OFFSET\t', num2str( rdat.offset, '\t%d'),'\n'] );
+fprintf( fid, '\n' );
+fprintf( fid,  ['SEQPOS\t', num2str( rdat.seqpos, '\t%d'),'\n'] );
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if length( rdat.mutpos ) > 0
+  s = [s, 'MUTPOS\t', strrep( num2str(rdat.mutpos,'\t%d'), 'NaN', ' WT' ), '\n'];
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OK, the good stuff.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %s = [s,'\n'];
-fprintf( fid, '\n' );
+%fprintf( fid, '\n' );
 num_lanes = size( rdat.reactivity, 2  );
 for i=1:num_lanes
   %s = [s, 'REACTIVITY:', int2str_exact(i,6), '              ', num2str( rdat.reactivity(:,i)', ' %9.4f'),'\n'];
@@ -123,12 +127,10 @@ if ~isempty( rdat.trace )
   fprintf( '\n' );
 end
 
-%fprintf( s )
-
-fprintf( 'Finished outputting text\n' );
+%fprintf( 'Finished outputting text\n' );
 % Print out the file.
 fprintf(fid, s);
-fprintf( '\n' );
+%fprintf( '\n' );
 fclose( fid );
 
 % quick check on names.
