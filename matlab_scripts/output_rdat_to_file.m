@@ -5,6 +5,8 @@ function output_rdat_to_file( filename, rdat );
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
 %
 
+if nargin == 0; help( mfilename ); return; end;
+
 fprintf( 'About to create file: %s\n', filename );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,7 +19,8 @@ s = '';
 %s = [s, 'RDAT_VERSION 0.23\n']; % use sorted sequence order; spacer in SEQPOS
 %s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
 %s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
-s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
+%s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
+s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];
@@ -63,7 +66,18 @@ end
 fprintf( fid, '\n' );
 fprintf( fid,  ['OFFSET\t', num2str( rdat.offset, '\t%d'),'\n'] );
 fprintf( fid, '\n' );
-fprintf( fid,  ['SEQPOS\t', num2str( rdat.seqpos, '\t%d'),'\n'] );
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fprintf( fid,  ['SEQPOS\t']);
+for i = 1:length( rdat.seqpos )
+  m = rdat.seqpos(i) - rdat.offset;
+  if ( m < 1 | m > length( rdat.sequence ) )
+    fprintf( 'Error in SEQPOS %d -- please check OFFSET and SEQUENCE\n', rdat.seqpos(i) );
+    error();
+  end
+  fprintf( fid, '\t%s%d', rdat.sequence(m), rdat.seqpos(i) );
+end
+fprintf( fid, '\n' );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.mutpos ) > 0

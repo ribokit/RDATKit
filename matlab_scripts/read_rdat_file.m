@@ -7,6 +7,8 @@ function rdat = read_rdat_file(filename)
 % Copyright P. Cordero, R. Das, Stanford University, 2010-2013.
 %
 
+if nargin==0; help( mfilename ); return; end;
+
 rdat           = RDATFile;
 rdat.version          = 0.0;
 rdat.comments         = {};
@@ -25,6 +27,8 @@ rdat.reactivity_error  = [];
 rdat.trace            = [];
 rdat.xsel             = [];
 rdat.xsel_refine      = [];
+
+sequence_seqpos = '';
 
 fprintf( 1, 'Parsing file from rdat: %s\n', filename );
 fid = fopen(filename);
@@ -55,7 +59,8 @@ while 1
     elseif strfind(line, 'OFFSET') == 1
       rdat.offset = str2num( remove_tag(line,'OFFSET'));
     elseif strfind(line, 'SEQPOS') == 1
-      rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
+      %rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
+      [ rdat.seqpos, sequence_seqpos ] = get_seqpos( remove_tag(line, 'SEQPOS') );
     elseif strfind(line, 'MUTPOS') == 1
       rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
     elseif strfind(line, 'STRUCTURE') == 1
@@ -138,6 +143,9 @@ if strcmp(rdat.structure, '')
   rdat.structure = rdat.structures{1};
  end
 end
+
+% output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
+check_sequence_seqpos( sequence_seqpos, rdat.seqpos, rdat.sequence, rdat.offset );
 
 fprintf( 'Number of traces         : %d \n', size( rdat.trace, 2 ) );
 fprintf( 'Number of reactivity lines: %d \n', size( rdat.reactivity, 2 ) );
@@ -289,3 +297,59 @@ for i = 1:size(  rdat.reactivity, 2 )
     rdat.structures{i} = rdat.structure;
   end
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [seqpos, sequence_seqpos] = get_seqpos( seqpos_info );
+
+seqpos_tags = str2cell( seqpos_info );
+sequence_seqpos = '';
+
+seqpos = [];
+
+for i = 1:length( seqpos_tags )
+
+  tag = seqpos_tags{i};
+
+  if isempty( str2num( tag(1) ) ) % first letter is a character
+    sequence_seqpos = [sequence_seqpos, tag(1) ]; 
+    tag = tag(2:end);
+  end
+
+  seqpos = [seqpos, str2num( tag )];
+
+end
+
+return;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
+function ok = check_sequence_seqpos( sequence_seqpos, seqpos, sequence, offset );
+
+ok = 1;
+
+if length( sequence_seqpos ) == 0; return; end;
+
+if length( sequence_seqpos ) ~= length( seqpos ); 
+  fprintf( 'Number of characters in sequence_seqpos %d, does not match number of seqpos %d\n', length( sequence_seqpos) , length( seqpos ) ); 
+  ok = 0;
+  return;
+end
+
+for i = 1:length( sequence_seqpos )
+  c1 = lower( sequence_seqpos(i) );
+  m = seqpos(i) - offset;
+  if ( m < 1 | m > length( sequence ) )
+    fprintf( 'Warning: seqpos %d is not inside sequence, given offset %d\n', seqpos(i), offset );
+    ok = 0;
+    continue;
+  end
+  c2 = lower( sequence( seqpos(i) - offset ) );
+  if ( c1 ~= 'X' & c2 ~= 'X' & c1 ~= c2 )
+    fprintf( 'Warning: mismatch at seqpos %d, between SEQPOS nucleotide %s and SEQUENCE nucleotide %s\n', seqpos(i), sequence_seqpos(i),  sequence( seqpos(i) - offset ) );
+    ok = 0;
+  end
+end
+
+

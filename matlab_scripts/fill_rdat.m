@@ -6,6 +6,8 @@ function rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, s
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
 %
 
+if nargin==0; help( mfilename ); return; end;
+
 rdat = RDATFile;
 rdat.name = ''; % signal that we're not filled yet.
 

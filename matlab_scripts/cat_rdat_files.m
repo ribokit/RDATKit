@@ -3,6 +3,7 @@ function new_rdat =  cat_rdat_files( new_file, rdat_files );
 %   cat_rdat_files( new_file, rdat_files );
 %
 
+if nargin==0; help( mfilename ); return; end;
 
 for i = 1:length( rdat_files )
   rdats{i} = read_rdat_file( rdat_files{i} );

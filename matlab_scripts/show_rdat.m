@@ -8,6 +8,8 @@ function rdat = show_rdat(rdat, print_postscript );
 % Copyright P. Cordero, R. Das, Stanford University, 2010.
 %
 
+if nargin==0; help( mfilename ); return; end;
+
 filename = '';
 if ischar( rdat )
   filename = rdat;
@@ -68,7 +70,7 @@ set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab),'yaxisloc','left'
 plot_title = [ rdat.name,'; ', remove_tag_before_colon_cell( rdat.annotations )];
 if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
-set(gca,'fontsize',10,'fontweight','bold','tickdir','out');
+set(gca,'fontsize',10,'fontweight','bold','tickdir','out','ticklength',[0 0]);
 set( h, 'interpreter','none','fontsize',10,'fontweight','bold');
 
 if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & length( rdat.seqpos ) > 1
@@ -81,7 +83,7 @@ if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & 
   hold off
 end
 
-make_lines_horizontal( [0:1:size(d_filter,2)],'k',0.25  )
+if size( d_filter, 2) < 200; make_lines_horizontal( [0:1:size(d_filter,2)],'k',0.25  ); end;
   
 if ( print_postscript & length( filename )  > 0 ); 
   eps_file = [filename,'.eps']; fprintf( 'Outputting: %s\n',eps_file );

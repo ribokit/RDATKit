@@ -1,4 +1,9 @@
 function check_rdat( rdat )
+% check_rdat( rdat )
+%
+% (C) R. Das, 2011-2013.
+
+if nargin==0; help( mfilename ); return; end;
 
 % A bunch of consistency checks...
 if length( rdat.name ) == 0; fprintf( '\nWARNING! Must give a name!\n'); return; end;

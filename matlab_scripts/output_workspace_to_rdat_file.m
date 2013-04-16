@@ -13,6 +13,9 @@ function rdat = output_workspace_to_rdat_file( filename, name, sequence, offset,
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
 %
 
+if nargin==0; help( mfilename ); return; end;
+
+
 % set defaults.
 if ~exist( 'reactivity' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
 if ~exist( 'mutpos' ); mutpos = []; end;
