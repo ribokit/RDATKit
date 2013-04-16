@@ -199,7 +199,10 @@ class RDATFile:
 		    current_section = 'data'
 		    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t ')
 		elif 'SEQPOS' in line:
-		    self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
+                    if self.version >= 0.32:
+                        self.constructs[current_construct].seqpos= [int(x[1:]) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
+                    else:
+                        self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
 		elif 'MUTPOS' in line:
 		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delims='\t ')]
 		elif 'ANNOTATION_DATA' in line:
@@ -366,7 +369,10 @@ class RDATFile:
 			file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
 		    else:
 			file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
-		    file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
+                    if version >= 0.32:
+                        file.write('SEQPOS '+delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])+'\n')
+                    else:
+                        file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
 		    for i, d in enumerate(construct.data):
 			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
 		    if name in self.values:
