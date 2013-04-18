@@ -230,6 +230,8 @@ x = strrep( x, 'U', '');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_sequences_if_empty( rdat );
 
+if length( rdat.data_annotations ) == 0; return; end;
+
 for i = 1:size(  rdat.reactivity, 2 )
   if i > length( rdat.sequences )  |  length(rdat.sequences{i} ) == 0
     rdat.sequences{i} = rdat.sequence;
@@ -291,6 +293,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_structures_if_empty( rdat );
+
+if length( rdat.data_annotations ) == 0; return; end;
 
 for i = 1:size(  rdat.reactivity, 2 )
   if i > length( rdat.structures )  |  length(rdat.structures{i} ) == 0

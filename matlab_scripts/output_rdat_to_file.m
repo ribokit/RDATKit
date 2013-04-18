@@ -53,11 +53,21 @@ s = '';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % this needs to happen line by line -- running out of memory actually.
 if  ~isempty( rdat.data_annotations ) 
-  %s = [s,'\n'];
-  fprintf( fid, '\n' );
+
+  print_data_annotations = 0;
   for i=1:length( rdat.data_annotations )
-    %s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
-    fprintf( fid, ['ANNOTATION_DATA:', int2str_exact(i,6),'\t',cell2str( rdat.data_annotations{i},'\t'),'\n'] );
+    if length( rdat.data_annotations{i} ) > 0;
+      print_data_annotations = 1; break;
+    end
+  end  
+
+  if print_data_annotations
+    %s = [s,'\n'];
+    fprintf( fid, '\n' );
+    for i=1:length( rdat.data_annotations )
+      %s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
+      fprintf( fid, ['ANNOTATION_DATA:', int2str_exact(i,6),'\t',cell2str( rdat.data_annotations{i},'\t'),'\n'] );
+    end
   end
 end
 
