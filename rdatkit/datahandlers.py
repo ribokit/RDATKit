@@ -244,19 +244,19 @@ class RDATFile:
 		    self.constructs[current_construct].data[data_idx].errors = errors
 		    self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
 		elif 'TRACE' in line:
-		    fields = split(line.replace(':', ' ').replace('TRACE ', '').strip('\n ,'),delims='\t ')
+		    fields = split(line.replace(':', ' ').replace('TRACE', '').strip('\n ,'),delims='\t ')
 		    data_idx = int(fields[0])-1
 		    trace = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].trace = trace
 		    self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
 		elif 'XSEL_REFINE' in line:
-		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE ', '').strip('\n ,'),delims='\t ')
+		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE', '').strip('\n ,'),delims='\t ')
 		    data_idx = int(fields[0])-1
 		    xsel = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].xsel = xsel
 		    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		elif 'XSEL' in line:
-		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL ','').strip('\n ,'),delims='\t ')]
+		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t ')]
 		else:
                     if line.strip():
 			    print 'Invalid section: '+line
