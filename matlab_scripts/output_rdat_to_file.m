@@ -20,7 +20,8 @@ s = '';
 %s = [s, 'RDAT_VERSION 0.24\n']; % use REACTIVITY instead of AREA_PEAK
 %s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
 %s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
-s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
+%s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
+s = [s, 'RDAT_VERSION\t0.32\n']; % get rid of MUTPOS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];
@@ -90,9 +91,9 @@ end
 fprintf( fid, '\n' );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if length( rdat.mutpos ) > 0
-  s = [s, 'MUTPOS\t', strrep( num2str(rdat.mutpos,'\t%d'), 'NaN', ' WT' ), '\n'];
-end
+%if length( rdat.mutpos ) > 0
+%  s = [s, 'MUTPOS\t', strrep( num2str(rdat.mutpos,'\t%d'), 'NaN', ' WT' ), '\n'];
+%end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OK, the good stuff.

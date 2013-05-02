@@ -19,7 +19,6 @@ rdat.sequences        = {};
 rdat.structures       = {};
 rdat.offset           =  0;
 rdat.seqpos           = [];
-rdat.mutpos           = [];
 rdat.annotations      = {};
 rdat.data_annotations = {};
 rdat.reactivity        = [];
@@ -61,8 +60,8 @@ while 1
     elseif strfind(line, 'SEQPOS') == 1
       %rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
       [ rdat.seqpos, sequence_seqpos ] = get_seqpos( remove_tag(line, 'SEQPOS') );
-    elseif strfind(line, 'MUTPOS') == 1
-      rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
+    %elseif strfind(line, 'MUTPOS') == 1
+    %  rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
     elseif strfind(line, 'STRUCTURE') == 1
       cols = str2cell( remove_tag( line, 'STRUCTURE' ) );
       if length( cols ) > 1
@@ -200,6 +199,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% no longer in use
 function  d = fill_mutpos( d );
 
 % need to figure out where mutations are based on tags like "mutation:G64C" in data_annotation
@@ -233,7 +233,7 @@ function rdat = fill_sequences_if_empty( rdat );
 if length( rdat.data_annotations ) == 0; return; end;
 
 for i = 1:size(  rdat.reactivity, 2 )
-  if i > length( rdat.sequences )  |  length(rdat.sequences{i} ) == 0
+  if ( i > length( rdat.sequences )  |  length(rdat.sequences{i} ) == 0 ) & i <= length( rdat.data_annotations )
     rdat.sequences{i} = rdat.sequence;
     
     data_annotation = rdat.data_annotations{i};

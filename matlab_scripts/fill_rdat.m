@@ -1,6 +1,6 @@
-function rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, structure, ...
+function rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, structure, ...
 			   annotations, data_annotations, reactivity_error, trace_in, xsel, xsel_refine, comments );
-% rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, structure, ...
+% rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, structure, ...
 %			   annotations, data_annotations, reactivity_error, trace, xsel, xsel_refine, comments );
 %
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
@@ -12,7 +12,6 @@ rdat = RDATFile;
 rdat.name = ''; % signal that we're not filled yet.
 
 if ~exist( 'reactivity' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
-if ~exist( 'mutpos' ); mutpos = []; end;
 if ~exist( 'structure' ); structure=''; end;
 if ~exist( 'annotations' ); annotations = {}; end;
 if ~exist( 'data_annotations' ); data_annotations = {}; end;
@@ -28,14 +27,13 @@ end
 
 
 % Current version of fill_rdat script... work in progress!
-rdat.version = 0.22;
+rdat.version = 0.33;
 rdat.comments = comments;
 rdat.name = name;
 rdat.sequence = sequence;
 rdat.structure = structure;
 rdat.offset = offset;
 rdat.seqpos = seqpos;
-rdat.mutpos = mutpos;
 rdat.annotations = annotations;
 rdat.data_annotations = data_annotations;
 rdat.reactivity = reactivity;

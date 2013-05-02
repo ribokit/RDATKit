@@ -8,7 +8,6 @@ classdef RDATFile
 	structures
         offset
         seqpos
-        mutpos
         annotations
         comments
         data_annotations

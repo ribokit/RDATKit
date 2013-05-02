@@ -1,5 +1,5 @@
 function rdat = output_workspace_to_rdat_file( filename, name, sequence, offset, seqpos, reactivity, ...
-					       mutpos, structure, ...
+					       structure, ...
 					       annotations, data_annotations, ...
 					       reactivity_error, ...
 					       trace_in, xsel, xsel_refine, comments );
@@ -15,10 +15,15 @@ function rdat = output_workspace_to_rdat_file( filename, name, sequence, offset,
 
 if nargin==0; help( mfilename ); return; end;
 
+if exist( 'structure', 'var' ) & ~ischar(structure) & isnumeric( structure )
+  fprintf( 'WARNING!WARNING!WARNING!!!\n');
+  fprintf( 'NO LONGER ACCEPTING MUTPOS!\n');
+  fprintf( 'WARNING!WARNING!WARNING!!!\n');
+  error( 'No longer accepting mutpos'); return;
+end
 
 % set defaults.
 if ~exist( 'reactivity' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
-if ~exist( 'mutpos' ); mutpos = []; end;
 if ~exist( 'annotations' ); annotations = {}; end;
 if ~exist( 'data_annotations' ); data_annotations = {}; end;
 if ~exist( 'reactivity_error' ); reactivity_error = {}; end;
@@ -28,7 +33,7 @@ if ~exist( 'comments' ); comments = {}; end;
 if ~exist( 'trace_in' ); trace_in = []; end;
 trace = trace_in; % this is necessary because matlab has a function called trace, of course
 
-rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, mutpos, structure, ...
+rdat = fill_rdat( name, sequence, offset, seqpos, reactivity, structure, ...
 		  annotations, data_annotations, reactivity_error, trace, xsel, xsel_refine, comments );
 
 if length( rdat.name ) == 0; 
