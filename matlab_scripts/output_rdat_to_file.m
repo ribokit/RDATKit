@@ -21,7 +21,7 @@ s = '';
 %s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
 %s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
 %s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
-s = [s, 'RDAT_VERSION\t0.32\n']; % get rid of MUTPOS
+s = [s, 'RDAT_VERSION\t0.33\n']; % get rid of MUTPOS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];

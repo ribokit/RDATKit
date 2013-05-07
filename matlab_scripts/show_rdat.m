@@ -48,8 +48,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show values, i..e. fitted peak intensities or reactivity.
 figure(1)
-set(gcf,'color','white');
-clf
+set(gcf, 'Position', [0, 0, 800, 600]);
+set(gcf, 'PaperOrientation', 'landscape', 'PaperPositionMode', 'auto', 'color', 'white');
+clf;
 colormap( 1 - gray(100));
 
 d_filter = filter_ERROR_lanes( d, rdat.data_annotations );
@@ -137,7 +138,9 @@ end
 num_lanes = size( rdat.reactivity, 2 );
 if length( rdat.reactivity_error ) > 0 && num_lanes <= 16 % totally arbitrary cutoff;
   figure(3)
-  set(gcf,'color','white');
+  set(gcf, 'Position', [0, 0, 800, 600]);
+  set(gcf, 'PaperOrientation', 'landscape', 'PaperPositionMode', 'auto', 'color', 'white');
+  
   for i = 1: num_lanes
     subplot( num_lanes, 1, i );
         
@@ -187,6 +190,9 @@ if length( rdat.reactivity_error ) > 0 && num_lanes <= 16 % totally arbitrary cu
   set(gca,'ytick',[]);
   %xlabel( 'sequence position' );
 end
+
+% beep notice when finished
+beep on; beep; beep off;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
