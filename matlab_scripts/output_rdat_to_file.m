@@ -188,7 +188,7 @@ end;
 function s = cell2str( c, delim )
 s = '';
 c = strrep( c, '%','%%'); % otherwise % is assumed to be an escape string.
-if length(c) > 0
+if ~isempty(c)
   s = c{1};
   for i = 2:length(c); 
     s = [s,delim,c{i} ]; 
