@@ -47,10 +47,11 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show values, i..e. fitted peak intensities or reactivity.
-figure(1)
-set(gcf, 'Position', [0, 0, 800, 600]);
-set(gcf, 'PaperOrientation', 'landscape', 'PaperPositionMode', 'auto', 'color', 'white');
-clf;
+h = figure(1); clf;
+set(h, 'Name', 'RDAT Preview');
+set(h, 'Position', [100, 100, 800, 600]);
+set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
+      'PaperSize', [11 8.5], 'PaperPosition', [-0.65 0.15 12 8], 'Color', 'White');
 colormap( 1 - gray(100));
 
 d_filter = filter_ERROR_lanes( d, rdat.data_annotations );
@@ -136,11 +137,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show bargraph with errors
 num_lanes = size( rdat.reactivity, 2 );
-if length( rdat.reactivity_error ) > 0 && num_lanes <= 16 % totally arbitrary cutoff;
-  figure(3)
-  set(gcf, 'Position', [0, 0, 800, 600]);
-  set(gcf, 'PaperOrientation', 'landscape', 'PaperPositionMode', 'auto', 'color', 'white');
-  
+if ~isempty( rdat.reactivity_error ) && num_lanes <= 16 % totally arbitrary cutoff;
+  h = figure(3);
+  set(h, 'Name', 'RDAT Plot');
+  set(h, 'Position', [100, 100, 800, 600]);
+  set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
+      'PaperSize', [11 8.5], 'PaperPosition', [-0.65 0.15 12 8], 'Color', 'White');
+    
   for i = 1: num_lanes
     subplot( num_lanes, 1, i );
         
@@ -251,7 +254,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function s = cell2str( c, delim )
-if  ~exist('delim'); delim = ' '; end;
+if  ~exist('delim','var'); delim = ' '; end;
 s = '';
 if length(c) > 0
   s = c{1};
