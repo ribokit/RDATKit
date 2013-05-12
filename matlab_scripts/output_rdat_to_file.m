@@ -84,7 +84,7 @@ for i = 1:length( rdat.seqpos )
   m = rdat.seqpos(i) - rdat.offset;
   if ( m < 1 | m > length( rdat.sequence ) )
     fprintf( 'Error in SEQPOS %d -- please check OFFSET and SEQUENCE\n', rdat.seqpos(i) );
-    error();
+    error('Error in seqpos');
   end
   fprintf( fid, '\t%s%d', rdat.sequence(m), rdat.seqpos(i) );
 end

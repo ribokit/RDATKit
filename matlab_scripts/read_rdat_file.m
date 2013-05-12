@@ -124,6 +124,8 @@ while 1
 
 end
 
+rdat = fill_data_annotations_if_empty( rdat );
+
 % let's try to fill the "sequences" field if it isn't there.
 rdat = fill_sequences_if_empty( rdat );
 rdat = fill_structures_if_empty( rdat );
@@ -228,6 +230,15 @@ x = strrep( x, 'U', '');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rdat = fill_data_annotations_if_empty( rdat );
+
+for i = 1:size(  rdat.reactivity, 2 )
+  if i > length( rdat.data_annotations ) 
+    rdat.data_annotations{i} = {};
+  end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_sequences_if_empty( rdat );
 
 if length( rdat.data_annotations ) == 0; return; end;
@@ -294,7 +305,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_structures_if_empty( rdat );
 
-if length( rdat.data_annotations ) == 0; return; end;
+if size( rdat.reactivity, 2 ) == 0; return; end;
 
 for i = 1:size(  rdat.reactivity, 2 )
   if i > length( rdat.structures )  |  length(rdat.structures{i} ) == 0

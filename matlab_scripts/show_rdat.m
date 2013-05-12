@@ -181,7 +181,7 @@ if ~isempty( rdat.reactivity_error ) && num_lanes <= 16 % totally arbitrary cuto
     colormap( 1 - gray(100) );
     %if length( xlab ) >= i; title( xlab{i} ); end;
 
-    if length( xlab ) >= i;
+    if length( xlab_full ) >= i;
       h = text( min_x, maxval+(maxval-minval)*0.2, xlab_full{i} ); 
       set(h,'interpreter','none','fontsize',8);
     end
@@ -193,10 +193,6 @@ if ~isempty( rdat.reactivity_error ) && num_lanes <= 16 % totally arbitrary cuto
   set(gca,'ytick',[]);
   %xlabel( 'sequence position' );
 end
-
-% beep notice when finished
-beep on; beep; beep off;
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % stripping off the 'mutation' tag makes the labels easier to read.
