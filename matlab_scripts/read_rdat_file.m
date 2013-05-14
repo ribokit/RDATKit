@@ -148,7 +148,7 @@ end
 % output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
 check_sequence_seqpos( sequence_seqpos, rdat.seqpos, rdat.sequence, rdat.offset );
 
-fprintf( 'Number of traces         : %d \n', size( rdat.trace, 2 ) );
+if size( rdat.trace, 2 ) > 0; fprintf( 'Number of traces         : %d \n', size( rdat.trace, 2 ) ); end;
 fprintf( 'Number of reactivity lines: %d \n', size( rdat.reactivity, 2 ) );
 fclose( fid );
 
