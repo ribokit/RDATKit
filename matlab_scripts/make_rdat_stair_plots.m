@@ -6,8 +6,8 @@ function make_rdat_stair_plots( r, idx, colorcode, labels, norm_pos );
 % r          = cell of rdats
 % idx        = indices of reactivities within each rdat
 % colorcode  = [Optional] RGB colors, e.g., [0 0 1; 1 0 0] will plot red, then blue. [Default: 'jet']
-% labels     = names for each rdat [default: 1, 2, 3, ... ]
-% norm_pos   = sequence positions over which to normalize.
+% labels     = [Optional] names for each rdat [default: 1, 2, 3, ... ]
+% norm_pos   = [Optional] sequence positions over which to normalize.
 %
 % (C) R. Das, 2013
 
@@ -15,14 +15,17 @@ cla;
 if nargin==0; help( mfilename ); return; end;
 
 N = length( r );
+set(gcf, 'PaperPositionMode','auto','color','white');
 
 % plot values as staircase
-if ~exist( 'colorcode' ); colorcode = jet( N ); end;
+if ~exist( 'idx', 'var' ) | isempty(idx); idx = ones( N, 1 ); end;
+if ~exist( 'labels','var' ); for i = 1:N; labels{i} = sprintf( '(%d) %s', i, r{i}.name ); end; end;
+if ~exist( 'colorcode' ) | isempty(colorcode); colorcode = jet( N ); end;
 ymax = 0;
 
 for i = 1:N; 
 
-  if length( norm_pos ) > 0
+  if exist( 'norm_pos', 'var') & length( norm_pos ) > 0
     norm_bins = [];
     for m = norm_pos; norm_bins = [norm_bins, find( m == r{i}.seqpos ) ]; end;
     [r{i}.reactivity(:,idx(i)), dummy, r{i}.reactivity_error(:,idx(i))] = ...
