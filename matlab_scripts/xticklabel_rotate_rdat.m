@@ -132,8 +132,8 @@ end
 %CODE below was modified following suggestions from Urs Schwarz
 y=repmat(y,size(XTick,1),1);
 % retrieve current axis' fontsize
-%fs = get(gca,'fontsize');
-fs = 10;
+fs = get(gca,'fontsize');
+%fs = 10;
 
 % Place the new xTickLabels by creating TEXT objects
 hText = text(XTick, y, xTickLabels,'fontsize',fs,'fontweight','bold');

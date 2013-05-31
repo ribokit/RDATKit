@@ -61,6 +61,8 @@ if ( length(rdat.seqpos) > 1 & rdat.seqpos( 2 ) < rdat.seqpos( 1 ) ) seq_order =
 image( 40 * d_filter( seq_order, :)' /mean(mean(max(d_filter,0)))  )
 
 % sorry for the x-y switch; decided in the end to transpose everything.
+if length(ylabpos) > 48; x_ft_sz = 6; else; x_ft_sz = 10; end;
+set(gca, 'fontsize', x_ft_sz);
 set(gca, 'xTick', [1:length(ylabpos)],'xTickLabel', char(ylab(seq_order)) );
 xticklabel_rotate_rdat();
 % after xticklabel_rotate, can use xticklabels again to draw structure
@@ -68,11 +70,12 @@ xticklabel_rotate_rdat();
 %  set(gca,'xTick',[1:length(ylabpos)],'xTickLabel', rdat.structure( ylabpos(seq_order) )','xaxislocation','top' );
 %end
 
+if size(xlab,2) > 48; y_ft_sz = 6; else; y_ft_sz = 10; end;
 set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab),'yaxisloc','left');
 plot_title = [ rdat.name,'; ', remove_tag_before_colon_cell( rdat.annotations )];
 if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
-set(gca,'fontsize',10,'fontweight','bold','tickdir','out','ticklength',[0 0]);
+set(gca,'fontsize',y_ft_sz,'fontweight','bold','tickdir','out','ticklength',[0 0]);
 set( h, 'interpreter','none','fontsize',10,'fontweight','bold');
 
 if length( rdat.structure > 0 ) & length( strfind( rdat.structure, '(') ) > 0 & length( rdat.seqpos ) > 1
@@ -117,13 +120,19 @@ if length( t ) > 0
       x = rdat.xsel;
     end
     [ytickpos, reorder] = sort(x);
+    if length(ytickpos) > 48; y_ft_sz = 6; else; y_ft_sz = 10; end;
+    if length(xlab) > 48; x_ft_sz = 6; else; x_ft_sz = 10; end;
+
+    set(gca,'fontsize',y_ft_sz);
     set(gca, 'xTick', ytickpos, 'xTickLabel', char(ylab(reorder)),'fontweight','bold');
+    set(gca,'fontsize',x_ft_sz);
     set(gca, 'yTick',[1:length(xlab)],'yTicklabel',char(xlab));
     ticklength = get(gca,'ticklength');
     ticklength = [ 0.0 0.0 ];
     set(gca,'ticklength',ticklength,'tickdir','out' );
     
     set( gca,'xdir','reverse');
+
     xticklabel_rotate_rdat();
   end
 
