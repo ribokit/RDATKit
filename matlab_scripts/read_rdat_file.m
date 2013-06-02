@@ -60,8 +60,10 @@ while 1
     elseif strfind(line, 'SEQPOS') == 1
       %rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
       [ rdat.seqpos, sequence_seqpos ] = get_seqpos( remove_tag(line, 'SEQPOS') );
-    %elseif strfind(line, 'MUTPOS') == 1
-    %  rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
+    elseif strfind(line, 'MUTPOS') == 1
+      
+      %rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
+      fprintf( 'No longer reading in MUTPOS\n' );
     elseif strfind(line, 'STRUCTURE') == 1
       cols = str2cell( remove_tag( line, 'STRUCTURE' ) );
       if length( cols ) > 1
@@ -326,7 +328,7 @@ for i = 1:length( seqpos_tags )
 
   tag = seqpos_tags{i};
 
-  if isempty( str2num( tag(1) ) ) % first letter is a character
+  if isempty( str2num( tag(1) ) ) & tag(1) ~= '-' % first letter is a character not a number of minus sign.
     sequence_seqpos = [sequence_seqpos, tag(1) ]; 
     tag = tag(2:end);
   end
@@ -360,7 +362,7 @@ for i = 1:length( sequence_seqpos )
     ok = 0;
     continue;
   end
-  c2 = lower( sequence( seqpos(i) - offset ) );
+  c2 = lower( sequence( m ) );
   if ( c1 ~= 'X' & c2 ~= 'X' & c1 ~= c2 )
     fprintf( 'Warning: mismatch at seqpos %d, between SEQPOS nucleotide %s and SEQUENCE nucleotide %s\n', seqpos(i), sequence_seqpos(i),  sequence( seqpos(i) - offset ) );
     ok = 0;
