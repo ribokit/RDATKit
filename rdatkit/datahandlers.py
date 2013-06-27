@@ -365,14 +365,15 @@ class RDATFile:
 		    file.write('OFFSET '+str(construct.offset)+'\n')
 		    if construct.annotations:
 			file.write('ANNOTATION '+self.annotation_str(construct.annotations, delim)+'\n')
-                    if name in self.mutpos:
-			file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
-		    else:
-			file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
                     if version >= 0.32:
-                        file.write('SEQPOS '+delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])+'\n')
+                        if name in self.mutpos:
+                            file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
+                        else:
+                            file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
+                    if version >= 0.32:
+                        file.write('SEQPOS '+delim.join([construct.sequence[x - construct.offset] + str(x+1) for x in construct.seqpos])+'\n')
                     else:
-                        file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
+                        file.write('SEQPOS '+delim.join([str(x+1) for x in construct.seqpos])+'\n')
 		    for i, d in enumerate(construct.data):
 			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
 		    if name in self.values:
