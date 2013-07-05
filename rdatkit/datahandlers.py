@@ -349,50 +349,50 @@ class RDATFile:
 			file.write('XSEL_REFINE %s %s\n' % (i+1, delim.join([str(x) for x in row])))
             elif version >= 0.24 :
 	        file = open(filename, 'w')
-		file.write('VERSION '+str(version)+'\n')
-		file.write('COMMENTS '+str(self.comments)+'\n')
+		file.write('VERSION%s' % (delim) + str(version)+'\n')
+		file.write('COMMENTS%s' % (delim) + str(self.comments)+'\n')
 		for name in self.constructs:
 		    construct = self.constructs[name]
-		    file.write('NAME '+name+'\n')
+		    file.write('NAME%s' % (delim) + name+'\n')
 		    if construct.sequence:
-			file.write('SEQUENCE '+construct.sequence+'\n')
+			file.write('SEQUENCE%s' % (delim) + construct.sequence+'\n')
 		    for k, v in construct.sequences.iteritems():
-			file.write('SEQUENCE:%s %s\n' % (k, v))
+			file.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
 		    if construct.structure:
-			file.write('STRUCTURE '+construct.structure+'\n')
+			file.write('STRUCTURE%s' % (delim) + construct.structure+'\n')
 		    for k, v in construct.structures.iteritems():
-			file.write('STRUCTURE:%s %s\n' % (k, v))
-		    file.write('OFFSET '+str(construct.offset)+'\n')
+			file.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+		    file.write('OFFSET%s' % (delim) + str(construct.offset)+'\n')
 		    if construct.annotations:
-			file.write('ANNOTATION '+self.annotation_str(construct.annotations, delim)+'\n')
+			file.write('ANNOTATION%s' % (delim) + self.annotation_str(construct.annotations, delim)+'\n')
                     if version >= 0.32:
                         if name in self.mutpos:
-                            file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
+                            file.write('MUTPOS%s' % (delim) + delim.join([str(x) for x in self.mutpos[name]])+'\n')
                         else:
-                            file.write('MUTPOS ' + 'WT '*len(construct.data) + '\n')
+                            file.write('MUTPOS%s' % (delim) + 'WT '*len(construct.data) + '\n')
                     if version >= 0.32:
-                        file.write('SEQPOS '+delim.join([construct.sequence[x - construct.offset] + str(x+1) for x in construct.seqpos])+'\n')
+                        file.write('SEQPOS%s' % (delim) + delim.join([construct.sequence[x - construct.offset] + str(x+1) for x in construct.seqpos])+'\n')
                     else:
-                        file.write('SEQPOS '+delim.join([str(x+1) for x in construct.seqpos])+'\n')
+                        file.write('SEQPOS%s' % (delim) + delim.join([str(x+1) for x in construct.seqpos])+'\n')
 		    for i, d in enumerate(construct.data):
-			file.write('ANNOTATION_DATA:%s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
+			file.write('ANNOTATION_DATA:%s%s%s\n' % (i+1, delim, self.annotation_str(d.annotations, delim)))
 		    if name in self.values:
 			for i,row in enumerate(self.values[name]):
-			    file.write('REACTIVITY:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
+			    file.write('REACTIVITY:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
 		    if name in self.traces:
 			for i,row in enumerate(self.traces[name]):
 			    if len(row) > 0:
-				file.write('TRACE:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
+				file.write('TRACE:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
 		    if name in self.errors:
 			for i,row in enumerate(self.errors[name]):
 			    if len(row) > 0:
-				file.write('REACTIVITY_ERRORS:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
+				file.write('REACTIVITY_ERRORS:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
 		    if construct.xsel:
-			file.write('XSEL %s\n' % delim.join([str(x) for x in construct.xsel]))
+			file.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
 		    if name in self.xsels:
 			for i,row in enumerate(self.xsels[name]):
 			    if len(row) > 0:
-				file.write('XSEL_REFINE:%s %s\n' % (i+1, delim.join([str(x) for x in row])))
+				file.write('XSEL_REFINE:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
 
 	    else:
 		print 'Wrong version number %s' % version
