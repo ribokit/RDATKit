@@ -45,6 +45,8 @@ rdat.trace = trace_in;
 % reorder if seqpos is in weird order!
 if length(rdat.seqpos) > 1 & rdat.seqpos(1) > rdat.seqpos(2); rdat = reverse_rdat_seqpos_order( rdat ); end
 
+rdat = fill_sequences_and_structures( rdat );
+
 check_rdat( rdat );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

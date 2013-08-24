@@ -2,9 +2,11 @@ function print_out_rdat( r, search_tag );
 % print_out_rdat( r, search_tag );
 %
 %  Input: 
-%   r = name of RDAT file, or RDAT object read into MATLAB.
+%   r          = name of RDAT file, or RDAT object read into MATLAB.
 %   search_tag = [optional] text to look for in file.
 %  create a bunch of .eps postscript files for cloud lab RDAT. 
+%
+% (c) R. Das, Stanford University, 2013.
 %
 if ischar( r )
  r = read_rdat_file( r );
@@ -17,8 +19,7 @@ if exist( 'search_tag', 'var' );  data_cols = get_data_cols( r, search_tag ); en
 
 N = length( data_cols );
 
-h = figure(1);
-set(h,'Position',[1          -6         725        1090] );
+set( gcf,'Position',[1          -6         725        1090] );
 
 % number of rows per plot
 Nrows = 50;
@@ -31,6 +32,8 @@ set(gcf, 'PaperPositionMode','auto','color','white');
 
 clf; subplot(2,1,1);
 set(gca,'position',[0.05 0.35 0.9 0.6])
+
+
 for i = 1:NPLOT
   
   cla;
@@ -41,15 +44,19 @@ for i = 1:NPLOT
   Nmax = min( Nmax, N );
   
   Nrange = [Nmin:Nmax];
-
-  image( scalefactor * r.reactivity( :, data_cols(Nrange) ) );
-
   
+  max_pos =  size( r.reactivity, 1 );
+  tot_counts = sum( r.reactivity( :, data_cols(Nrange) ), 2 );
+  blank_rows = find( tot_counts == 0 );
+  if ( ~isempty( blank_rows ) ) max_pos = min( blank_rows )-1; end;
+  
+  image( scalefactor * r.reactivity( 1:max_pos, data_cols(Nrange) ) ); 
   
   M = length( Nrange );
   set(gca,'xlim', [0.5 M+0.5] );
   
   make_lines( 1:M,'k',0.25 );
+
 
   for j = 1:M
     
@@ -65,12 +72,6 @@ for i = 1:NPLOT
 
     set(gca,'ydir','normal','tickdir','out','xtick',[],'fontweight','bold');
 
-    max_pos =  size( r.reactivity, 1 );
-    tot_counts = sum( r.reactivity( :, data_cols(Nrange) ), 2 );
-    blank_rows = find( tot_counts == 0 );
-    if ( ~isempty( blank_rows ) ) max_pos = min( blank_rows )-1; end;
-    ylim( [0.5 max_pos+0.5 ] );
-
     % names.
     anot = r.data_annotations{ data_cols( Nrange(j) ) };
     design_name  = get_tag( anot, 'MAPseq:design_name' );
@@ -84,7 +85,7 @@ for i = 1:NPLOT
 
     h = text( j, 0, tag );
     set(h,'rotation',90,'horizontalalign','right','fontsize',10,'fontweight','bold','interp','none');
-    
+
   end
   
   colormap( 1 - gray(100 ))
@@ -93,7 +94,6 @@ for i = 1:NPLOT
 
   draw_structure_boundaries( Nrange, r, data_cols );
       
-  %pause;
   print_suffix = '';
   if exist( 'search_tag','var'); print_suffix = ['_', search_tag]; end;
   print_file_name = sprintf('rdat%s_plot%02d.eps',print_suffix, i );
@@ -179,26 +179,4 @@ for j = 1:length( plot_structures )
 
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function data_cols = get_data_cols( r, search_tag )
-
-fprintf( 'Searching for tag: %s\n', search_tag );
-
-data_cols = [];
-
-for n = 1:length( r.data_annotations );
-
-  anot = r.data_annotations{n};
-
-  found_it = 0;
-  for m = 1:length( anot )
-    if ~isempty( strfind( anot{m}, search_tag ) )
-      found_it = 1;
-      data_cols = [data_cols, n ];
-      break;
-    end
-  end
-
-end
 
