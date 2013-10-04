@@ -34,14 +34,16 @@ end
 
 for j=1:size(rdat.reactivity,2);  xlab{j} = ''; end
 
+MAX_LABEL_LEN = 40;
 if length( rdat.data_annotations ) > 0
   for j=1:length(rdat.data_annotations )
     d_annot = rdat.data_annotations{j};
     xlab{j} = remove_tag_before_colon_cell( d_annot );
     xlab_full{j} = strrep(xlab{j},' ',', ');
     % truncate? 
-    max_x =  min( length( xlab{j} ), 40 );
+    max_x =  min( length( xlab{j} ), MAX_LABEL_LEN );
     xlab{j} = xlab{j}(1:max_x);
+    for i = (length( xlab{j} ) +1) : MAX_LABEL_LEN; xlab{j} = [' ', xlab{j} ]; end;
   end
 end
 
@@ -71,7 +73,7 @@ xticklabel_rotate_rdat();
 %end
 
 if size(xlab,2) > 48; y_ft_sz = 6; else; y_ft_sz = 10; end;
-set(gca, 'yTick', [1:size(xlab,2)],   'yTicklabel', char(xlab),'yaxisloc','left');
+set(gca, 'yTick', [1:size(xlab,2)], 'yTicklabel', char(xlab),'yaxisloc','left');
 plot_title = [ rdat.name,'; ', remove_tag_before_colon_cell( rdat.annotations )];
 if length( filename ) > 0; plot_title = [ filename,': ',plot_title ]; end;
 h = title( plot_title );
