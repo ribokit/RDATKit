@@ -21,7 +21,8 @@ s = '';
 %s = [s, 'RDAT_VERSION\t0.30\n']; % use tab-delimiters!
 %s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
 %s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
-s = [s, 'RDAT_VERSION\t0.33\n']; % get rid of MUTPOS
+%s = [s, 'RDAT_VERSION\t0.33\n']; % get rid of MUTPOS
+s = [s, 'RDAT_VERSION\t0.34\n']; % put OFFSET back up.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];
@@ -34,6 +35,9 @@ s = [s, 'SEQUENCE\t', rdat.sequence, '\n'];
 if length(rdat.structure ) > 0
   s = [s, 'STRUCTURE\t', rdat.structure, '\n'];
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+s = [s, 'OFFSET\t', num2str( rdat.offset, '\t%d'),'\n\n'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.comments ) > 0
@@ -72,10 +76,6 @@ if  ~isempty( rdat.data_annotations )
   end
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf( fid, '\n' );
-fprintf( fid,  ['OFFSET\t', num2str( rdat.offset, '\t%d'),'\n'] );
 fprintf( fid, '\n' );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
