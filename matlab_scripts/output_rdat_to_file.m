@@ -9,6 +9,8 @@ if nargin == 0; help( mfilename ); return; end;
 
 fprintf( 'About to create file: %s\n', filename );
 
+rdat = pad_by_one_if_necessary( rdat );
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Prepare text for output.
 
@@ -22,7 +24,7 @@ s = '';
 %s = [s, 'RDAT_VERSION\t0.31\n']; % reorder so that SEQPOS & OFFSET occur closer to data
 %s = [s, 'RDAT_VERSION\t0.32\n']; % provide nucleotides in SEQPOS
 %s = [s, 'RDAT_VERSION\t0.33\n']; % get rid of MUTPOS
-s = [s, 'RDAT_VERSION\t0.34\n']; % put OFFSET back up.
+s = [s, 'RDAT_VERSION\t0.34\n']; % put OFFSET back near top. Pad seqpos by 1 if necessary. remove extra tab in SEQPOS.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 s = [s, 'NAME\t', rdat.name,'\n'];
@@ -79,7 +81,7 @@ end
 fprintf( fid, '\n' );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf( fid,  ['SEQPOS\t']);
+fprintf( fid,  ['SEQPOS']);
 for i = 1:length( rdat.seqpos )
   m = rdat.seqpos(i) - rdat.offset;
   if ( m < 1 | m > length( rdat.sequence ) )
@@ -280,3 +282,23 @@ end
 
 num = str2num( construct_name( num_start:num_end ) );
 seqchar = construct_name( num_start - 1 );
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rdat = pad_by_one_if_necessary( rdat );
+
+PAD = 0;
+for i = 1:length( rdat.seqpos )
+  m = rdat.seqpos(i) - rdat.offset;
+  if ( m == 0 & PAD == 0)
+    rdat.sequence = ['X',rdat.sequence];
+    rdat.offset = rdat.offset - 1;
+    rdat.structure = ['.',rdat.structure];
+    PAD = 1; break;
+  end
+end
+
+if PAD; fprintf( 'Padded by one -- note that sequence, structure, and offset changed!\n' ); end
+
+return
