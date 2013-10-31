@@ -1,10 +1,12 @@
-function print_out_rdat( r, search_tag );
+function print_out_rdat( r, search_tag, out_tag );
 % print_out_rdat( r, search_tag );
+%
+%  create a bunch of .eps postscript files for cloud lab RDAT. 
 %
 %  Input: 
 %   r          = name of RDAT file, or RDAT object read into MATLAB.
-%   search_tag = [optional] text to look for in file.
-%  create a bunch of .eps postscript files for cloud lab RDAT. 
+%   search_tag = [optional] text to look for in file. (give '' for no search_
+%   out_tag    = filename prefix
 %
 % (c) R. Das, Stanford University, 2013.
 %
@@ -15,7 +17,9 @@ end
 SIGNAL_TO_NOISE_TAG = 0;
 
 data_cols = 1:size( r.reactivity, 2 );
-if exist( 'search_tag', 'var' );  data_cols = get_data_cols( r, search_tag ); end;
+if exist( 'search_tag', 'var' ) & length( search_tag ) > 0;  
+  data_cols = get_data_cols( r, search_tag ); 
+end;
 
 N = length( data_cols );
 
@@ -30,14 +34,12 @@ scalefactor = 40 / mean(mean( r.reactivity ) );
 
 set(gcf, 'PaperPositionMode','auto','color','white');
 
-clf; subplot(2,1,1);
-set(gca,'position',[0.05 0.35 0.9 0.6])
-
-
 for i = 1:NPLOT
-  
-  cla;
-  Nmin = ( i - 1 ) * Nrows + 1 - PAD;
+
+  clf; subplot(2,1,1);
+  set(gca,'position',[0.05 0.35 0.9 0.6])
+
+  Nmin = ( i - 1 ) * Nrows + 1;
   Nmax = ( i ) * Nrows + PAD;
 
   Nmin = max( Nmin, 1 );
@@ -53,10 +55,11 @@ for i = 1:NPLOT
   image( scalefactor * r.reactivity( 1:max_pos, data_cols(Nrange) ) ); 
   
   M = length( Nrange );
-  set(gca,'xlim', [0.5 M+0.5] );
+  set(gca,'xlim', [0.5 Nrows+PAD+0.5] );
   
   make_lines( 1:M,'k',0.25 );
 
+  text(0, max_pos+2, [num2str(i),'/',num2str(NPLOT)],'verticalalign','bottom','fontweight','bold','fontsize',12 );
 
   for j = 1:M
     
@@ -64,7 +67,7 @@ for i = 1:NPLOT
     for k = 1:length( r.seqpos )
       sequence = r.sequences{ data_cols( Nrange(j) ) };
       idx = r.seqpos(k) - r.offset;
-      if idx > 0 & idx <=length( sequence );
+      if idx > 0 & idx <= length( sequence );
 	seqchar = sequence( idx );
 	h = text( j, k, seqchar,'fontsize',7,'fontweight','bold','color',getcolor( seqchar ),'horizontalalignment','center','clipping','on' );
       end
@@ -84,20 +87,31 @@ for i = 1:NPLOT
     tag = [ signal_to_noise_tag, design_name,' ',project_name ];
 
     h = text( j, 0, tag );
-    set(h,'rotation',90,'horizontalalign','right','fontsize',10,'fontweight','bold','interp','none');
+    set(h,'rotation',90,'horizontalalign','right',...
+	  'verticalalign','middle','fontsize',10,'fontweight','bold','interp','none');
 
   end
   
   colormap( 1 - gray(100 ))
-
-  text(0, max_pos+2, [num2str(i),'/',num2str(NPLOT)],'verticalalign','bottom','fontweight','bold','fontsize',12 );
-
+  
   draw_structure_boundaries( Nrange, r, data_cols );
+  box off
       
   print_suffix = '';
-  if exist( 'search_tag','var'); print_suffix = ['_', search_tag]; end;
-  print_file_name = sprintf('rdat%s_plot%02d.eps',print_suffix, i );
-  print( '-depsc2', print_file_name );
+  if exist( 'search_tag','var') & length( search_tag ) > 0; print_suffix = ['_', search_tag]; end;
+  
+  if ~exist( 'out_tag','var' )
+    print_file_name = sprintf('rdat%s_plot%02d.eps',print_suffix, i );
+  else
+    print_file_name = sprintf('%s%02d.eps',out_tag, i );
+  end
+
+  if exist( 'export_fig' ) == 2; 
+    print_file_name = strrep( print_file_name, '.eps', '.pdf' );
+    export_fig( print_file_name );
+  else
+    print( '-depsc2', print_file_name );
+  end
   fprintf( 'Outputted:%s\n ', print_file_name );
   
 end
