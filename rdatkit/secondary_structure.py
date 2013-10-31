@@ -8,13 +8,16 @@ from random import *
 from rdatkit import settings
 from rdatkit import mapping
 
-
+debug = False
 class SecondaryStructure:
     def __init__(self, dbn=''):
         self.dbn = dbn
 
     def __len__(self):
         return len(self.dbn)
+
+    def __str__(self):
+        return self.dbn
 
     def base_pairs(self):
         stack = []
@@ -180,6 +183,13 @@ class SecondaryStructure:
                             probs[i] = g.pdf(data[i])
         return probs, prod(probs)
 
+
+def removefile(f):
+    if type(f) == str:
+        os.remove(os.path.abspath(f))
+    else:
+        os.remove(os.path.abspath(f.name))
+
 def to_seqfile(sequence, name='placeholder'):
     seqfile = tempfile.NamedTemporaryFile(delete=False)
     seqfile.write(';\n%(name)s\n%(sequence)s1' % {'name':name, 'sequence':sequence})
@@ -194,6 +204,20 @@ def _prepare_ct_and_seq_files(sequence):
     seqfile.close()
     return seqname, ctname
 
+def _prepare_fasta_file(sequence):
+    fastafile = tempfile.NamedTemporaryFile(delete=False)
+    fastafile.write('>bla\n%s\n' % sequence)
+    return fastafile.name
+
+def _get_fasta_structures(fname):
+    structures = []
+    for l in open(fname).readlines():
+        l = l.strip()
+        if l[0] not in  ['.', '(', ')']:
+            continue
+        structures.append(SecondaryStructure(dbn=l.split()[0]))
+    return structures
+
 def _get_dot_structs(ctname, nstructs, unique=False):
     structs = []
     dbns = []
@@ -203,8 +227,8 @@ def _get_dot_structs(ctname, nstructs, unique=False):
         dbnfile.close()
         os.popen(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
              (ctname, i+1, dbnname))
-        print(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
-             (ctname, i+1, dbnname))
+        if debug: print(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
+             (ctname, i+1, dbnname));
         dbn = open(dbnname).readlines()[-1].strip()
         # Append only non trivial structures
         if '(' in dbn:
@@ -214,6 +238,7 @@ def _get_dot_structs(ctname, nstructs, unique=False):
                     structs.append(SecondaryStructure(dbn=dbn))
             else:
                 structs.append(SecondaryStructure(dbn=dbn))
+        removefile(dbnfile)
     return structs
 
 def _to_ct_file(sequence, struct, filename):
@@ -237,14 +262,25 @@ def _to_ct_file(sequence, struct, filename):
 	    f.write('%s %s %s %s %s %s\n' % (i+1, sequence[i], i, i+2, pair, n))
     f.close()
 
+def _to_fasta_file(sequence, structures, fastaname):
+    fastafile = open(fastaname, 'w')
+    if type(structures) == list:
+        for struct in structures:
+            fastafile.write('>bla\n%s\n%s\n' % (sequence, str(struct)))
+    else:
+        fastafile.write('>bla\n%s\n%s\n' % (sequence, structures))
+    fastafile.close()
+
 def get_boltzmann_weight(sequence, structure, algorithm='rnastructure'):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
         _to_ct_file(sequence, structure, ctname)
         energy = get_energies(ctname)[0]
         PARTCMD = settings.RNA_STRUCTURE_PARTITION + ' %s %s ' % (seqname, '/dev/null')
-        print PARTCMD
+        if debug: print PARTCMD;
         ensemble_energy = float(os.popen(PARTCMD).read().split('\n')[-1])
+        removefile(seqname)
+        removefile(ctname)
         kT = 0.5905 #TODO Need to generalize/correct this
         weight = exp(-energy/kT)/exp(-ensemble_energy/kT)
     return weight
@@ -253,9 +289,11 @@ def mea_structure(sequence, algorithm='rnastructure', nstructs=1, gamma=1.0, opt
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
         CMD = settings.RNA_STRUCTURE + '/exe/MaxExpect -g %s --sequence %s %s %s' % (gamma, seqname, ctname, opts)
-        print CMD
+        if debug: print CMD;
         os.popen(CMD)
         structs = _get_dot_structs(ctname, nstructs)
+        removefile(seqname)
+        removefile(ctname)
     if returnct:
         return structs, ctname
     else:
@@ -265,6 +303,7 @@ def fold(sequence, algorithm='rnastructure', mapping_data=[], nstructs=1, fold_o
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
         CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
+        tmp = None
         if len(mapping_data) > 0:
             if bonus2d:
                 tmp = tempfile.NamedTemporaryFile(delete=False)
@@ -272,14 +311,26 @@ def fold(sequence, algorithm='rnastructure', mapping_data=[], nstructs=1, fold_o
                 tmp.close()
                 CMD += '-x %s ' % tmp.name
             else:
-                tmp = tempfile.namedtemporaryfile(delete=false)
+                tmp = tempfile.NamedTemporaryFile(delete=False)
                 tmp.write(str(mapping_data))
                 tmp.close()
-                cmd += '-sh %s ' % tmp.name
+                CMD += '-sh %s ' % tmp.name
                 CMD += fold_opts
-        print(CMD)
+        if debug: print(CMD);
         os.popen(CMD)
         structs = _get_dot_structs(ctname, nstructs)
+        removefile(seqname)
+        removefile(ctname)
+        if tmp != None:
+            removefile(tmp)
+    if algorithm == 'viennarna':
+        fastaname = _prepare_fasta_file(sequence)
+        CMD = settings.VIENNA_RNA_FOLD + ' < %s > %s.out' % (fastaname, fastaname)
+        if debug: print(CMD);
+        os.popen(CMD)
+        structs = [SecondaryStructure(dbn=l.split()[0].strip()) for l in open(fastaname + '.out').readlines() if l.strip()[0] in ['(', ')', '.']]
+        removefile(fastaname)
+    
     return structs
 
 def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts='', bonus2d=False):
@@ -287,38 +338,70 @@ def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts='
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
         CMD = settings.RNA_STRUCTURE_PARTITION + ' %s %s ' % (seqname, ctname)
         if mapping_data:
-            tmp = tempfile.NamedTemporaryFile(delete=False)
-	    if bonus2d:
-		savetxt(tmp, mapping_data)
-		tmp.close()
-		CMD += '-x %s ' % tmp.name
-	    else:
-		tmp.write(str(mapping_data))
-		tmp.close()
-		CMD += '-sh %s ' % tmp.name
+            CMD += _get_mapping_data_file(mapping_data, bonus2d=bonus2d)
             CMD += fold_opts
-        print(CMD)
+        if debug: print(CMD);
         os.popen(CMD)
     bppm = loadtxt('bpp.txt')
     for i in range(bppm.shape[0]):
         for j in range(i,bppm.shape[1]):
             if bppm[i,j] != 0:
                 bppm[j,i] = bppm[i,j]
+    removefile(seqname)
+    removefile(ctname)
     return bppm
 
-def get_structure_energies(sequence, structures):
-    energies = []
-    ctfile = tempfile.NamedTemporaryFile(delete=False)
-    ctname = ctfile.name
-    _to_ct_file(sequence, structures, ctname)
-    return get_energies(ctname)
+def _get_mapping_data_file(mapping_data, bonus2d=False):
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    if bonus2d:
+        savetxt(tmp, mapping_data)
+        tmp.close()
+        opt = ' -x %s ' % tmp.name
+    else:
+        tmp.write(str(mapping_data))
+        tmp.close()
+        opt = ' -sh %s ' % tmp.name
+    return opt
 
-def get_energies(ctname):
-    EFN2CMD = settings.RNA_STRUCTURE_ENERGY + ' %s /tmp/energy' % ctname
-    os.popen(EFN2CMD)
-    energyfile = open('/tmp/energy')
-    energies = [float(line.split(' ')[-1]) for line in energyfile.readlines()]
+
+def get_structure_energies(sequence, structures, mapping_data=None, algorithm='rnastructure'):
+    if algorithm == 'rnastructure':
+        energies = []
+        ctfile = tempfile.NamedTemporaryFile(delete=False)
+        ctname = ctfile.name
+        _to_ct_file(sequence, structures, ctname)
+        energies = get_energies(ctname, mapping_data=mapping_data)
+        removefile(ctfile)
+    if algorithm == 'viennarna':
+        fastafile = tempfile.NamedTemporaryFile(delete=False)
+        fastaname = fastafile.name
+        _to_fasta_file(sequence, structures, fastaname)
+        energies = get_energies(fastaname, format='fasta')
+        removefile(fastafile)
     return energies
+
+def get_energies(fname, format='ct', mapping_data=None):
+    if format == 'ct':
+        energyfile = tempfile.NamedTemporaryFile(delete=False)
+        EFN2CMD = settings.RNA_STRUCTURE_ENERGY + ' %s %s' % (fname, energyfile.name)
+        if mapping_data:
+            EFN2CMD += _get_mapping_data_file(mapping_data)
+        os.popen(EFN2CMD)
+        energyfile.seek(0)
+        energies = [float(line.split(' ')[-1]) for line in energyfile.readlines()]
+        removefile(energyfile)
+        return energies
+    if format == 'fasta':
+        RNAEVALCMD = settings.VIENNA_RNA_ENERGY + '< %s > %s.out' % (fname, fname)
+        os.popen(RNAEVALCMD)
+        energies = []
+        for l in open(fname + '.out').readlines():
+            l = l.strip()
+            if l[0] not in  ['.', '(', ')']:
+                continue
+            energies.append(float(l.split()[-1].strip(')(')))
+        removefile(fname + '.out')
+        return energies
 
 def sample(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1000, unique=False, energies=False):
     if algorithm == 'rnastructure':
@@ -327,6 +410,8 @@ def sample(sequence, algorithm='rnastructure', mapping_data=None, nstructs=1000,
         os.popen(CMD)
         structs = _get_dot_structs(ctname, nstructs, unique=unique)
         energies = get_energies(ctname)
+        removefile(seqname)
+        removefile(ctname)
     if energies:
         return structs, energies
     else:
@@ -341,6 +426,17 @@ def subopt(sequence, algorithm='rnastructure', mapping_data=None, fraction=0.05,
         os.popen(CMD)
         structs = _get_dot_structs(ctname, nstructs)
         energies = get_energies(ctname)
+        removefile(seqname)
+        removefile(ctname)
+    if algorithm == 'viennarna':
+        fastaname = _prepare_fasta_file(sequence)
+        CMD = settings.VIENNA_RNA_SUBOPT + ' -p %s < %s > %s.out' % (nstructs, fastaname, fastaname)
+        if debug: print CMD;
+        os.popen(CMD)
+        structs = _get_fasta_structures(fastaname + '.out')
+        energies = get_structure_energies(sequence, structs, algorithm='viennarna')
+        removefile(fastaname)
+        removefile(fastaname + '.out')
     if energies:
         return structs, energies
     return structs

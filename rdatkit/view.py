@@ -24,8 +24,10 @@ class VARNA:
 	    else:
 		argval = str(val)
 	    option_str += '-%s "%s" ' % (key, argval)
-	os.popen('java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
-		  (settings.VARNA, sequence, structure, option_str, outfile))
+	comm = 'java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
+		  (settings.VARNA, sequence, structure, option_str, outfile)
+        print comm
+        os.popen(comm)
 
     def __init__(self, sequences=[], structures=[], mapping_data=[]):
         self.sequences = sequences

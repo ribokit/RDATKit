@@ -17,4 +17,4 @@ Add rdatkit/matlab_scripts to your MATLAB path
 
 ===Module usage and help===
 
-Visit the documentation page at https://sites.google.com/site/rmdbwiki/rdatkit
+Visit the documentation page at https://github.com/hitrace/rdatkit
