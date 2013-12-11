@@ -63,8 +63,6 @@ class SecondaryStructure:
                 if len(currhelix) > 0:
                     helices.append(currhelix)
                     currhelix = []
-            if len(currhelix) > 0:
-                helices.append(currhelix)
         return helices
 
 
@@ -461,14 +459,18 @@ def base_pair_fractions_in_structures(reference, structures, factors=None):
     ref_bp = reference.base_pairs()
     if factors == None:
         factors = [1]*len(structures)
-    bpdict = dict([(bp, 0) for bp in ref_bps])
-    for s in structures:
-        for bp in bps:
+    bpdict = dict([(bp, 0) for bp in ref_bp])
+    for i, s in enumerate(structures):
+        bps = s.base_pairs()
+        for bp in bps or bp[::-1] in bps:
             if bp in bpdict:
-                bpdict[bp] += 1 * factors[s]
-            else:
-                bpdict[bp] = 1 * factors[s]
-    for bp in bpdict:
-        bpdict[bp] *= 1/len(structures)
+                bpdict[bp] += 1 * factors[i]
+
+    for bp in bpdict.keys():
+        bpdict[bp] *= 100./len(structures)
+    
+    for bp in ref_bp:
+        bpdict[bp[::-1]] = bpdict[bp]
+
     return bpdict
 
