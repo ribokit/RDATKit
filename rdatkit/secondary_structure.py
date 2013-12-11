@@ -456,3 +456,19 @@ def random(nstructs, length, nbp):
                 dbnlist[b1] = ')'
         structs.append(SecondaryStructure(dbn=''.join(dbnlist)))
     return structs
+
+def base_pair_fractions_in_structures(reference, structures, factors=None):
+    ref_bp = reference.base_pairs()
+    if factors == None:
+        factors = [1]*len(structures)
+    bpdict = dict([(bp, 0) for bp in ref_bps])
+    for s in structures:
+        for bp in bps:
+            if bp in bpdict:
+                bpdict[bp] += 1 * factors[s]
+            else:
+                bpdict[bp] = 1 * factors[s]
+    for bp in bpdict:
+        bpdict[bp] *= 1/len(structures)
+    return bpdict
+
