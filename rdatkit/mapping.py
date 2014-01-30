@@ -1,4 +1,5 @@
 import settings
+import pdb
 from scipy.stats import stats
 from numpy import *
 import random as rand
@@ -45,8 +46,8 @@ def matrix_to_mapping(matrix):
     return md
 
 class MappingData:
-    def __init__(self, data=[], seqpos=[], type='', norm=False):
-	if seqpos:
+    def __init__(self, data=[], seqpos=[], type='', norm=False, enforce_positives=False):
+	if len(seqpos) > 0:
 	    self._data = [None]*(max(seqpos) + 1)
 	    self.seqpos = seqpos
 	    for i, pos in enumerate(seqpos):
@@ -87,7 +88,10 @@ class MappingData:
         s = ''
         for pos in self.seqpos:
 	    if self._data[pos] is not None:
-		s += '%d %f\n' % (pos + 1, float(self._data[pos]))
+                if self.enforce_positives and self._data[pos] < 0:
+                    s += '%d -999\n'
+                else:
+                    s += '%d %f\n' % (pos + 1, float(self._data[pos]))
         return s
     
     def sample(self, numsamples, replacement=False):
