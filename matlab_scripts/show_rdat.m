@@ -105,6 +105,7 @@ if length( t ) > 0
   clf;  colormap( 1 - gray(100));
 
   t_filter = filter_ERROR_lanes( t, rdat.data_annotations );
+  %image(100 * t_filter')
   image( 100 * t_filter'/mean(mean(t_filter)))
   hold on;
 
