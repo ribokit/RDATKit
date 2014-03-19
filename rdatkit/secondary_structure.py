@@ -18,18 +18,24 @@ class SecondaryStructure:
 
     def __str__(self):
         return self.dbn
-
-    def base_pairs(self):
+    
+    def _get_base_pairs(self, opch, clch):
         stack = []
         bps = []
         for i, s in enumerate(self.dbn):
-            if s == '(':
+            if s == opch:
                 stack.append(i)
-            if s == ')':
+            if s == clch:
                 bps.append((i, stack.pop()))
         return bps
 
-    def base_pair_dict(self):
+    def base_pairs(self):
+        bps = self._get_base_pairs('(',')')
+        bps += self._get_base_pairs('{','}')
+        bps += self._get_base_pairs('[',']')
+        return bps
+    
+    def _get_base_pair_dict(self, opch, clch):
         stack = []
         bps = {}
         for i, s in enumerate(self.dbn):
@@ -41,18 +47,23 @@ class SecondaryStructure:
                 bps[i] = j
         return bps
 
+    def base_pair_dict(self):
+        bps = self._get_base_pair_dict('(', ')')
+        bps.update(self._get_base_pair_dict('{', '}'))
+        bps.update(self._get_base_pair_dict('[', ']'))
+        return bps
 
-    def helices(self):
+    def _get_helices(self, opch, clch):
         stack = []
         helices = []
         currhelix = []
         for i, s in enumerate(self.dbn):
-            if s == '(':
+            if s == opch:
                 stack.append(i)
-            if s == ')':
+            if s == clch:
                 prevbase = stack.pop()
                 if len(currhelix) > 0:
-                    if currhelix[-1][0] - 1 == prevbase:
+                    if currhelix[-1][0] == prevbase + 1 and currhelix[-1][1] == i - 1:
                         currhelix.append((prevbase, i))
                     else:
                         helices.append(currhelix)
@@ -63,6 +74,14 @@ class SecondaryStructure:
                 if len(currhelix) > 0:
                     helices.append(currhelix)
                     currhelix = []
+        if len(currhelix) > 0:
+            helices.append(currhelix)
+        return helices
+
+    def helices(self):
+        helices = self._get_helices('(',')')
+        helices += self._get_helices('{','}')
+        helices += self._get_helices('[',']')
         return helices
 
 
@@ -83,14 +102,20 @@ class SecondaryStructure:
             ways = 0
             startj = len(junctions)
             for i, jun in enumerate(junctions):
-                if jun[0] - 1 == pos:
+                if len(jun) > 0 and jun[0] - 1 == pos:
                     startj = i
                     break
             for i in range(startj, len(junctions)):
                 ways += 1
-                junction += junctions[i]
+                junction += [x for x in junctions[i] if self.dbn[x] == '.' or self.dbn[x].lower() == 'a']
             newjunctions = junctions[:startj]
             return junction, ways, newjunctions
+
+        def _get_ssregion(start, i):
+            if start < 0:
+                return  []
+            else:
+                return range(start, i)
 
         """
         """
@@ -109,12 +134,14 @@ class SecondaryStructure:
                     sstate = statestack.pop()
                 if prevstate == '.' and sstate == '-':
                     fragments['dangles'].append(range(i))
-                if (prevstate == '.' or prevstate == ')') and sstate != '-':
-                    jlist.append(range(ssregion_start, i))
-                    jstartstack.append(ssregion_start-1)
-                    wstack.append(1)
+                if sstate != '-':
+                    if (prevstate == '.' or prevstate == ')') and sstate != '-':
+                        jlist.append(_get_ssregion(ssregion_start, i))
+                        jstartstack.append(ssregion_start-1)
+                        wstack.append(1)
+                        ssregion_start = -1
                 prevstate = '('
-            if s == '.':
+            if s == '.' or s == 'a':
                 if prevstate != '.':
                     ssregion_start = i
                     statestack.append(prevstate)
@@ -127,18 +154,19 @@ class SecondaryStructure:
                         for w in range(ways):
                             jstartstack.pop()
                         if ways == 1:
-                            fragments['interiorloops'].append(junction + range(ssregion_start, i))
+                            fragments['interiorloops'].append(junction + _get_ssregion(ssregion_start, i))
                         else:
                             key = '%dwayjunctions' % (ways + 1)
                             if key not in fragments:
                                 fragments[key] = []
-                            fragments[key].append(junction + range(ssregion_start, i))
+                            fragments[key].append(junction + _get_ssregion(ssregion_start, i))
                     else:
                         sstate = statestack.pop()
                         if sstate == '(':
-                            fragments['hairpins'].append(range(ssregion_start, i))
+                            fragments['hairpins'].append(_get_ssregion(ssregion_start, i))
                         if sstate == ')':
-                            fragments['bulges'].append(range(ssregion_start, i))
+                            fragments['bulges'].append(_get_ssregion(ssregion_start, i))
+                    ssregion_start = -1
                 if prevstate == ')':
                     if len(jstartstack) > 0 and jstartstack[-1] == prevbase:
                         jstartstack.pop()
@@ -152,15 +180,28 @@ class SecondaryStructure:
                             for w in range(ways):
                                 jstartstack.pop()
                                 if ways == 1:
-                                    fragments['interiorloops'].append(junction + range(ssregion_start, i))
+                                    fragments['interiorloops'].append(junction + _get_ssregion(ssregion_start, i))
                                 else:
                                     key = '%dwayjunctions' % (ways + 1)
                                     if key not in fragments:
                                         fragments[key] = []
-                                    fragments[key].append(junction + range(ssregion_start, i))
+                                    fragments[key].append(junction + _get_ssregion(ssregion_start, i))
+                                ssregion_start = -1
                 prevstate = ')'
         if self.dbn[-1] == '.':
-            fragments['dangles'].append(range(ssregion_start, len(self.dbn)))
+            fragments['dangles'].append(_get_ssregion(ssregion_start, len(self.dbn)))
+        # Eliminate spurious adds for single stranded regions and re-assign aptamer regions
+        aptamers = []
+        for k, v in fragments.iteritems():
+            if k != 'helices':
+                for i, ntlist in enumerate(v):
+                    v[i] = [x for x in ntlist if self.dbn[x] == '.']
+                    apt = [x for x in ntlist if self.dbn[x].lower() == 'a']
+                    if len(apt) > 0:
+                        aptamers.append(apt)
+            # Get rid of empty lists
+            fragments[k] = [x for x in v if len(x) > 0]
+        fragments['aptamers'] = aptamers
         return fragments
 
 
@@ -462,12 +503,17 @@ def base_pair_fractions_in_structures(reference, structures, factors=None):
     bpdict = dict([(bp, 0) for bp in ref_bp])
     for i, s in enumerate(structures):
         bps = s.base_pairs()
-        for bp in bps or bp[::-1] in bps:
+        for bp in bps:
             if bp in bpdict:
-                bpdict[bp] += 1 * factors[i]
+                bpdict[bp] = bpdict[bp] + factors[i]
+            if bp[::-1] in bpdict:
+                bpdict[bp[::-1]] = bpdict[bp[::-1]] + factors[i]
 
     for bp in bpdict.keys():
-        bpdict[bp] *= 100./len(structures)
+        if factors == None:
+            bpdict[bp] *= 100./len(structures)
+        else:
+            bpdict[bp] *= 100.
     
     for bp in ref_bp:
         bpdict[bp[::-1]] = bpdict[bp]

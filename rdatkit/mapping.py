@@ -58,6 +58,7 @@ class MappingData:
         if norm:
             self._data = normalize(self._data)
 	self.type = type
+        self.enforce_positives=enforce_positives
     
     def data(self):
         return self._data
