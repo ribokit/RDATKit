@@ -87,8 +87,9 @@ while line:
         else:
             tag = 'REACTIVITY'
         for idx in reactidces:
-            if tag+':'+idx in line:
+            if tag+':'+idx + ' ' in line or tag + ':' + '\t' in line:
                 reacts = line.strip().replace('%s:%s' % (tag, idx), '').strip().split('\t')
+                
                 if args.m2:
                     reactlines.append('%s:%s\t%s\n' % (tag, offsetindices[int(idx)], '\t'.join([reacts[i] for i in range(len(seqpos))])))
                 else:
