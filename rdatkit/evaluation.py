@@ -32,18 +32,49 @@ def get_helices_from_structures(structures):
                 helices.append(struct_helix)
 
     return helices
-    
-def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2=None, helices=None):
+
+def _find_helices_from_bppm(bppm):
+    visited = []
+    helices = []
+    for i in xrange(bppm.shape[0]):
+        for j in xrange(i+1, bppm.shape[1]):
+            if (i, j) not in visited and bppm[i,j] != 0:
+                helix = [(i,j)]
+                ii = i + 1
+                jj = j - 1
+                while ii < bppm.shape[0]  and jj >= i and (ii, jj) not in visited and bppm[ii,jj] != 0:
+                    helix.append((ii, jj))
+                    visited.append((ii, jj))
+                    ii += 1
+                    jj -= 1
+
+                ii = i - 1
+                jj = j + 1
+                while ii <= 0  and jj < bppm.shape[1] and (ii, jj) not in visited and bppm[ii,jj] != 0:
+                    helix.append((ii, jj))
+                    visited.append((ii, jj))
+                    ii -= 1
+                    jj += 1
+                helices.append(helix)
+    return helices
+                
+
+def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2=None, helices=False):
     if thresh2 is None:
         thresh1 = thresh
-    if helices is not None:
+    if helices:
         tp , fp, tn, fn = 0., 0., 0., 0.
+        bppm_index = zeros(bppm_pred.shape)
+        bppm_index[logical_or(bppm_pred > thresh2, bppm_true > thresh2)] = 1
+        helices = _find_helices_from_bppm(bppm_index)
         for h in helices:
             bps_tp = 0.
             bps_fp = 0.
             bps_tn = 0.
             bps_fn = 0.
             for n1, n2 in h:
+                if len(h) <= 3:
+                    continue # No helices smaller than 4
                 if bppm_pred[n1, n2] >= thresh2 or bppm_true[n1, n2] >= thresh2:
                     if bppm_true[n2, n1] >= thresh2:
                         n3 = n2
@@ -79,10 +110,10 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
         #tn = logical_and(not_pred_indices, not_true_indices).sum()
         #fn = (abs(bppm_pred[not_pred_indices] - bppm_true[not_pred_indices]) > diff_thresh).sum()
 
-        tp = logical_and(pred_indices, true_indices).sum()
-        fp = logical_and(pred_indices, not_true_indices).sum()
-        tn = logical_and(not_pred_indices, not_true_indices).sum()
-        fn = logical_and(not_pred_indices, true_indices).sum()
+        tp = logical_and(pred_indices, true_indices).sum()/2.
+        fp = logical_and(pred_indices, not_true_indices).sum()/2.
+        tn = logical_and(not_pred_indices, not_true_indices).sum()/2.
+        fn = logical_and(not_pred_indices, true_indices).sum()/2.
     return tp, fp, tn, fn
 
 def get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2=None):
