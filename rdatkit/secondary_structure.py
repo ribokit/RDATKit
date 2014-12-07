@@ -202,6 +202,24 @@ class SecondaryStructure:
             # Get rid of empty lists
             fragments[k] = [x for x in v if len(x) > 0]
         fragments['aptamers'] = aptamers
+        previ = -1
+        sstrand_region = []
+        fragments['sstrand'] = []
+        for i in xrange(len(self.dbn)):
+            found = False
+            for k, ntlists in fragments.iteritems():
+                for ntlist in ntlists:
+                    if i in ntlist:
+                        found = True
+            if not found:
+                if i != previ + 1 and previ >= 0:
+                    fragments['sstrand'].append(sstrand_region)
+                    sstrand_region = []
+                sstrand_region.append(i)
+                previ = i
+        if len(sstrand_region) > 0:
+            fragments['sstrand'].append(sstrand_region)
+
         return fragments
 
 
