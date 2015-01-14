@@ -16,9 +16,15 @@ Please put your email for Entrez
 Entrez.email = ''
 """
 def split(s, delims=None):
+    process =  False
     for d in delims:
         if d in s:
-            return [x for x in s.split(d) if x]
+            process = True
+    if process:
+        for d in delims[1:]:
+            s = s.replace(d, delims[0])
+        return [x for x in s.split(delims[0]) if x]
+    return [s]
 
 """
 Mapping between RDAT and ISATAB file formats (see sections below)
@@ -38,6 +44,7 @@ class RDATFile:
     def __init__(self):
         self.constructs = defaultdict(list)
         self.traces = defaultdict(list)
+        self.reads = defaultdict(list)
         self.values = defaultdict(list)
         self.xsels = defaultdict(list)
         self.data_types = defaultdict(list)
@@ -53,6 +60,7 @@ class RDATFile:
         d.values = []
         d.xsel = []
         d.trace = []
+        d.reads = []
         d.annotations = {}
         self.constructs[current_construct].data.append(d)
 
@@ -112,6 +120,7 @@ class RDATFile:
 		    self.constructs[current_construct].seqpos = []
 		    self.constructs[current_construct].xsel = []
 		    self.traces[current_construct] = []
+		    self.reads[current_construct] = []
 		    self.values[current_construct] = []
 		    self.xsels[current_construct] = []
 		    self.data_types[current_construct] = []
@@ -154,9 +163,12 @@ class RDATFile:
 		    print 'Invalid section: '+line
 	    elif self.version >= 0.2:
 		if 'COMMENT' in line:
-		    self.comments += line.replace('COMMENTS','').replace('COMMENT ','') + '\n'
+                    parsed_line = line
+                    for sep in ' \t':
+		        parsed_line = parsed_line.replace('COMMENTS' + sep,'').replace('COMMENT' + sep,'')
+                    self.comments += parsed_line + '\n'
 		elif 'ANNOTATION' in line and not 'ANNOTATION_DATA' in line:
-		    self.annotations = self.parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t '))
+		    self.annotations = self.parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
 		elif 'CONSTRUCT' in line or 'NAME' in line:
 		    current_section = 'construct'
                     if 'CONSTRUCT' in line: line = file.readline().strip() # Advance to 'NAME' line.
@@ -172,6 +184,7 @@ class RDATFile:
 		    self.constructs[current_construct].xsel = []
 		    self.constructs[current_construct].annotations = {}
 		    self.traces[current_construct] = []
+		    self.reads[current_construct] = []
 		    self.values[current_construct] = []
 		    self.xsels[current_construct] = []
 		    self.data_types[current_construct] = []
@@ -179,37 +192,53 @@ class RDATFile:
 		    self.errors[current_construct] = []
 		    self.constructs[current_construct].structure = ''
 		    self.constructs[current_construct].sequence = ''
-		    self.constructs[current_construct].structures =  defaultdict(int)
-		    self.constructs[current_construct].sequences =  defaultdict(int)
+		    self.constructs[current_construct].structures =  defaultdict(str)
+		    self.constructs[current_construct].sequences =  defaultdict(str)
 		elif 'SEQUENCE' in line:
 		    if ':' in line:
-			seqidx, seq = line.replace('SEQUENCE:','').strip().split()
+			attheader = 'SEQUENCE:'
+		    else:
+			attheader = 'SEQUENCE'
+		    line = line.replace(attheader, '')
+		    if len(line.split()) > 1:
+			seqidx, seq = line.replace(attheader,'').strip().split()
 			self.constructs[current_construct].sequences[int(seqidx)] = seq.strip()
+			self.constructs[current_construct].sequence = seq.strip()
 		    else:
-			self.constructs[current_construct].sequence = line.replace('SEQUENCE', '').strip()
+			seq = line
+			self.constructs[current_construct].sequence = seq.strip()
+			self.constructs[current_construct].sequences[0] = seq.strip()
                 elif 'STRUCTURE' in line:
-		    if 'STRUCTURE:' in line:
-			structidx, struct = split(line.replace('STRUCTURE:','').strip(), delims='\t ')
-			self.constructs[current_construct].structures[int(structidx)] = struct.strip()
+		    if ':' in line:
+			attheader = 'STRUCTURE:'
 		    else:
-			self.constructs[current_construct].structure = line.replace('STRUCTURE', '').strip()
+			attheader = 'STRUCTURE'
+		    line = line.replace(attheader, '')
+		    if len(line.split()) > 1:
+			structidx, struct = line.replace(attheader,'').strip().split()
+			self.constructs[current_construct].structures[int(structidx)] = struct.strip()
+			self.constructs[current_construct].structure = struct.strip()
+		    else:
+			struct = line
+			self.constructs[current_construct].structure = struct.strip()
+			self.constructs[current_construct].structures[0] = struct.strip()
 		elif 'OFFSET' in line:
 		    self.constructs[current_construct].offset = int(line.replace('OFFSET',''))
 		elif 'DATA_TYPE' in line:
 		    current_section = 'data'
-		    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t ')
+		    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t')
 		elif 'SEQPOS' in line:
                     if self.version >= 0.32:
-                        self.constructs[current_construct].seqpos= [int(x[1:]) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
+                        self.constructs[current_construct].seqpos= [int(x[1:]) for x in split(line.replace('SEQPOS','').strip(), delims='\t')]
                     else:
-                        self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delims='\t ')]
+                        self.constructs[current_construct].seqpos= [int(x) for x in split(line.replace('SEQPOS','').strip(), delims='\t')]
 		elif 'MUTPOS' in line:
-		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delims='\t ')]
+		    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delims='\t')]
 		elif 'ANNOTATION_DATA' in line:
 		    if self.version >= 0.23:
-			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delims='\t ')
+			fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delims='\t')
 		    else:
-			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delims='\t ')
+			fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delims='\t')
 		    data_idx = int(fields[0])-1
 		    annotations = self.parse_annotations(fields[1:])
                     for l in xrange(data_idx - len(self.constructs[current_construct].data) + 1):
@@ -225,9 +254,9 @@ class RDATFile:
 			    pass
 		elif 'AREA_PEAK ' in line or 'REACTIVITY:' in line:
 		    if 'AREA_PEAK ' in line:
-			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delims='\t ')
+			fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delims='\t')
 		    if 'REACTIVITY:' in line: # Means we are in version >= 0.23
-			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delims='\t ')
+			fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delims='\t')
 		    data_idx = int(fields[0])-1
 		    peaks = [float(x) for x in fields[1:]]
                     if ( data_idx >= len(self.constructs[current_construct].data) ):
@@ -236,27 +265,33 @@ class RDATFile:
 		    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
 		elif 'AREA_PEAK_ERROR' in line or 'REACTIVITY_ERROR:' in line:
 		    if 'AREA_PEAK_ERROR ' in line:
-			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delims='\t ')
+			fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delims='\t')
 		    if 'REACTIVITY_ERROR:' in line: #Means we are in version >= 0.23
-			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delims='\t ')
+			fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delims='\t')
 		    data_idx = int(fields[0])-1
 		    errors = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].errors = errors
 		    self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
 		elif 'TRACE' in line:
-		    fields = split(line.replace(':', ' ').replace('TRACE', '').strip('\n ,'),delims='\t ')
+		    fields = split(line.replace(':', ' ').replace('TRACE', '').strip('\n ,'),delims='\t')
 		    data_idx = int(fields[0])-1
 		    trace = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].trace = trace
 		    self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
+		elif 'READS' in line:
+		    fields = split(line.replace(':', ' ').replace('READS', '').strip('\n ,'),delims='\t')
+		    data_idx = int(fields[0])-1
+		    reads = [float(x) for x in fields[1:]]
+		    self.constructs[current_construct].data[data_idx].reads = reads
+		    self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
 		elif 'XSEL_REFINE' in line:
-		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE', '').strip('\n ,'),delims='\t ')
+		    fields = split(line.replace(':', ' ').replace('XSEL_REFINE', '').strip('\n ,'),delims='\t')
 		    data_idx = int(fields[0])-1
 		    xsel = [float(x) for x in fields[1:]]
 		    self.constructs[current_construct].data[data_idx].xsel = xsel
 		    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 		elif 'XSEL' in line:
-		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t ')]
+		    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t')]
 		else:
                     if line.strip():
 			    print 'Invalid section: '+line
@@ -356,12 +391,14 @@ class RDATFile:
 		    file.write('NAME%s' % (delim) + name+'\n')
 		    if construct.sequence:
 			file.write('SEQUENCE%s' % (delim) + construct.sequence+'\n')
-		    for k, v in construct.sequences.iteritems():
-			file.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
+                    if 'sequences' in construct.__dict__:
+			for k, v in construct.sequences.iteritems():
+			    file.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
 		    if construct.structure:
 			file.write('STRUCTURE%s' % (delim) + construct.structure+'\n')
-		    for k, v in construct.structures.iteritems():
-			file.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+                    if 'structures' in construct.__dict__:
+			for k, v in construct.structures.iteritems():
+			    file.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
 		    file.write('OFFSET%s' % (delim) + str(construct.offset)+'\n')
 		    if construct.annotations:
 			file.write('ANNOTATION%s' % (delim) + self.annotation_str(construct.annotations, delim)+'\n')
@@ -383,6 +420,10 @@ class RDATFile:
 			for i,row in enumerate(self.traces[name]):
 			    if len(row) > 0:
 				file.write('TRACE:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+		    if name in self.reads:
+			for i,row in enumerate(self.reads[name]):
+			    if len(row) > 0:
+				file.write('READS:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
 		    if name in self.errors:
 			for i,row in enumerate(self.errors[name]):
 			    if len(row) > 0:
