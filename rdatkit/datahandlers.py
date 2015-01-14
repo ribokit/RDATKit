@@ -325,6 +325,29 @@ class RDATFile:
 	        print a[k]
 	        s += k + ':' + a[k][i] + delim
 	return s
+    
+
+    def save_a_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32):
+        self.version = version
+        self.constructs[construct] = RDATSection()
+        self.constructs[construct].name = construct
+        self.constructs[construct].seqpos = range(len(sequence))
+        self.constructs[construct].sequence = sequence
+        self.constructs[construct].sequences = defaultdict(int)
+        self.constructs[construct].structures = defaultdict(int)
+        self.constructs[construct].structure = structure
+        self.constructs[construct].offset = offset
+        self.constructs[construct].annotations = {}
+        self.constructs[construct].xsel = []
+        self.values[construct] = [data]
+        self.mutpos[construct] = []
+        self.comments = comments
+        self.constructs[construct].data = []
+        self.append_a_new_data_section(construct)
+        self.constructs[construct].data[0].values = data
+        self.constructs[construct].data[0].annotations = data_annotations
+        self.loaded = True
+        self.save(filename)
 
     def save(self, filename, version=None, delim='\t'):
         if not version:

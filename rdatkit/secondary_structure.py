@@ -159,7 +159,41 @@ class SecondaryStructure:
                                     fragments[key].append(junction + range(ssregion_start, i))
                 prevstate = ')'
         if self.dbn[-1] == '.':
+<<<<<<< HEAD
             fragments['dangles'].append(range(ssregion_start, len(self.dbn)))
+=======
+            fragments['dangles'].append(_get_ssregion(ssregion_start, len(self.dbn)))
+        # Eliminate spurious adds for single stranded regions and re-assign aptamer regions
+        aptamers = []
+        for k, v in fragments.iteritems():
+            if k != 'helices':
+                for i, ntlist in enumerate(v):
+                    v[i] = [x for x in ntlist if self.dbn[x] == '.']
+                    apt = [x for x in ntlist if self.dbn[x].lower() == 'a']
+                    if len(apt) > 0:
+                        aptamers.append(apt)
+            # Get rid of empty lists
+            fragments[k] = [x for x in v if len(x) > 0]
+        fragments['aptamers'] = aptamers
+        previ = -1
+        sstrand_region = []
+        fragments['sstrand'] = []
+        for i in xrange(len(self.dbn)):
+            found = False
+            for k, ntlists in fragments.iteritems():
+                for ntlist in ntlists:
+                    if i in ntlist:
+                        found = True
+            if not found:
+                if i != previ + 1 and previ >= 0:
+                    fragments['sstrand'].append(sstrand_region)
+                    sstrand_region = []
+                sstrand_region.append(i)
+                previ = i
+        if len(sstrand_region) > 0:
+            fragments['sstrand'].append(sstrand_region)
+
+>>>>>>> refs/remotes/origin/master
         return fragments
 
 
