@@ -284,15 +284,16 @@ class RDATFile:
 					fields = split(line.replace(':', ' ').replace('TRACE', '').strip('\n ,'),delims='\t, ')
 					data_idx = int(fields[0])-1
 					trace = [float(x) for x in fields[1:]]
-					self.constructs[current_construct].data[data_idx].trace = trace
-					self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
+					if data_idx < len(self.constructs[current_construct].data):
+						self.constructs[current_construct].data[data_idx].trace = trace
+						self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
 				elif 'READS' in line:
 					fields = split(line.replace(':', ' ').replace('READS', '').strip('\n ,'),delims='\t, ')
 					data_idx = int(fields[0])-1
 					reads = [float(x) for x in fields[1:]]
-					print data_idx, current_construct, len(self.constructs[current_construct].data)
-					self.constructs[current_construct].data[data_idx].reads = reads
-					self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
+					if data_idx < len(self.constructs[current_construct].data):
+						self.constructs[current_construct].data[data_idx].reads = reads
+						self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
 				elif 'XSEL_REFINE' in line:
 					fields = split(line.replace(':', ' ').replace('XSEL_REFINE', '').strip('\n ,'),delims='\t, ')
 					data_idx = int(fields[0])-1
