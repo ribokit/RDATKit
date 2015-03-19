@@ -213,13 +213,14 @@ class RDATFile:
 						seq = line
 						self.constructs[current_construct].sequence = seq.strip()
 						self.constructs[current_construct].sequences[0] = seq.strip()
-				elif 'STRUCTURE' in line:
+				elif 'STRUCTURE' in line and 'MAPseq:design_name' not in line:
 					if ':' in line:
 						attheader = 'STRUCTURE:'
 					else:
 						attheader = 'STRUCTURE'
 					line = line.replace(attheader, '')
 					if len(line.split()) > 1:
+						print line, line.replace(attheader,'').strip().split()
 						structidx, struct = line.replace(attheader,'').strip().split()
 						self.constructs[current_construct].structures[int(structidx)] = struct.strip()
 						self.constructs[current_construct].structure = struct.strip()
@@ -289,6 +290,7 @@ class RDATFile:
 					fields = split(line.replace(':', ' ').replace('READS', '').strip('\n ,'),delims='\t, ')
 					data_idx = int(fields[0])-1
 					reads = [float(x) for x in fields[1:]]
+					print data_idx, current_construct, len(self.constructs[current_construct].data)
 					self.constructs[current_construct].data[data_idx].reads = reads
 					self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
 				elif 'XSEL_REFINE' in line:
@@ -298,7 +300,7 @@ class RDATFile:
 					self.constructs[current_construct].data[data_idx].xsel = xsel
 					self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
 				elif 'XSEL' in line:
-					self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t')]
+					self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t, ')]
 				else:
 					if line.strip():
 						print 'Invalid section: '+line
