@@ -709,7 +709,7 @@ class RDATFile:
 				isatabfile.investigation_dict['Study Factor Type Term Source REF'].append('CHEBI')
 			return isatabfile
 
-		    
+
 """
 For the ISATAB format for chemical footprinting experiments
 """

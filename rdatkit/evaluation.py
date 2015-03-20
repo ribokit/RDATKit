@@ -64,27 +64,19 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
         thresh1 = thresh
     if helices:
         tp , fp, tn, fn = 0., 0., 0., 0.
-        bppm_index = zeros(bppm_pred.shape)
-        bppm_index[logical_or(bppm_pred > thresh2, bppm_true > thresh2)] = 1
-        helices = _find_helices_from_bppm(bppm_index)
+        helices = _find_helices_from_bppm(bppm_true >= thresh2)
+        helices_pred = _find_helices_from_bppm(bppm_pred >= thresh2)
         for h in helices:
+            if len(h) < 3:
+                continue 
             bps_tp = 0.
-            bps_fp = 0.
             bps_tn = 0.
             bps_fn = 0.
             for n1, n2 in h:
-                if len(h) <= 3:
-                    continue # No helices smaller than 4
-                if bppm_pred[n1, n2] >= thresh2 or bppm_true[n1, n2] >= thresh2:
-                    if bppm_true[n2, n1] >= thresh2:
-                        n3 = n2
-                        n2 = n1
-                        n1 = n3
+                if bppm_pred[n1, n2] >= thresh or bppm_true[n1, n2] >= thresh2:
                     if bppm_pred[n1, n2] >= thresh:
-                        if bppm_true[n1, n2] >= thresh:
+                        if bppm_true[n1, n2] >= thresh2:
                             bps_tp += 1
-                        else:
-                            bps_fp += 1
                     else:
                         if bppm_true[n1, n2] >= thresh2:
                             bps_fn += 1
@@ -92,12 +84,20 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
                             bps_tn += 1
             if bps_tp >= len(h)/2:
                 tp += 1
-            if bps_fp > len(h)/2:
-                fp += 1
             if bps_tn >= len(h)/2:
                 tn += 1
             if bps_fn > len(h)/2:
                 fn += 1
+        for h in helices_pred:
+            bps_fp = 0.
+            if len(h) < 3:
+                continue 
+            for n1, n2 in h:
+                if bppm_pred[n1, n2] >= thresh:
+                    if bppm_pred[n1, n2] >= thresh and bppm_true[n1, n2] < thresh2:
+                        bps_fp += 1
+            if bps_fp > len(h)/2:
+                fp += 1
         return tp, fp, tn, fn
     else:
         true_indices = bppm_true >= thresh2
