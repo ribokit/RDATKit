@@ -1,5 +1,5 @@
 build/
 dist/
-RDATkit.egg-info
+RDATkit.egg-info/
 rdatkit/settings.py
 
