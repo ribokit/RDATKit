@@ -26,7 +26,6 @@ class VARNA:
 	    option_str += '-%s "%s" ' % (key, argval)
 	comm = 'java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
 		  (settings.VARNA, sequence, structure, option_str, outfile)
-        print comm
         os.popen(comm)
 
     def _get_option_string(self, options):
@@ -77,7 +76,12 @@ class VARNA:
 	    if annotation_by_helix:
 		for helix in self.structures[i].helices():
 		    anchor = helix[0][helix_side] + 1 + (helix[-1][helix_side] - helix[0][helix_side])/2 + base_offset
-		    annotation_value = ba[helix[0]]
+                    if helix[0] in ba:
+		        annotation_value = ba[helix[0]]
+                    elif helix[0][::-1] in ba:
+                        annotation_value = ba[helix[0][::-1]]
+                    else:
+                        annotation_value = 0
 		    for bp in helix:
 			if bp in ba:
 			    nextval = ba[bp]
