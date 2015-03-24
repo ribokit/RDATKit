@@ -19,10 +19,10 @@ class RNA:
         if nsamples < 0:
             nsamples = len(self.sequence)
 
-        print len(self.sequence), mapping_data.shape()
+        # print len(self.sequence), mapping_data.shape()
         full_bps = secondary_structure.fold(self.sequence, algorithm=algorithm, mapping_data=mapping_data, fold_opts='', bonus2d=bonus2d)
-        print len(full_bps)
-        print full_bps
+        # print len(full_bps)
+        # print full_bps
         full_bps = full_bps[0].base_pairs()
         bpdict = dict([(bp, 0) for bp in full_bps])
         for i in range(nboot):

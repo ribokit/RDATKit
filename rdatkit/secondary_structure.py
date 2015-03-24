@@ -356,7 +356,7 @@ def mea_structure(sequence, algorithm='rnastructure', nstructs=1, gamma=1.0, opt
     else:
         return structs
 
-def fold(sequence, algorithm='rnastructure', mapping_data=[], nstructs=1, fold_opts='', bonus2d=False):
+def fold(sequence, algorithm='rnastructure', modifier='shape', mapping_data=[], nstructs=1, fold_opts='', bonus2d=False):
     if algorithm == 'rnastructure':
         seqname, ctname = _prepare_ct_and_seq_files(sequence)
         CMD = settings.RNA_STRUCTURE_FOLD + ' %s %s ' % (seqname, ctname)
@@ -369,11 +369,25 @@ def fold(sequence, algorithm='rnastructure', mapping_data=[], nstructs=1, fold_o
                 CMD += '-x %s ' % tmp.name
             else:
                 tmp = tempfile.NamedTemporaryFile(delete=False)
-                tmp.write(str(mapping_data))
+                if modifier.lower() == 'dms':
+                    for pos in mapping_data.seqpos:
+                        s = sequence[pos].lower()
+                        if s == 'a' or s == 'c':
+                            tmp.write('%d %.3f\n' % (pos + 1, float(mapping_data[pos])))
+                    CMD += '-dms %s ' % tmp.name
+                elif modifier.lower() == 'cmct':
+                    for pos in mapping_data.seqpos:
+                        s = sequence[pos].lower()
+                        if s == 'g' or s == 'u':
+                            tmp.write('%d %.3f\n' % (pos + 1, float(mapping_data[pos])))
+                    CMD += '-cmct %s ' % tmp.name
+                else:
+                    CMD += '-sh %s ' % tmp.name
+                    tmp.write(str(mapping_data))
                 tmp.close()
-                CMD += '-sh %s ' % tmp.name
-                CMD += fold_opts
+        CMD += fold_opts
         if debug: print(CMD);
+        
         os.popen(CMD)
         structs = _get_dot_structs(ctname, nstructs)
         removefile(seqname)
