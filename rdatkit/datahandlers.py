@@ -332,9 +332,11 @@ class RDATFile:
 	def annotation_str(self, a, delim):
 		s = ''
 		for k in a:
-			for i in range(len(a[k])):
-				print a[k]
-				s += k + ':' + a[k][i] + delim
+			if type(a[k]) == list:	
+				for i in range(len(a[k])):
+					s += k + ':' + a[k][i] + delim
+			else:
+				s += k + ':' + str(a[k]) + delim
 		return s
 
 
@@ -350,13 +352,20 @@ class RDATFile:
 		self.constructs[construct].offset = offset
 		self.constructs[construct].annotations = {}
 		self.constructs[construct].xsel = []
-		self.values[construct] = [data]
 		self.mutpos[construct] = []
 		self.comments = comments
 		self.constructs[construct].data = []
-		self.append_a_new_data_section(construct)
-		self.constructs[construct].data[0].values = data
-		self.constructs[construct].data[0].annotations = data_annotations
+		if type(data_annotations) == dict:
+		    self.values[construct] = [data]
+		    self.append_a_new_data_section(construct)
+		    self.constructs[construct].data[0].values = data
+		    self.constructs[construct].data[0].annotations = data_annotations
+		else:
+		    for i, data_annotation in enumerate(data_annotations):
+		        self.values[construct] = data
+			self.append_a_new_data_section(construct)
+			self.constructs[construct].data[-1].values = data[i,:]
+			self.constructs[construct].data[-1].annotations = data_annotation
 		self.loaded = True
 		self.save(filename)
 
