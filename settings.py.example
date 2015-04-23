@@ -17,3 +17,5 @@ for k in ['dangles', 'bulges', 'hairpins']:
 for k in ['all', 'interiorloops', 'helices', '3wayjunctions', '4wayjunctions',\
           '5wayjunctions', 'unpaired', 'internalpairs', 'edgepairs']:
     dists[k] = stats.gamma
+
+VERSION = '0.6'
