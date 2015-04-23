@@ -340,11 +340,14 @@ class RDATFile:
 		return s
 
 
-	def save_a_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32):
+	def save_a_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32, seqpos=None):
 		self.version = version
 		self.constructs[construct] = RDATSection()
 		self.constructs[construct].name = construct
-		self.constructs[construct].seqpos = range(len(sequence))
+		if seqpos is not None:
+		    self.constructs[construct].seqpos = seqpos
+		else:
+		    self.constructs[construct].seqpos = [i + offset for i in range(len(sequence))]
 		self.constructs[construct].sequence = sequence
 		self.constructs[construct].sequences = defaultdict(int)
 		self.constructs[construct].structures = defaultdict(int)
@@ -459,7 +462,7 @@ class RDATFile:
 						file.write('ANNOTATION_DATA:%s%s%s\n' % (i+1, delim, self.annotation_str(d.annotations, delim)))
 					if name in self.values:
 						for i,row in enumerate(self.values[name]):
-							file.write('REACTIVITY:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+							file.write('REACTIVITY:%s%s%s\n' % (i+1, delim, delim.join(['%.4f' % x for x in row])))
 					if name in self.traces:
 						for i,row in enumerate(self.traces[name]):
 							if len(row) > 0:
