@@ -286,7 +286,7 @@ def _get_dot_structs(ctname, nstructs, unique=False):
              (ctname, i+1, dbnname))
         if debug: print(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
              (ctname, i+1, dbnname));
-        dbnlines = open(dbname).readlines()
+        dbnlines = open(dbnname).readlines()
         if len(dbnlines) > 0:
 	    dbn = dbnlines[-1].strip()
 	    # Append only non trivial structures
