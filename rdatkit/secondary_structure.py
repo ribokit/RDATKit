@@ -286,16 +286,18 @@ def _get_dot_structs(ctname, nstructs, unique=False):
              (ctname, i+1, dbnname))
         if debug: print(settings.RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % \
              (ctname, i+1, dbnname));
-        dbn = open(dbnname).readlines()[-1].strip()
-        # Append only non trivial structures
-        if '(' in dbn:
-            if unique:
-                if dbn not in dbns:
-                    dbns.append(dbn)
-                    structs.append(SecondaryStructure(dbn=dbn))
-            else:
-                structs.append(SecondaryStructure(dbn=dbn))
-        removefile(dbnfile)
+        dbnlines = open(dbname).readlines()
+        if len(dbnlines) > 0:
+	    dbn = dbnlines[-1].strip()
+	    # Append only non trivial structures
+	    if '(' in dbn:
+		if unique:
+		    if dbn not in dbns:
+			dbns.append(dbn)
+			structs.append(SecondaryStructure(dbn=dbn))
+		else:
+		    structs.append(SecondaryStructure(dbn=dbn))
+	    removefile(dbnfile)
     return structs
 
 def _to_ct_file(sequence, struct, filename):
