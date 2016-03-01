@@ -3,93 +3,92 @@ import pdb
 import os
 from secondary_structure import SecondaryStructure
 
-class VARNA:
+class VARNA(object):
     
     @classmethod
     def get_colorMapStyle(self, values, sequence=''):
         if len(sequence) > len(values):
-	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
+            return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
         if reduce(lambda x,y: x or y, [x < 0 for x in values]):
-	    return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
-	else:
-	    return '0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
+            return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
+        else:
+            return '0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
     
     @classmethod
     def cmd(self, sequence, structure, outfile, options={}):
         option_str = ''
-	for key in options:
-	    val = options[key]
-	    if type(val) == list:
-		argval = str(val).strip('[]').replace('L', '').replace('u','')
-	    else:
-		argval = str(val)
-	    option_str += '-%s "%s" ' % (key, argval)
-	comm = 'java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' %\
-		  (settings.VARNA, sequence, structure, option_str, outfile)
+        for key in options:
+            val = options[key]
+            if type(val) == list:
+                argval = str(val).strip('[]').replace('L', '').replace('u','')
+            else:
+                argval = str(val)
+            option_str += '-%s "%s" ' % (key, argval)
+        comm = 'java -cp %s  fr.orsay.lri.varna.applications.VARNAcmd -sequenceDBN %s -structureDBN "%s" %s -o %s' % (settings.VARNA, sequence, structure, option_str, outfile)
         os.popen(comm)
 
     def _get_option_string(self, options):
         option_str = ''
-	for key in options:
-	    val = options[key]
-	    if type(val) == list:
-		argval = str(val).strip('[]').replace('L', '').replace('u','')
-	    else:
-		argval = str(val)
-	    option_str += '-%s "%s" ' % (key, argval)
+        for key in options:
+            val = options[key]
+            if type(val) == list:
+                argval = str(val).strip('[]').replace('L', '').replace('u','')
+            else:
+                argval = str(val)
+            option_str += '-%s "%s" ' % (key, argval)
         return option_str
 
     def __init__(self, sequences=[], structures=[], mapping_data=[]):
         self.sequences = sequences
-	self.structures = structures
+        self.structures = structures
         self.mapping_data = mapping_data
-	self.rows = 1
-	self.columns = 1
-	self.width = 522
-	self.height = 200
-	self.annotation_font_size = 9
-	self.annotation_color = '#FF0000'
+        self.rows = 1
+        self.columns = 1
+        self.width = 522
+        self.height = 200
+        self.annotation_font_size = 9
+        self.annotation_color = '#FF0000'
     
     def get_values(self, att):
         if att == 'structures':
-	    return [struct.dbn for struct in self.structures]
+            return [struct.dbn for struct in self.structures]
         return self.__dict__[att]
     
     def get_frames(self, overlap_structures):
         res = -1
         for key, val in self.__dict__.items():
-	    if overlap_structures and key == 'structures':
-		continue
-	    if type(val) == list:
-		res = max(res, len(val))
-	return res
+            if overlap_structures and key == 'structures':
+                continue
+            if type(val) == list:
+                res = max(res, len(val))
+        return res
 
     def _get_base_annotation_string(self, base_annotations, annotation_by_helix=False, helix_function=(lambda x,y:x), forapplet=False, base_offset=0, stype='L', helix_side=0):
         base_annotation_string = ''
-	for i, ba in enumerate(base_annotations):
-	    if len(base_annotations) > 1:
-		idx = str(i+1)
-	    else:
-		idx = ''
+        for i, ba in enumerate(base_annotations):
+            if len(base_annotations) > 1:
+                idx = str(i+1)
+            else:
+                idx = ''
             if forapplet:
                 base_annotation_string += '<param name="annotations%s" value=\n\t"' % idx
-	    if annotation_by_helix:
-		for helix in self.structures[i].helices():
-		    anchor = helix[0][helix_side] + 1 + (helix[-1][helix_side] - helix[0][helix_side])/2 + base_offset
+            if annotation_by_helix:
+                for helix in self.structures[i].helices():
+                    anchor = helix[0][helix_side] + 1 + (helix[-1][helix_side] - helix[0][helix_side])/2 + base_offset
                     if helix[0] in ba:
-		        annotation_value = ba[helix[0]]
+                        annotation_value = ba[helix[0]]
                     elif helix[0][::-1] in ba:
                         annotation_value = ba[helix[0][::-1]]
                     else:
                         annotation_value = 0
-		    for bp in helix:
-			if bp in ba:
-			    nextval = ba[bp]
-			    annotation_value = helix_function(annotation_value, nextval)
-		    base_annotation_string += '%s:type=%s,anchor=%d,size=%d,color=%s;' % (annotation_value, stype, anchor, self.annotation_font_size, self.annotation_color)
-	    else:
-		for bp in base_annotations:
-		    base_annotation_string += '%s:type=B,anchor=%d,size=%d,color=%s;' % (base_annotations[bp], bp[0] + base_offset, self.annotation_font_size, self.annotation_color)	
+                    for bp in helix:
+                        if bp in ba:
+                            nextval = ba[bp]
+                            annotation_value = helix_function(annotation_value, nextval)
+                    base_annotation_string += '%s:type=%s,anchor=%d,size=%d,color=%s;' % (annotation_value, stype, anchor, self.annotation_font_size, self.annotation_color)
+            else:
+                for bp in base_annotations:
+                    base_annotation_string += '%s:type=B,anchor=%d,size=%d,color=%s;' % (base_annotations[bp], bp[0] + base_offset, self.annotation_font_size, self.annotation_color)   
             base_annotation_string = base_annotation_string.strip() 
         if forapplet:
             base_annotation_string += '"/>\n'
@@ -198,9 +197,5 @@ class VARNA:
                               (settings.VARNA, sequence, structure.dbn, option_str, output)
                 i += 1
             return comm
-
-	
-	
-
 
 
