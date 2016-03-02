@@ -2,12 +2,11 @@
 datahandlers is a module that contains classes for representing structure mapping file formats in python.
 @author Pablo Sanchez Cordero
 """
+from collections import defaultdict
+# from itertools import chain
 import os
 import xlwt
 import xlrd
-
-from itertools import chain
-from collections import defaultdict
 
 if __package__ is None or not __package__:
     from util import *
@@ -60,7 +59,7 @@ class RDATFile(object):
         self.annotations = defaultdict(list)
         self.loaded = False
 
-    def append_a_new_data_section( self, current_construct ):
+    def append_a_new_data_section(self, current_construct):
         d = RDATSection()
         d.seqpos = []
         d.errors = []
@@ -74,35 +73,40 @@ class RDATFile(object):
 
     def load(self, file):
         self.filename = file.name
+        self.comments = ''
+
         current_section = 'general'
         fill_data_types = False
         INIT = False
-        self.comments = ''
+
         while True:
             line = file.readline()
             if not line:
                 break
             line = line.strip(' \n')
+
             if 'VERSION:' in line:
-                self.version = float(line.replace('VERSION:',''))
+                self.version = float(line.replace('VERSION:', ''))
                 continue
             elif 'VERSION' in line:
-                self.version = float(line.replace( 'RDAT_VERSION','').replace('VERSION',''))
+                self.version = float(line.replace('RDAT_VERSION', '').replace('VERSION', ''))
                 continue
+
             if self.version == 0.1:
                 if 'COMMENTS:' in line:
                     self.comments = line.replace('COMMENTS:','').strip()
+
                 elif 'ANNOTATION:' in line:
                     if current_section == 'general':
                         self.annotations = self.parse_annotations(line.replace('ANNOTATION:', ''))
                     elif current_section == 'construct':
-                        annotations =  self.parse_annotations(line.replace('ANNOTATION:',''))
-                        self.constructs[current_construct].annotations =  annotations
+                        annotations =  self.parse_annotations(line.replace('ANNOTATION:', ''))
+                        self.constructs[current_construct].annotations = annotations
                         if 'modifier' in annotations:
                             self.data_types[current_construct].append(annotations['modifier'][0])
                             fill_data_types = True
                     elif current_section == 'data':
-                        annotations = self.parse_annotations(line.replace('ANNOTATION:',''))
+                        annotations = self.parse_annotations(line.replace('ANNOTATION:', ''))
                         self.constructs[current_construct].data[data_idx].annotations = annotations
                         if 'modifier' in annotations:
                             self.data_types[current_construct].append(annotations['modifier'][0])
@@ -112,14 +116,15 @@ class RDATFile(object):
                             except ValueError:
                                 pass
                     else:
-                        print 'Attribute :'+line+' does not belong to a valid section'
+                        print 'Attribute :%s does not belong to a valid section' % line
 
                 elif 'CONSTRUCT' in line:
                     current_section = 'construct'
                     if fill_data_types:
-                        self.data_types[current_construct] = [self.data_types[current_construct][0]]*len(self.values[current_construct])
+                        self.data_types[current_construct] = [self.data_types[current_construct][0]] * len(self.values[current_construct])
                         fill_data_types = False
-                    current_construct = file.readline().strip().replace('NAME:','').strip()
+
+                    current_construct = file.readline().strip().replace('NAME:', '').strip()
                     data_idx = -1
                     self.constructs[current_construct] = RDATSection()
                     self.constructs[current_construct].name = current_construct
@@ -133,14 +138,19 @@ class RDATFile(object):
                     self.data_types[current_construct] = []
                     self.mutpos[current_construct] = []
                     self.constructs[current_construct].structure = ''
+
                 elif 'SEQUENCE:' in line:
                     self.constructs[current_construct].sequence = line.replace('SEQUENCE:', '').strip()
+
                 elif 'STRUCTURE:' in line:
                     self.constructs[current_construct].structure = line.replace('STRUCTURE:', '').strip()
+
                 elif 'WELLS:' in line:
                     self.constructs[current_construct].wells = line.replace('WELLS:', '').strip().split(',')
+
                 elif 'OFFSET:' in line:
-                    self.constructs[current_construct].offset = int(line.replace('OFFSET:',''))
+                    self.constructs[current_construct].offset = int(line.replace('OFFSET:', ''))
+
                 elif 'DATA' in line:
                     current_section = 'data'
                     data_idx += 1
@@ -149,22 +159,26 @@ class RDATFile(object):
                     d.seqpos = []
                     self.mutpos[current_construct].append('WT')
                     self.constructs[current_construct].data.append(d)
+
                 elif 'SEQPOS:' in line:
                     if current_section == 'construct':
-                        self.constructs[current_construct].seqpos= [int(x) for x in line.replace('SEQPOS:','').strip(' ,').split(',')]
+                        self.constructs[current_construct].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
                     else:
-                        self.constructs[current_construct].data[data_idx].seqpos = [int(x) for x in line.replace('SEQPOS:','').strip(' ,').split(',')]
+                        self.constructs[current_construct].data[data_idx].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
+
                 elif 'VALUES:' in line:
-                    self.constructs[current_construct].data[data_idx].values = [float(x) for x in line.replace('VALUES:','').strip(' ,').split(',')]
+                    self.constructs[current_construct].data[data_idx].values = [float(x) for x in line.replace('VALUES:', '').strip(' ,').split(',')]
                     self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
+
                 elif 'TRACE:' in line:
-                    self.constructs[current_construct].data[data_idx].trace = [float(x) for x in line.replace('TRACE:','').strip(' ,').split(',')]
+                    self.constructs[current_construct].data[data_idx].trace = [float(x) for x in line.replace('TRACE:', '').strip(' ,').split(',')]
                     self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
+
                 elif 'XSEL:' in line:
                     if current_section == 'construct':
-                        self.constructs[current_construct].xsel = [float(x) for x in line.replace('XSEL:','').strip(' ,').split(',')]
+                        self.constructs[current_construct].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
                     else:
-                        self.constructs[current_construct].data[data_idx].xsel = [float(x) for x in line.replace('XSEL:','').strip(' ,').split(',')]
+                        self.constructs[current_construct].data[data_idx].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
                         self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
                 else:
                     print 'Invalid section: '+line
@@ -173,17 +187,20 @@ class RDATFile(object):
                 if 'COMMENT' in line:
                     parsed_line = line
                     for sep in ' \t':
-                        parsed_line = parsed_line.replace('COMMENTS' + sep,'').replace('COMMENT' + sep,'')
+                        parsed_line = parsed_line.replace('COMMENTS' + sep, '').replace('COMMENT' + sep, '')
                     self.comments += parsed_line + '\n'
+
                 elif 'ANNOTATION' in line and not 'ANNOTATION_DATA' in line:
                     self.annotations = self.parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
+
                 elif 'CONSTRUCT' in line or 'NAME' in line:
                     current_section = 'construct'
-                    if 'CONSTRUCT' in line: line = file.readline().strip() # Advance to 'NAME' line.
+                    if 'CONSTRUCT' in line:
+                        line = file.readline().strip() # Advance to 'NAME' line.
                     #if fill_data_types:
                     #   self.data_types[current_construct] = [self.data_types[current_construct][0]]*len(self.values[current_construct])
                     #   fill_data_types = False
-                    current_construct = line.replace('NAME','').strip()
+                    current_construct = line.replace('NAME', '').strip()
                     data_idx = -1
                     self.constructs[current_construct] = RDATSection()
                     self.constructs[current_construct].name = current_construct
@@ -200,30 +217,26 @@ class RDATFile(object):
                     self.errors[current_construct] = []
                     self.constructs[current_construct].structure = ''
                     self.constructs[current_construct].sequence = ''
-                    self.constructs[current_construct].structures =  defaultdict(str)
-                    self.constructs[current_construct].sequences =  defaultdict(str)
+                    self.constructs[current_construct].structures = defaultdict(str)
+                    self.constructs[current_construct].sequences = defaultdict(str)
+
                 elif 'SEQUENCE' in line:
-                    if ':' in line:
-                        attheader = 'SEQUENCE:'
-                    else:
-                        attheader = 'SEQUENCE'
+                    attheader = 'SEQUENCE:' if ':' in line else 'SEQUENCE'
                     line = line.replace(attheader, '')
                     if len(line.split()) > 1:
-                        seqidx, seq = line.replace(attheader,'').strip().split()
+                        seqidx, seq = line.replace(attheader, '').strip().split()
                         self.constructs[current_construct].sequences[int(seqidx)] = seq.strip()
                         self.constructs[current_construct].sequence = seq.strip()
                     else:
                         seq = line
                         self.constructs[current_construct].sequence = seq.strip()
                         self.constructs[current_construct].sequences[0] = seq.strip()
+
                 elif 'STRUCTURE' in line and 'MAPseq:design_name' not in line:
-                    if ':' in line:
-                        attheader = 'STRUCTURE:'
-                    else:
-                        attheader = 'STRUCTURE'
+                    attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
                     line = line.replace(attheader, '')
                     if len(line.split()) > 1:
-                        print line, line.replace(attheader,'').strip().split()
+                        # print line, line.replace(attheader, '').strip().split()
                         structidx, struct = line.replace(attheader,'').strip().split()
                         self.constructs[current_construct].structures[int(structidx)] = struct.strip()
                         self.constructs[current_construct].structure = struct.strip()
@@ -231,26 +244,32 @@ class RDATFile(object):
                         struct = line
                         self.constructs[current_construct].structure = struct.strip()
                         self.constructs[current_construct].structures[0] = struct.strip()
+
                 elif 'OFFSET' in line:
-                    self.constructs[current_construct].offset = int(line.replace('OFFSET',''))
+                    self.constructs[current_construct].offset = int(line.replace('OFFSET', ''))
+
                 elif 'DATA_TYPE' in line:
                     current_section = 'data'
                     self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t')
+
                 elif 'SEQPOS' in line:
-                    seqpos_tmp = split(line.replace('SEQPOS','').strip(), delims='\t, ')
+                    seqpos_tmp = split(line.replace('SEQPOS', '').strip(), delims='\t, ')
                     if self.version >= 0.32:
                         self.constructs[current_construct].seqpos= [int(x[1:]) for x in seqpos_tmp]
                     else:
                         self.constructs[current_construct].seqpos= [int(x) for x in seqpos_tmp]
+
                 elif 'MUTPOS' in line:
-                    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS','').strip(), delims='\t')]
+                    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS', '').strip(), delims='\t')]
+
                 elif 'ANNOTATION_DATA' in line:
                     if self.version >= 0.23:
                         fields = split(line.replace('ANNOTATION_DATA:', '').strip(), delims='\t')
                     else:
                         fields = split(line.replace('ANNOTATION_DATA ', '').strip(), delims='\t')
-                    if len(fields) < 2: fields = split(fields[0], delims=' ')
-                    data_idx = int(fields[0])-1
+                    if len(fields) < 2:
+                        fields = split(fields[0], delims=' ')
+                    data_idx = int(fields[0]) - 1
                     annotations = self.parse_annotations(fields[1:])
                     for l in xrange(data_idx - len(self.constructs[current_construct].data) + 1):
                         self.append_a_new_data_section( current_construct )
@@ -263,55 +282,62 @@ class RDATFile(object):
                                 self.mutpos[current_construct].append(int(annotations['mutation'][0][1:-1]))
                         except ValueError:
                             pass
+
                 elif 'AREA_PEAK ' in line or 'REACTIVITY:' in line:
                     if 'AREA_PEAK ' in line:
                         fields = split(line.replace('AREA_PEAK ', '').strip('\n ,'), delims='\t, ')
                     if 'REACTIVITY:' in line: # Means we are in version >= 0.23
                         fields = split(line.replace('REACTIVITY:', '').strip('\n ,'), delims='\t, ')
-                    data_idx = int(fields[0])-1
+                    data_idx = int(fields[0]) - 1
                     peaks = [float(x) for x in fields[1:]]
-                    if ( data_idx >= len(self.constructs[current_construct].data) ):
+                    if (data_idx >= len(self.constructs[current_construct].data)):
                         self.append_a_new_data_section( current_construct )
                     self.constructs[current_construct].data[data_idx].values = peaks
                     self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
+
                 elif 'AREA_PEAK_ERROR' in line or 'REACTIVITY_ERROR:' in line:
                     if 'AREA_PEAK_ERROR ' in line:
                         fields = split(line.replace('AREA_PEAK_ERROR ', '').strip('\n ,'), delims='\t, ')
                     if 'REACTIVITY_ERROR:' in line: #Means we are in version >= 0.23
                         fields = split(line.replace('REACTIVITY_ERROR:', '').strip('\n ,'), delims='\t, ')
-                    data_idx = int(fields[0])-1
+                    data_idx = int(fields[0]) - 1
                     errors = [float(x) for x in fields[1:]]
                     self.constructs[current_construct].data[data_idx].errors = errors
                     self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
+
                 elif 'TRACE' in line:
                     fields = split(line.replace(':', ' ').replace('TRACE', '').strip('\n ,'),delims='\t, ')
-                    data_idx = int(fields[0])-1
+                    data_idx = int(fields[0]) - 1
                     trace = [float(x) for x in fields[1:]]
                     if data_idx < len(self.constructs[current_construct].data):
                         self.constructs[current_construct].data[data_idx].trace = trace
                         self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
+
                 elif 'READS' in line:
                     fields = split(line.replace(':', ' ').replace('READS', '').strip('\n ,'),delims='\t, ')
-                    data_idx = int(fields[0])-1
+                    data_idx = int(fields[0]) - 1
                     reads = [float(x) for x in fields[1:]]
                     if data_idx < len(self.constructs[current_construct].data):
                         self.constructs[current_construct].data[data_idx].reads = reads
                         self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
+
                 elif 'XSEL_REFINE' in line:
                     fields = split(line.replace(':', ' ').replace('XSEL_REFINE', '').strip('\n ,'),delims='\t, ')
-                    data_idx = int(fields[0])-1
+                    data_idx = int(fields[0]) - 1
                     xsel = [float(x) for x in fields[1:]]
                     self.constructs[current_construct].data[data_idx].xsel = xsel
                     self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
+
                 elif 'XSEL' in line:
-                    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL','').strip('\n ,'),delims='\t, ')]
+                    self.constructs[current_construct].xsel = [float(x) for x in split(line.replace(':', ' ').replace('XSEL', '').strip('\n ,'),delims='\t, ')]
                 else:
                     if line.strip():
-                        print 'Invalid section: '+line
+                        print 'Invalid section: ' + line
             else:
                 print 'Unknown version %s!' % self.version
+
             if fill_data_types:
-                self.data_types[current_construct] = [self.data_types[current_construct][0]]*len(self.values[current_construct])
+                self.data_types[current_construct] = [self.data_types[current_construct][0]] * len(self.values[current_construct])
             self.loaded = True
 
 
@@ -322,6 +348,7 @@ class RDATFile(object):
             s = s.split(',')
         else:
             token = ':'
+
         for item in s:
             if item:
                 pair = item.split(token)
@@ -370,7 +397,7 @@ class RDATFile(object):
             for i, data_annotation in enumerate(data_annotations):
                 self.values[construct] = data
             self.append_a_new_data_section(construct)
-            self.constructs[construct].data[-1].values = data[i,:]
+            self.constructs[construct].data[-1].values = data[i, :]
             self.constructs[construct].data[-1].annotations = data_annotation
         self.loaded = True
         self.save(filename)
@@ -378,115 +405,124 @@ class RDATFile(object):
 
     def save(self, filename, version=None, delim='\t'):
         if not version:
-            if not self.version:
-                version = 0.3
-            else:
-                version = self.version
+            version = 0.3 if not self.version else self.version
+
         if not self.loaded:
             print 'No data to save...'
         else:
+            f = open(filename, 'w')
+
             if version == 0.1:
-                file = open(filename, 'w')
-                file.write('VERSION: '+str(self.version)+'\n')
-                file.write('COMMENTS: '+str(self.comments)+'\n')
-                file.write('ANNOTATION: '+self.annotation_str(self.annotations, delim)+'\n')
+                f.write('VERSION: %s\n' % str(self.version))
+                f.write('COMMENTS: %s\n' % str(self.comments))
+                f.write('ANNOTATION: %s\n' % self.annotation_str(self.annotations, delim))
+
                 for name in self.constructs:
                     construct = self.constructs[name]
-                    file.write('CONSTRUCT\n')
-                    file.write('NAME: '+name+'\n')
-                    file.write('SEQUENCE: '+construct.sequence+'\n')
-                    file.write('WELLS: '+','.join([x for x in construct.wells])+'\n')
-                    file.write('OFFSET: '+str(construct.offset)+'\n')
-                    file.write('ANNOTATION: '+self.annotation_str(construct.annotations, delim)+'\n')
+                    f.write('CONSTRUCT\n')
+                    f.write('NAME: %s\n' % name)
+                    f.write('SEQUENCE: %s\n' % construct.sequence)
+                    f.write('WELLS: %s\n' % ','.join([x for x in construct.wells]))
+                    f.write('OFFSET: %s\n' % str(construct.offset))
+                    f.write('ANNOTATION: %s\n' % self.annotation_str(construct.annotations, delim))
                     for d in construct.data:
-                        file.write('DATA\n')
-                        file.write('SEQPOS: '+','.join([str(x) for x in d.seqpos])+'\n')
-                        file.write('ANNOTATION: '+self.annotation_str(d.annotations, delim)+'\n')
-                        file.write('VALUES: '+','.join([str(x) for x in d.values])+'\n')
-            elif version == 0.2 or version == 0.21 :
-                file = open(filename, 'w')
-                file.write('VERSION '+str(version)+'\n')
-                file.write('COMMENTS '+str(self.comments)+'\n')
+                        f.write('DATA\n')
+                        f.write('SEQPOS: %s\n' % ','.join([str(x) for x in d.seqpos]))
+                        f.write('ANNOTATION: %s\n' % self.annotation_str(d.annotations, delim))
+                        f.write('VALUES: %s\n' % ','.join([str(x) for x in d.values]))
+
+            elif version == 0.2 or version == 0.21:
+                f.write('VERSION %s\n' % str(version))
+                f.write('COMMENTS %s\n' % str(self.comments))
                 for name in self.constructs:
                     construct = self.constructs[name]
-                    file.write('CONSTRUCT\n')
-                    file.write('NAME '+name+'\n')
-                    file.write('SEQUENCE '+construct.sequence+'\n')
-                    file.write('STRUCTURE '+construct.structure+'\n')
-                    file.write('OFFSET '+str(construct.offset)+'\n')
+                    f.write('CONSTRUCT\n')
+                    f.write('NAME %s\n' % name)
+                    f.write('SEQUENCE %s\n' % construct.sequence)
+                    f.write('STRUCTURE %s\n' % construct.structure)
+                    f.write('OFFSET %s\n' % str(construct.offset))
                     if construct.annotations:
-                        file.write('ANNOTATION '+self.annotation_str(construct.annotations, delim)+'\n')
-                    file.write('MUTPOS '+delim.join([str(x) for x in self.mutpos[name]])+'\n')
-                    file.write('SEQPOS '+delim.join([str(x) for x in construct.seqpos])+'\n')
-                    file.write('DATA_TYPE '+' '.join(self.data_types[name])+'\n')
+                        f.write('ANNOTATION %s\n' % self.annotation_str(construct.annotations, delim))
+                    f.write('MUTPOS %s\n' % delim.join([str(x) for x in self.mutpos[name]]))
+                    f.write('SEQPOS %s\n' % delim.join([str(x) for x in construct.seqpos]))
+                    f.write('DATA_TYPE %s\n' % ' '.join(self.data_types[name]))
+
                     for i, d in enumerate(construct.data):
-                        file.write('ANNOTATION_DATA %s %s\n' % (i+1, self.annotation_str(d.annotations, delim)))
-                    for i,row in enumerate(self.values[name]):
-                        file.write('AREA_PEAK %s %s\n' % (i+1, delim.join([str(x) for x in row])))
-                    for i,row in enumerate(self.traces[name]):
-                        file.write('TRACE %s %s\n' % (i+1, delim.join([str(x) for x in row])))
+                        f.write('ANNOTATION_DATA %s %s\n' % (i + 1, self.annotation_str(d.annotations, delim)))
+                    for i, row in enumerate(self.values[name]):
+                        f.write('AREA_PEAK %s %s\n' % (i + 1, delim.join([str(x) for x in row])))
+                    for i, row in enumerate(self.traces[name]):
+                        f.write('TRACE %s %s\n' % (i + 1, delim.join([str(x) for x in row])))
+
                     if self.errors:
-                        for i,row in enumerate(self.errors[name]):
-                            file.write('AREA_PEAK_ERRORS %s %s\n' % (i+1, delim.join([str(x) for x in row])))
+                        for i, row in enumerate(self.errors[name]):
+                            f.write('AREA_PEAK_ERRORS %s %s\n' % (i + 1, delim.join([str(x) for x in row])))
                     if construct.xsel:
-                        file.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
-                    for i,row in enumerate(self.xsels[name]):
-                        file.write('XSEL_REFINE %s %s\n' % (i+1, delim.join([str(x) for x in row])))
+                        f.write('XSEL %s\n' % ' '.join([str(x) for x in construct.xsel]))
+
+                    for i, row in enumerate(self.xsels[name]):
+                        f.write('XSEL_REFINE %s %s\n' % (i + 1, delim.join([str(x) for x in row])))
+
             elif version >= 0.24 :
-                file = open(filename, 'w')
-                file.write('VERSION%s' % (delim) + str(version)+'\n')
-                file.write('COMMENTS%s' % (delim) + str(self.comments)+'\n')
+                f.write('VERSION%s%s\n' % (delim, str(version)))
+                f.write('COMMENTS%s%s\n' % (delim, str(self.comments)))
+
                 for name in self.constructs:
                     construct = self.constructs[name]
-                    file.write('NAME%s' % (delim) + name+'\n')
+                    f.write('NAME%s%s\n' % (delim, name))
+
                     if construct.sequence:
-                        file.write('SEQUENCE%s' % (delim) + construct.sequence+'\n')
+                        f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
                     if 'sequences' in construct.__dict__:
                         for k, v in construct.sequences.iteritems():
-                            file.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
+                            f.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
                     if construct.structure:
-                        file.write('STRUCTURE%s' % (delim) + construct.structure+'\n')
+                        f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
                     if 'structures' in construct.__dict__:
                         for k, v in construct.structures.iteritems():
-                            file.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
-                    file.write('OFFSET%s' % (delim) + str(construct.offset)+'\n')
+                            f.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+                    f.write('OFFSET%s%s\n' % (delim, str(construct.offset)))
+
                     if construct.annotations:
-                        file.write('ANNOTATION%s' % (delim) + self.annotation_str(construct.annotations, delim)+'\n')
+                        f.write('ANNOTATION%s%s\n' % (delim, self.annotation_str(construct.annotations, delim)))
                     if version >= 0.32:
                         if name in self.mutpos:
-                            file.write('MUTPOS%s' % (delim) + delim.join([str(x) for x in self.mutpos[name]])+'\n')
+                            f.write('MUTPOS%s%s\n' % (delim, delim.join([str(x) for x in self.mutpos[name]])))
                         else:
-                            file.write('MUTPOS%s' % (delim) + 'WT '*len(construct.data) + '\n')
+                            f.write('MUTPOS%s%s\n' % (delim, 'WT '* len(construct.data)))
                     if version >= 0.32:
-                        file.write('SEQPOS%s' % (delim) + delim.join([construct.sequence[x - construct.offset] + str(x+1) for x in construct.seqpos])+'\n')
+                        f.write('SEQPOS%s%s\n' % (delim, elim.join([construct.sequence[x - construct.offset] + str(x + 1) for x in construct.seqpos])))
                     else:
-                        file.write('SEQPOS%s' % (delim) + delim.join([str(x+1) for x in construct.seqpos])+'\n')
+                        f.write('SEQPOS%s%s\n' % (delim, delim.join([str(x + 1) for x in construct.seqpos])))
+
                     for i, d in enumerate(construct.data):
-                        file.write('ANNOTATION_DATA:%s%s%s\n' % (i+1, delim, self.annotation_str(d.annotations, delim)))
+                        f.write('ANNOTATION_DATA:%s%s%s\n' % (i + 1, delim, self.annotation_str(d.annotations, delim)))
+
                     if name in self.values:
-                        for i,row in enumerate(self.values[name]):
-                            file.write('REACTIVITY:%s%s%s\n' % (i+1, delim, delim.join(['%.4f' % x for x in row])))
+                        for i, row in enumerate(self.values[name]):
+                            f.write('REACTIVITY:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
                     if name in self.traces:
-                        for i,row in enumerate(self.traces[name]):
+                        for i, row in enumerate(self.traces[name]):
                             if len(row) > 0:
-                                file.write('TRACE:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+                                filename.write('TRACE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     if name in self.reads:
-                        for i,row in enumerate(self.reads[name]):
+                        for i, row in enumerate(self.reads[name]):
                             if len(row) > 0:
-                                file.write('READS:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+                                f.write('READS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     if name in self.errors:
-                        for i,row in enumerate(self.errors[name]):
+                        for i, row in enumerate(self.errors[name]):
                             if len(row) > 0:
-                                file.write('REACTIVITY_ERRORS:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+                                f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     if construct.xsel:
-                        file.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+                        f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
                     if name in self.xsels:
-                        for i,row in enumerate(self.xsels[name]):
+                        for i, row in enumerate(self.xsels[name]):
                             if len(row) > 0:
-                                file.write('XSEL_REFINE:%s%s%s\n' % (i+1, delim, delim.join([str(x) for x in row])))
+                                f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
 
             else:
                 print 'Wrong version number %s' % version
+            f.close()
  
 
     def validate(self):
@@ -512,17 +548,17 @@ class RDATFile(object):
                     messages.append( 'WARNING! Data for index %s has no values for area peaks' % i)
                 if not 'trace' in d.__dict__:
                     messages.append( 'WARNING! Data for index %s has no trace' % i)
-                if len(self.xsels) > 0 and not 'xsel' in d.__dict__:
+                if len(self.xsels) > 0 and ('xsel' not in d.__dict__):
                     messages.append( 'WARNING! Data for index %s has no xsel refine' % i)
                 if 'xsel' in c.__dict__:
                     if len(c.xsel) != len(d.values):
                         messages.append( 'WARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s' % (len(c.xsel), len(d.values), i ))
                 if 'xsel' in d.__dict__: 
                     if len(d.xsel) != 0 and len(d.xsel) != len(d.values):
-                        messages.append( 'WARNING! Number of bands in xsel indexed %s  [%s] does not match number of bands in values area peak [%s]' % (i, len(d.xsel), len(d.values) ))
+                        messages.append( 'WARNING! Number of bands in xsel indexed %s [%s] does not match number of bands in values area peak [%s]' % (i, len(d.xsel), len(d.values) ))
             return messages
- 
-        
+
+
     def toISATAB(self):
 
         def parse_concentration(s):
@@ -534,11 +570,9 @@ class RDATFile(object):
 
         isatabfile = ISATABFile()
         j = 0
-        general_factors = []
-        protocols = set()
-        general_protocol = ''
-        chemicals = set()
-        isatabfile.investigation_dict['Study File Name'].append(self.filename + ' (check entry ' + self.filename[:self.filename.find('.')] + ' at http://rmdb.stanford.edu for details)')
+        (general_factors, general_protocol) = ([], '')
+        (protocols, chemicals) = (set(), set())
+        isatabfile.investigation_dict['Study File Name'].append(self.filename + ' (check entry ' + self.filename[:self.filename.find('.')] + ' at https://rmdb.stanford.edu/deposit/validate/ for details)')
         """
         if 'pmid' in self.annotations:
             pmid = self.annotations['pmid'][0]
@@ -562,11 +596,12 @@ class RDATFile(object):
 
         for k in ['chemical', 'salt', 'buffer', 'temperature']:
             if k in self.annotations:
-                isatabfile.investigation_dict['Study Factor Name'].append('%s %s (constant for all assays)' % (k,self.annotations[k]))
+                isatabfile.investigation_dict['Study Factor Name'].append('%s %s (constant for all assays)' % (k, self.annotations[k]))
                 if k != 'temperature':
                     isatabfile.investigation_dict['Study Factor Type'].append('Compound')
                 else:
                     isatabfile.investigation_dict['Study Factor Type'].append('Temperature')
+
         if 'technology' in self.annotations:
             tech = self.annotations['technology'][0]
         else:
@@ -600,7 +635,7 @@ class RDATFile(object):
         for cname in self.constructs:
             construct = self.constructs[cname] 
             for i, d in enumerate(construct.data):
-                name = cname.replace(' ','-')
+                name = cname.replace(' ', '-')
                 seq = ''
                 for j in construct.seqpos:
                     seq += construct.sequence[j - construct.offset - 1]
@@ -611,13 +646,14 @@ class RDATFile(object):
                         if mutlabel != 'WT':
                             try:
                                 index = int(mutlabel[1:-1]) - construct.offset
-                                seq = seq[:index-1]+mutlabel[-1]+seq[index:]
+                                seq = seq[:index-1] + mutlabel[-1] + seq[index:]
                             except ValueError:
                                 # The mutation label is not in standard format, default to normal sequence and make a note
                                 seq += ' Note, mutation=%s' % mutlabel
                 else:
                     name = name + '_WT'
-                idname = name + '_' + str(i+1)
+
+                idname = name + '_' + str(i + 1)
                 isatabfile.assays_dict['Assay Name'].append(idname)
                 isatabfile.sample_id_name_map[idname] = name
                 isatabfile.data[idname] = d.values
@@ -625,14 +661,16 @@ class RDATFile(object):
                 isatabfile.assays_dict['Source Name'].append(name)
                 isatabfile.assays_dict['Characteristics[Nucleotide Sequence]'].append(seq)
                 isatabfile.assays_dict['Characteristics[Nucleotide Type]'].append('RNA')
+
                 if 'production' in d.annotations:
-                    isatabfile.assays_dict['Characteristics[RNA Production]'].append(d.annotations['production'][0].replace('-',' '))
+                    isatabfile.assays_dict['Characteristics[RNA Production]'].append(d.annotations['production'][0].replace('-', ' '))
                 else:
                     isatabfile.assays_dict['Characteristics[RNA Production]'].append('in vitro synthesis')
+
                 if 'modifier' in d.annotations:
                     modifier = d.annotations['modifier'][0]
                     if modifier in ONTOLOGY.MODIFIER_PROTOCOL:
-                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[d.annotations['modifier'][0]].replace('-',' '))
+                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[d.annotations['modifier'][0]].replace('-', ' '))
                         protocol = ONTOLOGY.MODIFIER_PROTOCOL[d.annotations['modifier'][0]]
                     else:
                         isatabfile.assays_dict['Protocol REF'].append(modifier)
@@ -641,7 +679,7 @@ class RDATFile(object):
                 elif 'modifier' in self.annotations:
                     modifier = self.annotations['modifier'][0]
                     if modifier in ONTOLOGY.MODIFIER_PROTOCOL:
-                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]].replace('-',' '))
+                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]].replace('-', ' '))
                         protocol = ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]]
                     else:
                         isatabfile.assays_dict['Protocol REF'].append(modifier)
@@ -653,14 +691,16 @@ class RDATFile(object):
                 else:
                     isatabfile.assays_dict['Protocol REF'].append('')
                     protocol = ''
-                isatabfile.assays_dict['Parameter Value[Data Starts at Sequence Position]'].append(str(min(construct.seqpos)-construct.offset))
+
+                isatabfile.assays_dict['Parameter Value[Data Starts at Sequence Position]'].append(str(min(construct.seqpos) - construct.offset))
                 isatabfile.assays_dict['Raw Data File'].append('datamatrix.txt')
                 if 'performer' in d.annotations:
-                    isatabfile.assays_dict['Performer'].append(d.annotations['performer'][0].replace('-',' '))
+                    isatabfile.assays_dict['Performer'].append(d.annotations['performer'][0].replace('-', ' '))
                 elif 'performer' in self.annotations:
-                    isatabfile.assays_dict['Performer'].append(self.annotations['performer'][0].replace('-',' '))
+                    isatabfile.assays_dict['Performer'].append(self.annotations['performer'][0].replace('-', ' '))
                 else:
                     isatabfile.assays_dict['Performer'].append('')
+
                 if 'date' in d.annotations:
                     isatabfile.assays_dict['Date'].append(d.annotations['date'][0])
                 elif 'date' in self.annotations: 
@@ -668,10 +708,12 @@ class RDATFile(object):
                 else:
                     isatabfile.assays_dict['Date'].append('')
                 isatabfile.assays_dict['Term Source REF'].append('OBI')
+
                 if protocol in ONTOLOGY.PROTOCOL:
                     isatabfile.assays_dict['Term Accession Number'].append(ONTOLOGY.PROTOCOL[protocol])
                 else:
                     isatabfile.assays_dict['Term Accession Number'].append(protocol)
+
                 for k in ['chemical', 'folding-salt', 'buffer', 'salt']:
                     if k in d.annotations:
                         chemical, concentration = d.annotations[k][0].split(':')
@@ -692,8 +734,8 @@ class RDATFile(object):
                         isatabfile.assays_factors[k]['concentration'].append(concentration)
                         isatabfile.assays_factors[k]['unit'].append(units)
                         isatabfile.assays_factors[k]['accession'].append(term)
-                        chemicals.add(k.replace('-',' '))
-                        chemicals.add(k.replace('-',' ') + ' concentration')
+                        chemicals.add(k.replace('-', ' '))
+                        chemicals.add(k.replace('-', ' ') + ' concentration')
                     else:
                         if k in chemicals:
                             isatabfile.assays_factors[k]['value'].append('')
@@ -701,19 +743,21 @@ class RDATFile(object):
                             isatabfile.assays_factors[k]['concentration'].append('')
                             isatabfile.assays_factors[k]['unit'].append('')
                             isatabfile.assays_factors[k]['accession'].append('')
+
                 for p in general_factors:
                     if p[0] in isatabfile.assays_dict:
                         isatabfile.assays_dict[p[0]].append(p[1])
                     else:
                         isatabfile.assays_dict[p[0]] = [p[1]]
+
             for p in protocols:
                 if p in ONTOLOGY.PROTOCOL:
                     term = ONTOLOGY.PROTOCOL[p]
                 else:
                     term = p
-                isatabfile.investigation_dict['Study Protocol Name'].append(p.replace('-',' '))
+                isatabfile.investigation_dict['Study Protocol Name'].append(p.replace('-', ' '))
                 isatabfile.investigation_dict['Study Protocol Type Term Source REF'].append('OBI')
-                isatabfile.investigation_dict['Study Assay Measurement Type'].append(p.replace('-',' '))
+                isatabfile.investigation_dict['Study Assay Measurement Type'].append(p.replace('-', ' '))
                 isatabfile.investigation_dict['Study Assay Measurement Type Term Accession Number'].append(term)
                 isatabfile.investigation_dict['Study Assay Measurement Type Term Source REF'].append(term.split(':')[0])
                 isatabfile.investigation_dict['Study Assay Technology Type'].append(tech)
@@ -730,117 +774,120 @@ For the ISATAB format for chemical footprinting experiments
 """
 
 
-investigation_keys = ['ONTOLOGY SOURCE REFERENCE','Term Source Name','Term Source File','Term Source Version','Term Source Description','INVESTIGATION','Investigation Identifier','Investigation Title','Investigation Description','Investigation Submission Date','Investigation Public Release Date','INVESTIGATION PUBLICATIONS','Investigation PubMed ID','Investigation Publication DOI','Investigation Publication Author list','Investigation Publication Title','Investigation Publication Status','Investigation Publication Status Term Accession Number','Investigation Publication Status Term Source REF','INVESTIGATION CONTACTS','Investigation Person Last Name','Investigation Person First Name','Investigation Person Mid Initials','Investigation Person Email','Investigation Person Phone','Investigation Person Fax','Investigation Person Address','Investigation Person Affiliation','Investigation Person Roles','Investigation Person Roles Term Accession Number','Investigation Person Roles Term Source REF','STUDY','Study Identifier','Study Title','Study Submission Date','Study Public Release Date','Study Description','Study File Name','STUDY DESIGN DESCRIPTORS','Study Design Type','Study Design Type Term Accession Number','Study Design Type Term Source REF','STUDY PUBLICATIONS','Study PubMed ID','Study Publication DOI','Study Publication Author list','Study Publication Title','Study Publication Status','Study Publication Status Term Accession Number','Study Publication Status Term Source REF','STUDY FACTORS','Study Factor Name','Study Factor Type','Study Factor Type Term Accession Number','Study Factor Type Term Source REF','Study Assay Measurement Type','Study Assay Measurement Type Term Accession Number','Study Assay Measurement Type Term Source REF','Study Assay Technology Type','Study Assay Technology Type Term Accession Number','Study Assay Technology Type Term Source REF','Study Assay Technology Platform','Study Assay File Name','STUDY PROTOCOLS','Study Protocol Name','Study Protocol Type','Study Protocol Type Term Accession Number','Study Protocol Type Term Source REF','Study Protocol Description','Study Protocol URI','Study Protocol Version','Study Protocol Parameters Name','Study Protocol Parameters Name Term Accession Number','Study Protocol Parameters Name Term Source REF','Study Protocol Components Name','Study Protocol Components Type','Study Protocol Components Type Term Accession Number','Study Protocol Components Type Term Source REF','STUDY CONTACTS','Study Person Last Name','Study Person First Name','Study Person Mid Initials','Study Person Email','Study Person Phone','Study Person Fax','Study Person Address','Study Person Affiliation','Study Person Roles', 'Study Person Roles Term Accession Number', 'Study Person Roles Term Source REF']
+investigation_keys = ['ONTOLOGY SOURCE REFERENCE', 'Term Source Name', 'Term Source File', 'Term Source Version', 'Term Source Description', 'INVESTIGATION', 'Investigation Identifier', 'Investigation Title', 'Investigation Description', 'Investigation Submission Date', 'Investigation Public Release Date', 'INVESTIGATION PUBLICATIONS', 'Investigation PubMed ID', 'Investigation Publication DOI', 'Investigation Publication Author list', 'Investigation Publication Title', 'Investigation Publication Status', 'Investigation Publication Status Term Accession Number', 'Investigation Publication Status Term Source REF', 'INVESTIGATION CONTACTS', 'Investigation Person Last Name', 'Investigation Person First Name', 'Investigation Person Mid Initials', 'Investigation Person Email', 'Investigation Person Phone', 'Investigation Person Fax', 'Investigation Person Address', 'Investigation Person Affiliation', 'Investigation Person Roles', 'Investigation Person Roles Term Accession Number', 'Investigation Person Roles Term Source REF', 'STUDY', 'Study Identifier', 'Study Title', 'Study Submission Date', 'Study Public Release Date', 'Study Description', 'Study File Name', 'STUDY DESIGN DESCRIPTORS', 'Study Design Type', 'Study Design Type Term Accession Number', 'Study Design Type Term Source REF', 'STUDY PUBLICATIONS', 'Study PubMed ID', 'Study Publication DOI', 'Study Publication Author list', 'Study Publication Title', 'Study Publication Status', 'Study Publication Status Term Accession Number', 'Study Publication Status Term Source REF', 'STUDY FACTORS', 'Study Factor Name', 'Study Factor Type', 'Study Factor Type Term Accession Number', 'Study Factor Type Term Source REF', 'Study Assay Measurement Type', 'Study Assay Measurement Type Term Accession Number', 'Study Assay Measurement Type Term Source REF', 'Study Assay Technology Type', 'Study Assay Technology Type Term Accession Number', 'Study Assay Technology Type Term Source REF', 'Study Assay Technology Platform', 'Study Assay File Name', 'STUDY PROTOCOLS', 'Study Protocol Name', 'Study Protocol Type', 'Study Protocol Type Term Accession Number', 'Study Protocol Type Term Source REF', 'Study Protocol Description', 'Study Protocol URI', 'Study Protocol Version', 'Study Protocol Parameters Name', 'Study Protocol Parameters Name Term Accession Number', 'Study Protocol Parameters Name Term Source REF', 'Study Protocol Components Name', 'Study Protocol Components Type', 'Study Protocol Components Type Term Accession Number', 'Study Protocol Components Type Term Source REF', 'STUDY CONTACTS', 'Study Person Last Name', 'Study Person First Name', 'Study Person Mid Initials', 'Study Person Email', 'Study Person Phone', 'Study Person Fax', 'Study Person Address', 'Study Person Affiliation', 'Study Person Roles', 'Study Person Roles Term Accession Number', 'Study Person Roles Term Source REF']
 assays_optional_columns = ['Factor Value[chemical]', 'Term Source REF[chemical]', 'Term Accession Number[chemical]', 'Factor Value[chemical concentration]', 'Unit[chemical]']
 
 
 class ISATABFile(object):
     def __init__(self):
-        self.assays_keys = ['Source Name','Characteristics[Nucleotide Sequence]','Characteristics[Nucleotide Type]','Characteristics[RNA Production]','Protocol REF','Parameter Value[Data Starts at Sequence Position]', 'Term Source REF','Term Accession Number', 'Assay Name', 'Raw Data File','Performer','Date']
-        self.investigation_dict = {}
-        self.assays_dict = {}
-        self.assays_dict['Source Name'] = []
-        self.assays_dict['Characteristics[Nucleotide Sequence]'] = []
-        self.assays_dict['Characteristics[Nucleotide Type]'] = []
-        self.assays_dict['Characteristics[RNA Production]'] = []
-        self.assays_dict['Protocol REF'] = []
-        self.assays_dict['Parameter Value[Data Starts at Sequence Position]'] = []
-        self.assays_dict['Assay Name'] = []
-        self.assays_dict['Raw Data File'] = []
-        self.assays_dict['Performer'] = []
-        self.assays_dict['Date'] = []
-        self.assays_dict['Term Source REF'] = []
-        self.assays_dict['Term Accession Number'] = []
-        self.investigation_dict['ONTOLOGY SOURCE REFERENCE'] = []
-        self.investigation_dict['Term Source Name'] = ['OBI','CHEBI', 'UO']
-        self.investigation_dict['Term Source File'] = [] 
-        self.investigation_dict['Term Source Version'] = ['v 1.26', 'v 1.26', 'v 1.26']
-        self.investigation_dict['Term Source Description'] = ['Ontology for Biomedical Investigations', 'Chemical Entity of Biological Interest', 'Unit Ontology']
-        self.investigation_dict['INVESTIGATION'] = []
-        self.investigation_dict['Investigation Identifier'] = []
-        self.investigation_dict['Investigation Title'] = []
-        self.investigation_dict['Investigation Description'] = []
-        self.investigation_dict['Investigation Submission Date'] = []
-        self.investigation_dict['Investigation Public Release Date'] = []
-        self.investigation_dict['INVESTIGATION PUBLICATIONS'] = []
-        self.investigation_dict['Investigation PubMed ID'] = []
-        self.investigation_dict['Investigation Publication DOI'] = []
-        self.investigation_dict['Investigation Publication Author list'] = []
-        self.investigation_dict['Investigation Publication Title'] = []
-        self.investigation_dict['Investigation Publication Status'] = []
-        self.investigation_dict['Investigation Publication Status Term Accession Number'] = []
-        self.investigation_dict['Investigation Publication Status Term Source REF'] = []
-        self.investigation_dict['INVESTIGATION CONTACTS'] = []
-        self.investigation_dict['Investigation Person Last Name'] = []
-        self.investigation_dict['Investigation Person First Name'] = []
-        self.investigation_dict['Investigation Person Mid Initials'] = []
-        self.investigation_dict['Investigation Person Email'] = []
-        self.investigation_dict['Investigation Person Phone'] = []
-        self.investigation_dict['Investigation Person Fax'] = []
-        self.investigation_dict['Investigation Person Address'] = []
-        self.investigation_dict['Investigation Person Affiliation'] = []
-        self.investigation_dict['Investigation Person Roles'] = []
-        self.investigation_dict['Investigation Person Roles Term Accession Number'] = []
-        self.investigation_dict['Investigation Person Roles Term Source REF'] = []
-        self.investigation_dict['STUDY'] = []
-        self.investigation_dict['Study Identifier'] = []
-        self.investigation_dict['Study Title'] = []
-        self.investigation_dict['Study Submission Date'] = []
-        self.investigation_dict['Study Public Release Date'] = []
-        self.investigation_dict['Study Description'] = []
-        self.investigation_dict['Study File Name'] = []
-        self.investigation_dict['STUDY DESIGN DESCRIPTORS'] = []
-        self.investigation_dict['Study Design Type'] = ['SNRNASM']
-        self.investigation_dict['Study Design Type Term Accession Number'] = ['OBI']
-        self.investigation_dict['Study Design Type Term Source REF'] = []
-        self.investigation_dict['STUDY PUBLICATIONS'] = []
-        self.investigation_dict['Study PubMed ID'] = []
-        self.investigation_dict['Study Publication DOI'] = []
-        self.investigation_dict['Study Publication Author list'] = []
-        self.investigation_dict['Study Publication Title'] = []
-        self.investigation_dict['Study Publication Status'] = []
-        self.investigation_dict['Study Publication Status Term Accession Number'] = []
-        self.investigation_dict['Study Publication Status Term Source REF'] = []
-        self.investigation_dict['STUDY FACTORS'] = []
-        self.investigation_dict['Study Factor Name'] = []
-        self.investigation_dict['Study Factor Type'] = []
-        self.investigation_dict['Study Factor Type Term Accession Number'] = []
-        self.investigation_dict['Study Factor Type Term Source REF'] = []
-        self.investigation_dict['Study Assay Measurement Type'] = []
-        self.investigation_dict['Study Assay Measurement Type Term Accession Number'] = []
-        self.investigation_dict['Study Assay Measurement Type Term Source REF'] = []
-        self.investigation_dict['Study Assay Technology Type'] = []
-        self.investigation_dict['Study Assay Technology Type Term Accession Number'] = []
-        self.investigation_dict['Study Assay Technology Type Term Source REF'] = []
-        self.investigation_dict['Study Assay Technology Platform'] = []
-        self.investigation_dict['Study Assay File Name'] = []
-        self.investigation_dict['STUDY PROTOCOLS'] = []
-        self.investigation_dict['Study Protocol Name'] = []
-        self.investigation_dict['Study Protocol Type'] = []
-        self.investigation_dict['Study Protocol Type Term Accession Number'] = []
-        self.investigation_dict['Study Protocol Type Term Source REF'] = []
-        self.investigation_dict['Study Protocol Description'] = []
-        self.investigation_dict['Study Protocol URI'] = []
-        self.investigation_dict['Study Protocol Version'] = []
-        self.investigation_dict['Study Protocol Parameters Name'] = ['data starts at sequence position']
-        self.investigation_dict['Study Protocol Parameters Name Term Accession Number'] = []
-        self.investigation_dict['Study Protocol Parameters Name Term Source REF'] = []
-        self.investigation_dict['Study Protocol Components Name'] = []
-        self.investigation_dict['Study Protocol Components Type'] = []
-        self.investigation_dict['Study Protocol Components Type Term Accession Number'] = []
-        self.investigation_dict['Study Protocol Components Type Term Source REF'] = []
-        self.investigation_dict['STUDY CONTACTS'] = []
-        self.investigation_dict['Study Person Last Name'] = []
-        self.investigation_dict['Study Person First Name'] = []
-        self.investigation_dict['Study Person Mid Initials'] = []
-        self.investigation_dict['Study Person Email'] = []
-        self.investigation_dict['Study Person Phone'] = []
-        self.investigation_dict['Study Person Fax'] = []
-        self.investigation_dict['Study Person Address'] = []
-        self.investigation_dict['Study Person Affiliation'] = []
-        self.investigation_dict['Study Person Roles'] = []
-        self.investigation_dict['Study Person Roles Term Accession Number'] = []
-        self.investigation_dict['Study Person Roles Term Source REF'] = []
+        self.assays_keys = ['Source Name', 'Characteristics[Nucleotide Sequence]', 'Characteristics[Nucleotide Type]', 'Characteristics[RNA Production]', 'Protocol REF', 'Parameter Value[Data Starts at Sequence Position]', 'Term Source REF', 'Term Accession Number', 'Assay Name', 'Raw Data File', 'Performer', 'Date']
+        self.investigation_dict = {
+            'ONTOLOGY SOURCE REFERENCE': [],
+            'Term Source Name': ['OBI','CHEBI', 'UO'],
+            'Term Source File': [],
+            'Term Source Version': ['v 1.26', 'v 1.26', 'v 1.26'],
+            'Term Source Description': ['Ontology for Biomedical Investigations', 'Chemical Entity of Biological Interest', 'Unit Ontology'],
+            'INVESTIGATION': [],
+            'Investigation Identifier': [],
+            'Investigation Title': [],
+            'Investigation Description': [],
+            'Investigation Submission Date': [],
+            'Investigation Public Release Date': [],
+            'INVESTIGATION PUBLICATIONS': [],
+            'Investigation PubMed ID': [],
+            'Investigation Publication DOI': [],
+            'Investigation Publication Author list': [],
+            'Investigation Publication Title': [],
+            'Investigation Publication Status': [],
+            'Investigation Publication Status Term Accession Number': [],
+            'Investigation Publication Status Term Source REF': [],
+            'INVESTIGATION CONTACTS': [],
+            'Investigation Person Last Name': [],
+            'Investigation Person First Name': [],
+            'Investigation Person Mid Initials': [],
+            'Investigation Person Email': [],
+            'Investigation Person Phone': [],
+            'Investigation Person Fax': [],
+            'Investigation Person Address': [],
+            'Investigation Person Affiliation': [],
+            'Investigation Person Roles': [],
+            'Investigation Person Roles Term Accession Number': [],
+            'Investigation Person Roles Term Source REF': [],
+            'STUDY': [],
+            'Study Identifier': [],
+            'Study Title': [],
+            'Study Submission Date': [],
+            'Study Public Release Date': [],
+            'Study Description': [],
+            'Study File Name': [],
+            'STUDY DESIGN DESCRIPTORS': [],
+            'Study Design Type': ['SNRNASM'],
+            'Study Design Type Term Accession Number': ['OBI'],
+            'Study Design Type Term Source REF': [],
+            'STUDY PUBLICATIONS': [],
+            'Study PubMed ID': [],
+            'Study Publication DOI': [],
+            'Study Publication Author list': [],
+            'Study Publication Title': [],
+            'Study Publication Status': [],
+            'Study Publication Status Term Accession Number': [],
+            'Study Publication Status Term Source REF': [],
+            'STUDY FACTORS': [],
+            'Study Factor Name': [],
+            'Study Factor Type': [],
+            'Study Factor Type Term Accession Number': [],
+            'Study Factor Type Term Source REF': [],
+            'Study Assay Measurement Type': [],
+            'Study Assay Measurement Type Term Accession Number': [],
+            'Study Assay Measurement Type Term Source REF': [],
+            'Study Assay Technology Type': [],
+            'Study Assay Technology Type Term Accession Number': [],
+            'Study Assay Technology Type Term Source REF': [],
+            'Study Assay Technology Platform': [],
+            'Study Assay File Name': [],
+            'STUDY PROTOCOLS': [],
+            'Study Protocol Name': [],
+            'Study Protocol Type': [],
+            'Study Protocol Type Term Accession Number': [],
+            'Study Protocol Type Term Source REF': [],
+            'Study Protocol Description': [],
+            'Study Protocol URI': [],
+            'Study Protocol Version': [],
+            'Study Protocol Parameters Name': ['data starts at sequence position'],
+            'Study Protocol Parameters Name Term Accession Number': [],
+            'Study Protocol Parameters Name Term Source REF': [],
+            'Study Protocol Components Name': [],
+            'Study Protocol Components Type': [],
+            'Study Protocol Components Type Term Accession Number': [],
+            'Study Protocol Components Type Term Source REF': [],
+            'STUDY CONTACTS': [],
+            'Study Person Last Name': [],
+            'Study Person First Name': [],
+            'Study Person Mid Initials': [],
+            'Study Person Email': [],
+            'Study Person Phone': [],
+            'Study Person Fax': [],
+            'Study Person Address': [],
+            'Study Person Affiliation': [],
+            'Study Person Roles': [],
+            'Study Person Roles Term Accession Number': [],
+            'Study Person Roles Term Source REF': []        
+        }
+        self.assays_dict = {
+            'Source Name': [],
+            'Characteristics[Nucleotide Sequence]': [],
+            'Characteristics[Nucleotide Type]': [],
+            'Characteristics[RNA Production]': [],
+            'Protocol REF': [],
+            'Parameter Value[Data Starts at Sequence Position]': [],
+            'Assay Name': [],
+            'Raw Data File': [],
+            'Performer': [],
+            'Date': [],
+            'Term Source REF': [],
+            'Term Accession Number': []
+        }
+
         self.sample_id_name_map = {}
         self.data_id_order = []
         self.assays_factors = {}
@@ -850,21 +897,24 @@ class ISATABFile(object):
     def save(self, name, type='xls'):
         self.name = name
         global investigation_keys
+
         if type == 'dir':
             if not os.path.exists(name):
                 os.mkdir(name)
-            investigationfile = open(name+'/investigation.txt', 'w')
-            assaysfile = open(name+'/study-assay.txt', 'w')
-            datamatrixfile = open(name+'/datamatrix.txt', 'w')
+            investigationfile = open(name + '/investigation.txt', 'w')
+            assaysfile = open(name + '/study-assay.txt', 'w')
+            datamatrixfile = open(name + '/datamatrix.txt', 'w')
+
             for k in self.assays_keys:
                 assaysfile.write(k + '\t')
             for k in self.assays_factors:
-                assaysfile.write('Factor Value[%s]\t' % k.replace('-',' '))
+                assaysfile.write('Factor Value[%s]\t' % k.replace('-', ' '))
                 assaysfile.write('Term Source REF\t')
                 assaysfile.write('Term Accession Number\t')
-                assaysfile.write('Factor Value[%s concentration]\t' % k.replace('-',' '))
+                assaysfile.write('Factor Value[%s concentration]\t' % k.replace('-', ' '))
                 assaysfile.write('Unit\t')
             assaysfile.write('\n')
+
             for i in range(len(self.assays_dict.values()[0])):
                 line = ''
                 for k in self.assays_keys:
@@ -872,49 +922,53 @@ class ISATABFile(object):
                         if len(self.assays_dict[k]) <= i:
                             line += '\t'
                         else:
-                            line += self.assays_dict[k][i] + '\t' 
+                            line += self.assays_dict[k][i] + '\t'
                 for k in self.assays_factors:
-                    line += self.assays_factors[k]['value'][i] + '\t'   
-                    line += self.assays_factors[k]['ref'][i] + '\t' 
-                    line += self.assays_factors[k]['accession'][i] + '\t'   
-                    line += self.assays_factors[k]['concentration'][i] + '\t'   
-                    line += self.assays_factors[k]['unit'][i] + '\t'    
+                    line += self.assays_factors[k]['value'][i] + '\t'
+                    line += self.assays_factors[k]['ref'][i] + '\t'
+                    line += self.assays_factors[k]['accession'][i] + '\t'
+                    line += self.assays_factors[k]['concentration'][i] + '\t'
+                    line += self.assays_factors[k]['unit'][i] + '\t'
                 assaysfile.write(line.strip('\t') + '\n')
+
             for k in investigation_keys:
                 line = k + '\t'
                 for i in range(len(self.investigation_dict[k])):
-                    line += self.investigation_dict[k][i] + '\t' 
+                    line += self.investigation_dict[k][i] + '\t'
                 investigationfile.write(line.strip('\t') + '\n')
+
             maxlen = max([len(x) for x in self.data.values()])
             datamatrixfile.write('\t'.join(self.assays_dict['Source Name']) + '\n')
             for i in range(maxlen):
                 datamatrixfile.write('\t'.join(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]) + '\n')
+
             assaysfile.close()
             datamatrixfile.close()
             investigationfile.close()
+
         elif type == 'xls':
-            assayrow = 0
-            invrow = 0
-            datarow = 0
-            wb =xlwt.Workbook()
-            investigationsh = wb.add_sheet('investigation')
-            assayssh = wb.add_sheet('study-assay')
-            datamatrixsh = wb.add_sheet('datamatrix')
+            (assay_row, inv_row, data_row) = (0, 0, 0)
+
+            wb = xlwt.Workbook()
+            investigation_sh = wb.add_sheet('investigation')
+            assays_sh = wb.add_sheet('study-assay')
+            datamatrix_sh = wb.add_sheet('datamatrix')
+
             for i, k in enumerate(self.assays_keys):
-                assayssh.write(assayrow, i, k)
+                assays_sh.write(assay_row, i, k)
             for k in self.assays_factors:
                 i += 1
-                assayssh.write(assayrow, i , 'Factor Value[%s]\t' % k.replace('-',' '))
+                assays_sh.write(assay_row, i, 'Factor Value[%s]\t' % k.replace('-', ' '))
                 i += 1
-                assayssh.write(assayrow, i, 'Term Source REF\t')
+                assays_sh.write(assay_row, i, 'Term Source REF\t')
                 i += 1
-                assayssh.write(assayrow, i, 'Term Accession Number\t')
+                assays_sh.write(assay_row, i, 'Term Accession Number\t')
                 i += 1
-                assayssh.write(assayrow, i, 'Factor Value[%s concentration]\t' % k.replace('-',' '))
+                assays_sh.write(assay_row, i, 'Factor Value[%s concentration]\t' % k.replace('-', ' '))
                 i += 1
-                assayssh.write(assayrow, i, 'Unit\t')
+                assays_sh.write(assay_row, i, 'Unit\t')
 
-            assayrow += 1
+            assay_row += 1
             for i in range(len(self.assays_dict.values()[0])):
                 line = []
                 for k in self.assays_keys:
@@ -922,33 +976,35 @@ class ISATABFile(object):
                         if len(self.assays_dict[k]) <= i:
                             line.append('')
                         else:
-                            line.append(self.assays_dict[k][i]) 
+                            line.append(self.assays_dict[k][i])
                 if i < len(self.assays_factors):
                     for k in self.assays_factors:
-                        line .append( self.assays_factors[k]['value'][i])   
-                        line .append( self.assays_factors[k]['ref'][i]) 
-                        line .append( self.assays_factors[k]['accession'][i])   
-                        line .append( self.assays_factors[k]['concentration'][i])   
-                        line .append( self.assays_factors[k]['unit'][i])    
+                        line .append(self.assays_factors[k]['value'][i])
+                        line .append(self.assays_factors[k]['ref'][i])
+                        line .append(self.assays_factors[k]['accession'][i])
+                        line .append(self.assays_factors[k]['concentration'][i])
+                        line .append(self.assays_factors[k]['unit'][i])
                 for j in range(len(line)):
-                    assayssh.write(assayrow, j, line[j])
-                assayrow += 1
+                    assays_sh.write(assay_row, j, line[j])
+                assay_row += 1
+
             for i, k in enumerate(investigation_keys):
                 line = [k]
                 for j in range(len(self.investigation_dict[k])):
-                    line.append(self.investigation_dict[k][j]) 
+                    line.append(self.investigation_dict[k][j])
                 for j in range(len(line)):
-                    investigationsh.write(invrow, j, line[j])
-                invrow += 1
+                    investigation_sh.write(inv_row, j, line[j])
+                inv_row += 1
+
             maxlen = max([len(x) for x in self.data.values()])
             for i, k in enumerate(self.assays_dict['Source Name']):
-                datamatrixsh.write(datarow, i, k)
-            datarow += 1
+                datamatrix_sh.write(data_row, i, k)
+            data_row += 1
 
             for i in range(maxlen):
                 for j, k in enumerate(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]):
-                    datamatrixsh.write(datarow, j, k)
-                datarow += 1
+                    datamatrix_sh.write(data_row, j, k)
+                data_row += 1
             wb.save(name)
 
         else:
@@ -957,14 +1013,17 @@ class ISATABFile(object):
 
     def load(self, name, type='xls'):
         self.name = name
+
         if type == 'dir':
-            investigationfile = open(name+'/investigation.txt')
+            investigationfile = open(name + '/investigation.txt')
             for l in investigationfile.readlines():
                 fields = l.strip().split('\t')
                 self.investigation_dict[fields[0]] = fields[1:]
+
             assaysfile = open(name+'/'+self.investigation_dict['Study Assay File Name'][0])
             assays_keys = assaysfile.readline().strip().split('\t')
             l = assaysfile.readline()
+
             while l:
                 for i, f in enumerate(l.strip().split('\t')):
                     if assays_keys[i] in self.assays_dict:
@@ -972,50 +1031,59 @@ class ISATABFile(object):
                     else:
                         self.assays_dict[assays_keys[i]] = [f]
                 l = assaysfile.readline()
-            datamatrixfile = open(name+'/'+self.assays_dict['Raw Data File'][0])
+
+            datamatrixfile = open(name + '/' + self.assays_dict['Raw Data File'][0])
             data_keys = datamatrixfile.readline().strip().split('\t')
             for i, k in enumerate(data_keys):
                 self.data[k + '_' + str(i+1)] = []
                 self.sample_id_name_map[k + '_' + str(i+1)] = k
-                self.data_id_order.append(k+ '_' + str(i+1))
+                self.data_id_order.append(k + '_' + str(i+1))
             l = datamatrixfile.readline()
+
             while l:
                 for i, f in enumerate(l.strip().split('\t')):
                     if f != '':
-                        self.data[data_keys[i] + '_' + str(i+1)].append(float(f))
+                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
                 l = datamatrixfile.readline()
+
             assaysfile.close()
             datamatrixfile.close()
             investigationfile.close()
+
         elif type == 'xls':
             wb = xlrd.open_workbook(name)
-            investigationsh = wb.sheet_by_name('investigation')
-            for j in range(investigationsh.nrows):
-                fields = investigationsh.row_values(j)
+            investigation_sh = wb.sheet_by_name('investigation')
+
+            for j in range(investigation_sh.nrows):
+                fields = investigation_sh.row_values(j)
                 self.investigation_dict[fields[0]] = fields[1:]
+
             try:
-                assayssh = wb.sheet_by_name(self.investigation_dict['Study Assay File Name'][0].replace('.txt',''))
+                assays_sh = wb.sheet_by_name(self.investigation_dict['Study Assay File Name'][0].replace('.txt', ''))
             except xlrd.biffh.XLRDError:
-                assayssh = wb.sheet_by_name(self.investigation_dict['Study File Name'][0].replace('.txt',''))
-            assays_keys = assayssh.row_values(0)
-            for j in range(1, assayssh.nrows):
-                l = assayssh.row_values(j)
+                assays_sh = wb.sheet_by_name(self.investigation_dict['Study File Name'][0].replace('.txt', ''))
+
+            assays_keys = assays_sh.row_values(0)
+            for j in range(1, assays_sh.nrows):
+                l = assays_sh.row_values(j)
                 for i, f in enumerate(l):
                     if assays_keys[i] in self.assays_dict:
                         self.assays_dict[assays_keys[i]].append(f)
                     else:
                         self.assays_dict[assays_keys[i]] = [f]
-            datamatrixsh = wb.sheet_by_name(self.assays_dict['Raw Data File'][0].replace('.txt',''))
-            data_keys = datamatrixsh.row_values(0)
+
+            datamatrix_sh = wb.sheet_by_name(self.assays_dict['Raw Data File'][0].replace('.txt', ''))
+            data_keys = datamatrix_sh.row_values(0)
             for i, k in enumerate(data_keys):
-                self.data[k + '_' + str(i+1)] = []
-                self.sample_id_name_map[k + '_' + str(i+1)] = k
-                self.data_id_order.append(k+ '_' + str(i+1))
-            for j in range(1, datamatrixsh.nrows):
-                l = datamatrixsh.row_values(j)
+                self.data[k + '_' + str(i + 1)] = []
+                self.sample_id_name_map[k + '_' + str(i + 1)] = k
+                self.data_id_order.append(k + '_' + str(i + 1))
+
+            for j in range(1, datamatrix_sh.nrows):
+                l = datamatrix_sh.row_values(j)
                 for i, f in enumerate(l):
                     if f != '':
-                        self.data[data_keys[i] + '_' + str(i+1)].append(float(f))
+                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
         else:
             print 'Unrecognized type %s for loading isatab file' % type
 
@@ -1026,15 +1094,16 @@ class ISATABFile(object):
         def check_terms(d, prefix, ontdict):
             m = []
             for i, t in enumerate(d[prefix]):
-                if not t.replace(' ','-') in ontdict:
+                if not t.replace(' ', '-') in ontdict:
                     if t.strip() == '':
                         pass
                     else:
                         m.append( 'WARNING! For %s, term %s is unknown for its respective ontology' % (prefix, t))
                 else:
-                    r = d[prefix + ' Term Accession Number'][i].strip().replace('_',':')
-                    if ontdict[t.replace(' ','-')] != r:
+                    r = d[prefix + ' Term Accession Number'][i].strip().replace('_', ':')
+                    if ontdict[t.replace(' ', '-')] != r:
                         m.append( 'WARNING! For %s, term %s and accession number %s do not match' % (prefix, t, r))
+
             for i, t in enumerate(d[prefix + ' Term Accession Number']):
                 if not d[prefix + ' Term Source REF'][i] in t:
                     m.append( 'WARNING! For %s, accession number and REF ontology do not match.' % prefix)
@@ -1049,11 +1118,11 @@ class ISATABFile(object):
             if not k + '_' + str(i) in self.data:
                 messages.append( 'WARNING! Sample %s in assays file is missing from data file' % k)
         for p in self.investigation_dict['Study Protocol Name']:
-            if p.strip() != '' and not p.strip().lower() in [x.strip().lower() for x in self.assays_dict['Protocol REF']]:
-                messages.append( 'WARNING! Protocol %s in investigation file is not in assays file' % p)
+            if p.strip() != '' and (p.strip().lower() not in [x.strip().lower() for x in self.assays_dict['Protocol REF']]):
+                messages.append('WARNING! Protocol %s in investigation file is not in assays file' % p)
         # Checks for ontology term consistency
-        #messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ONTOLOGY.PROTOCOL) 
-        #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ONTOLOGY.CHEMICAL) 
+        #messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ONTOLOGY.PROTOCOL)
+        #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ONTOLOGY.CHEMICAL)
         for i, seq in enumerate(self.assays_dict['Characteristics[Nucleotide Sequence]']):
             if i >= len(self.assays_dict['Source Name']):
                 messages.append( 'ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
@@ -1071,11 +1140,12 @@ class ISATABFile(object):
             m = int(self.assays_dict['Parameter Value[Data Starts at Sequence Position]'][i])
             if idn in self.data and len(self.data[idn]) != len(seq) - m + 1:
                 messages.append('WARNING! Length of data lane %s [%s] and length of respective sequence [%s] do not match' % (sn, len(self.data[idn]), len(seq) - m + 1))
+
             chartype = self.assays_dict['Characteristics[Nucleotide Type]'][i]
             if chartype == 'RNA' and 'T' in seq:
-                messages.append( 'WARNING! Sequence for %s specified as RNA but looks like DNA.' % n)
+                messages.append('WARNING! Sequence for %s specified as RNA but looks like DNA.' % n)
             if chartype == 'DNA' and 'U' in seq:
-                messages.append( 'WARNING! Sequence for %s specified as DNA but looks like RNA.' % n)
+                messages.append('WARNING! Sequence for %s specified as DNA but looks like RNA.' % n)
         return messages
 
 
@@ -1091,6 +1161,7 @@ class ISATABFile(object):
             c.annotations = {}
             for k, v in general_annotations.iteritems():
                 c.annotation_strtations[k] = v
+
             d.values = self.data[name]
             rdatfile.values[name] = [d.values]
             d.annotations = {}
@@ -1107,7 +1178,8 @@ class ISATABFile(object):
             c.data_types = []
             c.data = [d]
             c.offset = 0
-            c.structure = '.'*len(c.sequence)
+            c.structure = '.' * len(c.sequence)
+
         rdatfile.loaded = True
         return rdatfile
 
