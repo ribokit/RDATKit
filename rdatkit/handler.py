@@ -360,7 +360,7 @@ class RDATFile(object):
                     self.constructs[current_construct].sequence = line.strip()
                     self.constructs[current_construct].sequences[0] = line.strip()
 
-                elif line.startswith('STRUCTURE')
+                elif line.startswith('STRUCTURE'):
                     attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
                     line = line.replace(attheader, '')
                     self.constructs[current_construct].structure = line.strip()
@@ -525,7 +525,7 @@ class RDATFile(object):
                     for i, row in enumerate(self.xsels[name]):
                         f.write('XSEL_REFINE %s %s\n' % (i + 1, delim.join([str(x) for x in row])))
 
-            elif version >= 0.24:
+            elif version >= 0.24 and version < 0.4:
                 f.write('VERSION%s%s\n' % (delim, str(version)))
                 f.write('COMMENTS%s%s\n' % (delim, str(self.comments)))
 
@@ -551,7 +551,7 @@ class RDATFile(object):
                         if name in self.mutpos:
                             f.write('MUTPOS%s%s\n' % (delim, delim.join([str(x) for x in self.mutpos[name]])))
                         else:
-                            f.write('MUTPOS%s%s\n' % (delim, 'WT '* len(construct.data)))
+                            f.write('MUTPOS%s%s\n' % (delim, 'WT ' * len(construct.data)))
                     if version >= 0.32:
                         f.write('SEQPOS%s%s\n' % (delim, elim.join([construct.sequence[x - construct.offset] + str(x + 1) for x in construct.seqpos])))
                     else:
@@ -575,6 +575,44 @@ class RDATFile(object):
                         for i, row in enumerate(self.errors[name]):
                             if len(row) > 0:
                                 f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                    if construct.xsel:
+                        f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+                    if name in self.xsels:
+                        for i, row in enumerate(self.xsels[name]):
+                            if len(row) > 0:
+                                f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+
+            elif version >= 0.4:
+                f.write('RDATVERSION%s%s\n' % (delim, str(version)))
+                f.write('COMMENTS%s%s\n' % (delim, str(self.comments)))
+
+                for name in self.constructs:
+                    construct = self.constructs[name]
+                    f.write('NAME%s%s\n' % (delim, name))
+
+                    if construct.sequence:
+                        f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
+                    if 'sequences' in construct.__dict__:
+                        for k, v in construct.sequences.iteritems():
+                            f.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
+                    if construct.structure:
+                        f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
+                    if 'structures' in construct.__dict__:
+                        for k, v in construct.structures.iteritems():
+                            f.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+                    f.write('OFFSET%s%s\n' % (delim, str(construct.offset)))
+                    f.write('SEQPOS%s%s\n' % (delim, elim.join([construct.sequence[x - construct.offset] + str(x + 1) for x in construct.seqpos])))
+
+                    if construct.annotations:
+                        f.write('ANNOTATION%s%s\n' % (delim, self._annotation_str(construct.annotations, delim)))
+
+
+                    for i, d in enumerate(construct.data):
+                        f.write('DATA_ANNOTATION:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
+                    if name in self.values:
+                        for i, row in enumerate(self.values[name]):
+                            f.write('DATA:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
+
                     if construct.xsel:
                         f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
                     if name in self.xsels:
