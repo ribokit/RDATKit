@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from rdatkit.__init__ import __version__
 
 setup(
-    name='primerize',
+    name='rdatkit',
     description='RNA Dataset Toolkit',
     keywords='RNA Data RDAT Kit',
     version=__version__,

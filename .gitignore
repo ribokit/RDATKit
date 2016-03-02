@@ -1,6 +1,6 @@
 build/
 dist/
 RDATkit.egg-info/
-rdatkit/settings.py
+rdatkit/util.py
 *.pyc
 
