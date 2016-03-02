@@ -1,6 +1,10 @@
-import secondary_structure
 from numpy import array, indices, zeros
 from numpy.random import randint
+
+if __package__ is None or not __package__:
+    import secstr
+else:
+    from . import secstr
 
 
 class RNA(object):

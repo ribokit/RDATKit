@@ -1,8 +1,10 @@
 from scipy.stats import gamma
 
-PATH_RNA_STRUCTURE = '/MATLAB_Code/RNAstructure/'
-PATH_VIENNA_RNA = '/MATLAB_Code/Biers/ViennaRNA-1.8.4/'
-PATH_VARNA_JAR = '/Website_Server/RMDB/misc/VARNA.jar'
+if __package__ is None or not __package__:
+    from path import *
+else:
+    from .path import *
+
 
 PATH_RNA_STRUCTURE_FOLD = PATH_RNA_STRUCTURE + 'exe/Fold'
 PATH_RNA_STRUCTURE_ALLSUB = PATH_RNA_STRUCTURE + 'exe/AllSub'
@@ -11,9 +13,10 @@ PATH_RNA_STRUCTURE_ENERGY = PATH_RNA_STRUCTURE + 'exe/efn2'
 PATH_RNA_STRUCTURE_PARTITION = PATH_RNA_STRUCTURE + 'exe/partition'
 PATH_RNA_STRUCTURE_CT2DOT = PATH_RNA_STRUCTURE + 'exe/ct2dot'
 
-PATH_VIENNA_RNA_FOLD = ''      # these do not work. orphans by creator. no longer supported
-PATH_VIENNA_RNA_ENERGY = ''    # these do not work. orphans by creator. no longer supported
-PATH_VIENNA_RNA_SUBOPT = ''    # these do not work. orphans by creator. no longer supported
+# these do not work. orphans by creator. no longer supported
+PATH_VIENNA_RNA_FOLD = PATH_VIENNA_RNA + 'RNAfold'
+PATH_VIENNA_RNA_ENERGY = PATH_VIENNA_RNA + 'RNA2Dfold'
+PATH_VIENNA_RNA_SUBOPT = PATH_VIENNA_RNA + 'RNAsubopt'
 
 
 DIST = {}

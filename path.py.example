@@ -1,0 +1,3 @@
+PATH_RNA_STRUCTURE = '/path/to/root/RNAstructure/'
+PATH_VIENNA_RNA = '/usr/local/bin/'
+PATH_VARNA_JAR = '/path/to/VARNA.jar'
