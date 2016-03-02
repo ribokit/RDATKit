@@ -1,17 +1,17 @@
-# import settings
 import secondary_structure
 from numpy import array, indices, zeros
 from numpy.random import randint
-# from random import choice
 
-class RNA:
+
+class RNA(object):
     def __init__(self, sequence=''):
         self.sequence = sequence
 
     def __len__(self):
         return len(self.sequence)
 
-    def bootstrap(self, mapping_data, nboot, nsamples=-1, algorithm='rnastructure', bonus2d=False, replacement=False, fold_opts=''):
+
+    def bootstrap(self, mapping_data, nboot, nsamples=-1, algorithm='rnastructure', bonus2d=False, is_replacement=False, fold_opts=''):
         print 'Starting bootstrap...'
         print 'Folding RNA with complete data'
         if bonus2d:
@@ -33,7 +33,7 @@ class RNA:
                     N_contrib = sum(randint(0, N_res, N_res) == x)
                     md[:, x] = mapping_data[:, x] * N_contrib
             else:
-                md = mapping_data.sample(nsamples, replacement=replacement)
+                md = mapping_data.sample(nsamples, is_replacement=is_replacement)
 
             struct = secondary_structure.fold(self.sequence, algorithm=algorithm, mapping_data=md, fold_opts='', bonus2d=bonus2d)[0]
             bps = struct.base_pairs()

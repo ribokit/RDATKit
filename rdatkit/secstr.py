@@ -2,7 +2,7 @@ from numpy import *
 import os
 import pickle
 from random import *
-import scipy.stats as stats
+from scipy.stats import gamma
 import subprocess
 import tempfile
 
@@ -11,7 +11,7 @@ if __package__ is None or not __package__:
     import mapping
 else:
     from .util import *
-    from rdatkit import mapping
+    from . import mapping
 
 debug = False
 
@@ -252,7 +252,7 @@ class SecondaryStructure(object):
         probs = array([1.] * len(self.dbn))
         for k in frags:
             if len(frags[k]) > 0 and k in db:
-                g = stats.gamma(db[k][0], db[k][1], db[k][2])
+                g = gamma(db[k][0], db[k][1], db[k][2])
                 for frag in frags[k]:
                     for i in frag:
                         if g.pdf(data[i]) > 0:

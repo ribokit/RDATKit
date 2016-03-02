@@ -1,20 +1,24 @@
-import pdb
 from numpy import *
 from random import *
-from rdatkit import settings
-from rdatkit import secondary_structure as ss
+
+if __package__ is None or not __package__:
+    import secstr
+else:
+    from . import secstr
 
 
 def _bppm_thresh_indices(bppm_pred, bppm_true, thresh):
     return logical_or(bppm_pred >= thresh, bppm_true >= thresh)
 
+
 def get_helices_from_structures(structures):
     helices = []
     for struct in structures:
-        if type(struct) == str:
-                obj = ss.SecondaryStructure(dbn=struct)
+        if isinstance(struct, str):
+            obj = secstr.SecondaryStructure(dbn=struct)
         else:
-                obj = struct
+            obj = struct
+
         struct_helices = obj.helices()
         for struct_helix in struct_helices:
             add_helix = True
@@ -23,7 +27,8 @@ def get_helices_from_structures(structures):
                 for bp in struct_helix:
                     if bp in helix:
                         count += 1
-                if count >= len(helix)/2 or count >= len(struct_helix)/2:
+
+                if count >= len(helix) / 2 or count >= len(struct_helix) / 2:
                     if len(struct_helix) > len(helix):
                         helices[i] = struct_helix
                     else:
@@ -33,11 +38,12 @@ def get_helices_from_structures(structures):
 
     return helices
 
+
 def _find_helices_from_bppm(bppm):
     visited = []
     helices = []
     for i in xrange(bppm.shape[0]):
-        for j in xrange(i+1, bppm.shape[1]):
+        for j in xrange(i + 1, bppm.shape[1]):
             if (i, j) not in visited and bppm[i,j] != 0:
                 helix = [(i,j)]
                 ii = i + 1
@@ -62,16 +68,15 @@ def _find_helices_from_bppm(bppm):
 def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2=None, helices=False):
     if thresh2 is None:
         thresh1 = thresh
+
     if helices:
-        tp , fp, tn, fn = 0., 0., 0., 0.
+        (tp , fp, tn, fn) = (0., 0., 0., 0.)
         helices = _find_helices_from_bppm(bppm_true >= thresh2)
         helices_pred = _find_helices_from_bppm(bppm_pred >= thresh2)
         for h in helices:
             if len(h) < 3:
                 continue 
-            bps_tp = 0.
-            bps_tn = 0.
-            bps_fn = 0.
+            (bps_tp, bps_tn, bps_fn) = (0., 0., 0.)
             for n1, n2 in h:
                 if bppm_pred[n1, n2] >= thresh or bppm_true[n1, n2] >= thresh2:
                     if bppm_pred[n1, n2] >= thresh:
@@ -82,12 +87,13 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
                             bps_fn += 1
                         else:
                             bps_tn += 1
-            if bps_tp >= len(h)/2:
+            if bps_tp >= len(h) / 2:
                 tp += 1
-            if bps_tn >= len(h)/2:
+            if bps_tn >= len(h) / 2:
                 tn += 1
-            if bps_fn > len(h)/2:
+            if bps_fn > len(h) / 2:
                 fn += 1
+
         for h in helices_pred:
             bps_fp = 0.
             if len(h) < 3:
@@ -99,6 +105,7 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
             if bps_fp > len(h)/2:
                 fp += 1
         return tp, fp, tn, fn
+
     else:
         true_indices = bppm_true >= thresh2
         pred_indices = bppm_pred >= thresh
@@ -110,11 +117,12 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
         #tn = logical_and(not_pred_indices, not_true_indices).sum()
         #fn = (abs(bppm_pred[not_pred_indices] - bppm_true[not_pred_indices]) > diff_thresh).sum()
 
-        tp = logical_and(pred_indices, true_indices).sum()/2.
-        fp = logical_and(pred_indices, not_true_indices).sum()/2.
-        tn = logical_and(not_pred_indices, not_true_indices).sum()/2.
-        fn = logical_and(not_pred_indices, true_indices).sum()/2.
-    return tp, fp, tn, fn
+        tp = logical_and(pred_indices, true_indices).sum() / 2.
+        fp = logical_and(pred_indices, not_true_indices).sum() / 2.
+        tn = logical_and(not_pred_indices, not_true_indices).sum() / 2.
+        fn = logical_and(not_pred_indices, true_indices).sum() / 2.
+    return (tp, fp, tn, fn)
+
 
 def get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2=None):
     if thresh2 is None:
@@ -133,19 +141,19 @@ def get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, thresh2
     fp = logical_and(pred_indices, not_true_indices).sum()
     tn = logical_and(not_pred_indices, not_true_indices).sum()
     fn = logical_and(not_pred_indices, true_indices).sum()
-    return tp, fp, tn, fn
+    return (tp, fp, tn, fn)
 
 
 def bpp_rmsd(bppm_pred, bppm_true, thresh=0.01, indices=None):
-    if indices == None:
+    if indices is None:
         indices = _bppm_thresh_indices(bppm_pred, bppm_true, thresh)
-    return sqrt(((bppm_pred[indices] - bppm_true[indices])**2).mean())
+    return sqrt(((bppm_pred[indices] - bppm_true[indices]) ** 2).mean())
 
 
 def _find_mean_helix_value(helixm, i, j, indices, return_visited=False):
-    ii = i-1
-    jj = j+1
-    visited = [(i,j)]
+    ii = i - 1
+    jj = j + 1
+    visited = [(i, j)]
     while True:
         if ii < 0 or jj >= helixm.shape[1] or not indices[ii,jj] or helixm[ii,jj] == 0:
             break
@@ -153,8 +161,8 @@ def _find_mean_helix_value(helixm, i, j, indices, return_visited=False):
         ii -= 1
         jj += 1
 
-    ii = i+1
-    jj = j-1
+    ii = i + 1
+    jj = j - 1
     while True:
         if  ii >= helixm.shape[0] or jj < 0 or not indices[ii,jj] or helixm[ii,jj] == 0 :
             break
@@ -168,18 +176,21 @@ def _find_mean_helix_value(helixm, i, j, indices, return_visited=False):
 
     return mean_val
 
+
 def helix_rmsd(bppm_pred, bppm_true, helices, thresh=0.01, indices=None):
     rmsd = 0.
     if indices == None:
         indices = _bppm_thresh_indices(bppm_pred, bppm_true, thresh)
+
     def _get_helix_vals(matrix, helix):
         return array([matrix[n1, n2] for n1, n2 in helix])
         
     for helix in helices:
         hp_true = _get_helix_vals(bppm_true, helix).mean()
         hp_pred = _get_helix_vals(bppm_pred, helix).mean()
-        rmsd += (hp_true - hp_pred)**2
-    rmsd = sqrt(rmsd/len(helices))
+        rmsd += (hp_true - hp_pred) ** 2
+
+    rmsd = sqrt(rmsd / len(helices))
     return rmsd
 """
     helix_errm = zeros(bppm_true.shape)
@@ -200,13 +211,16 @@ def helix_rmsd(bppm_pred, bppm_true, helices, thresh=0.01, indices=None):
         return sqrt(err/count)
 """
 
+
 def bpp_ppv(bppm_pred, bppm_true, thresh=0.01, diff_thresh=0.1):
-    tp, fp, tn, fn = get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh)
-    return tp/float(tp + fp)
+    (tp, fp, tn, fn) = get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh)
+    return tp / float(tp + fp)
+
 
 def bpp_sensitivity(bppm_pred, bppm_true, thresh=0.01, diff_thresh=0.1):
-    tp, fp, tn, fn = get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh,  diff_thresh)
+    (tp, fp, tn, fn) = get_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh,  diff_thresh)
     return tp/float(tp + fn)
+
 
 def bpp_roc(bppm_pred, bppm_true, interval=None):
     if interval == None:
@@ -220,6 +234,7 @@ def bpp_roc(bppm_pred, bppm_true, interval=None):
     sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x:x[1])]
     return [ppv[i] for i in sorted_indices], [sens[i] for i in sorted_indices]
 
+
 def auc(ppv, sens):
     res = 0
     sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x:x[1])]
@@ -227,5 +242,5 @@ def auc(ppv, sens):
         j = sorted_indices[idx + 1]
         base = (ppv[j]-ppv[i])
         h = max(sens[j], sens[i])
-        res += base*h - (base*(h-min(sens[j], sens[i]))/2.)
+        res += base * h - (base * (h - min(sens[j], sens[i])) / 2.)
     return res

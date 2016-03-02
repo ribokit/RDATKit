@@ -2,17 +2,19 @@
 datahandlers is a module that contains classes for representing structure mapping file formats in python.
 @author Pablo Sanchez Cordero
 """
-import ontology
+import os
 import xlwt
 import xlrd
-#from Bio import Entrez, Medline
-import os
-import pdb
 
 from itertools import chain
 from collections import defaultdict
-#uncomment if you have scipy installed
-#from scipy.cluster.vq import vq, kmeans
+
+if __package__ is None or not __package__:
+    from util import *
+else:
+    from .util import *
+
+
 """
 Please put your email for Entrez
 Entrez.email = ''
@@ -41,10 +43,11 @@ rdat2isatab_dict = {}
 For the RDAT file format for sharing chemical footprinting experiments
 """
 
-class RDATSection:
+class RDATSection(object):
     pass
 
-class RDATFile:
+
+class RDATFile(object):
     def __init__(self):
         self.constructs = defaultdict(list)
         self.traces = defaultdict(list)
@@ -569,8 +572,8 @@ class RDATFile:
         else:
             tech = 'capillary electrophoresis'
         if 'modifier' in self.annotations:
-            if self.annotations['modifier'][0] in ontology.modifier_protocol:
-                general_protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+            if self.annotations['modifier'][0] in ONTOLOGY.MODIFIER_PROTOCOL:
+                general_protocol = ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]]
             else:
                 general_protocol = self.annotations['modifier'][0]
             protocols.add(general_protocol)
@@ -581,7 +584,7 @@ class RDATFile:
                 name, concentration = self.annotations[k][0].split(':')
                 isatabfile.investigation_dict['Study Factor Name'].append(name)
                 isatabfile.investigation_dict['Study Factor Name'].append(name + ' concentration')
-                term = ontology.chemicals[name]
+                term = ONTOLOGY.CHEMICAL[name]
                 concentration, units = parse_concentration(concentration)
                 general_factors.append(['Factor Value[%s]' % name, name])
                 general_factors.append(['Term Source REF[%s]' % name, term.split(':')[0]])
@@ -628,18 +631,18 @@ class RDATFile:
                     isatabfile.assays_dict['Characteristics[RNA Production]'].append('in vitro synthesis')
                 if 'modifier' in d.annotations:
                     modifier = d.annotations['modifier'][0]
-                    if modifier in ontology.modifier_protocol:
-                        isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[d.annotations['modifier'][0]].replace('-',' '))
-                        protocol = ontology.modifier_protocol[d.annotations['modifier'][0]]
+                    if modifier in ONTOLOGY.MODIFIER_PROTOCOL:
+                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[d.annotations['modifier'][0]].replace('-',' '))
+                        protocol = ONTOLOGY.MODIFIER_PROTOCOL[d.annotations['modifier'][0]]
                     else:
                         isatabfile.assays_dict['Protocol REF'].append(modifier)
                         protocol = modifier
                     protocols.add(protocol)
                 elif 'modifier' in self.annotations:
                     modifier = self.annotations['modifier'][0]
-                    if modifier in ontology.modifier_protocol:
-                        isatabfile.assays_dict['Protocol REF'].append(ontology.modifier_protocol[self.annotations['modifier'][0]].replace('-',' '))
-                        protocol = ontology.modifier_protocol[self.annotations['modifier'][0]]
+                    if modifier in ONTOLOGY.MODIFIER_PROTOCOL:
+                        isatabfile.assays_dict['Protocol REF'].append(ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]].replace('-',' '))
+                        protocol = ONTOLOGY.MODIFIER_PROTOCOL[self.annotations['modifier'][0]]
                     else:
                         isatabfile.assays_dict['Protocol REF'].append(modifier)
                         protocol = modifier
@@ -665,16 +668,16 @@ class RDATFile:
                 else:
                     isatabfile.assays_dict['Date'].append('')
                 isatabfile.assays_dict['Term Source REF'].append('OBI')
-                if protocol in ontology.protocols:
-                    isatabfile.assays_dict['Term Accession Number'].append(ontology.protocols[protocol])
+                if protocol in ONTOLOGY.PROTOCOL:
+                    isatabfile.assays_dict['Term Accession Number'].append(ONTOLOGY.PROTOCOL[protocol])
                 else:
                     isatabfile.assays_dict['Term Accession Number'].append(protocol)
                 for k in ['chemical', 'folding-salt', 'buffer', 'salt']:
                     if k in d.annotations:
                         chemical, concentration = d.annotations[k][0].split(':')
                         concentration, units = parse_concentration(concentration)
-                        if chemical in ontology.chemicals:
-                            term = ontology.chemicals[chemical]
+                        if chemical in ONTOLOGY.CHEMICAL:
+                            term = ONTOLOGY.CHEMICAL[chemical]
                         else:
                             term = chemical
                         if not k in isatabfile.assays_factors:
@@ -704,8 +707,8 @@ class RDATFile:
                     else:
                         isatabfile.assays_dict[p[0]] = [p[1]]
             for p in protocols:
-                if p in ontology.protocols:
-                    term = ontology.protocols[p]
+                if p in ONTOLOGY.PROTOCOL:
+                    term = ONTOLOGY.PROTOCOL[p]
                 else:
                     term = p
                 isatabfile.investigation_dict['Study Protocol Name'].append(p.replace('-',' '))
@@ -731,7 +734,7 @@ investigation_keys = ['ONTOLOGY SOURCE REFERENCE','Term Source Name','Term Sourc
 assays_optional_columns = ['Factor Value[chemical]', 'Term Source REF[chemical]', 'Term Accession Number[chemical]', 'Factor Value[chemical concentration]', 'Unit[chemical]']
 
 
-class ISATABFile:
+class ISATABFile(object):
     def __init__(self):
         self.assays_keys = ['Source Name','Characteristics[Nucleotide Sequence]','Characteristics[Nucleotide Type]','Characteristics[RNA Production]','Protocol REF','Parameter Value[Data Starts at Sequence Position]', 'Term Source REF','Term Accession Number', 'Assay Name', 'Raw Data File','Performer','Date']
         self.investigation_dict = {}
@@ -1049,8 +1052,8 @@ class ISATABFile:
             if p.strip() != '' and not p.strip().lower() in [x.strip().lower() for x in self.assays_dict['Protocol REF']]:
                 messages.append( 'WARNING! Protocol %s in investigation file is not in assays file' % p)
         # Checks for ontology term consistency
-        #messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ontology.protocols) 
-        #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ontology.chemicals) 
+        #messages = messages + check_terms(self.investigation_dict, 'Study Assay Measurement Type', ONTOLOGY.PROTOCOL) 
+        #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ONTOLOGY.CHEMICAL) 
         for i, seq in enumerate(self.assays_dict['Characteristics[Nucleotide Sequence]']):
             if i >= len(self.assays_dict['Source Name']):
                 messages.append( 'ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
