@@ -35,35 +35,37 @@ For the RDAT file format for sharing chemical footprinting experiments
 """
 
 class RDATSection(object):
-    pass
+    def __init__(self, attr_list=[], attr_str=[]):
+        for attr in attr_list:
+            setattr(self, attr, [])
+        for attr in attr_str:
+            setattr(self, attr, '')
 
 
 class RDATFile(object):
     def __init__(self):
         self.constructs = defaultdict(list)
+
+        self.values = defaultdict(list)
+        self.errors = defaultdict(list)
         self.traces = defaultdict(list)
         self.reads = defaultdict(list)
-        self.values = defaultdict(list)
-        self.xsels = defaultdict(list)
+
+        self.comments = ''
+        self.annotations = defaultdict(list)
         self.data_types = defaultdict(list)
         self.mutpos = defaultdict(list)
-        self.errors = defaultdict(list)
-        self.annotations = defaultdict(list)
+        self.xsels = defaultdict(list)
+
+        self.filename = None
         self.version = None
         self.loaded = False
 
 
-    def _append_new_data_section(self, current_construct):
-        d = RDATSection()
-        d.seqpos = []
-        d.errors = []
-        d.values = []
-        d.xsel = []
-        d.trace = []
-        d.reads = []
+    def _append_new_data_section(self, this_construct):
+        d = RDATSection(['seqpos', 'values', 'errors', 'trace', 'reads', 'xsel'])
         d.annotations = {}
-        self.constructs[current_construct].data.append(d)
-
+        self.constructs[this_construct].data.append(d)
 
     def _parse_data_block(self, line, key, start_idx=0):
         if not isinstance(key, list):
@@ -76,333 +78,6 @@ class RDATFile(object):
         data_idx = int(fields[0]) - 1 if start_idx else None
         data = [float(x) for x in fields[start_idx:]]
         return (data, data_idx)
-
-
-    def load(self, file):
-        self.filename = file.name
-        self.comments = ''
-
-        # only used for self.version == 0.1:
-        current_section = 'general'
-        fill_data_types = False
-        # data_dict = {}
-
-        while True:
-            line = file.readline()
-            if not line:
-                break
-            line = line.strip(' \n')
-
-            if line.startswith('VERSION:'):
-                self.version = float(line.replace('VERSION:', ''))
-                continue
-            elif line.startswith('RDAT_VERSION') or line.startswith('VERSION'):
-                self.version = float(line.replace('RDAT_VERSION', '').replace('VERSION', ''))
-                continue
-
-            if self.version == 0.1:
-                if line.startswith('COMMENTS:'):
-                    self.comments = line.replace('COMMENTS:', '').strip()
-
-                elif line.startswith('ANNOTATION:'):
-                    if current_section == 'general':
-                        self.annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
-                    elif current_section == 'construct':
-                        annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
-                        self.constructs[current_construct].annotations = annotations
-                        if 'modifier' in annotations:
-                            self.data_types[current_construct].append(annotations['modifier'][0])
-                            fill_data_types = True
-                    elif current_section == 'data':
-                        annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
-                        self.constructs[current_construct].data[data_idx].annotations = annotations
-                        if 'modifier' in annotations:
-                            self.data_types[current_construct].append(annotations['modifier'][0])
-                        if 'mutation' in annotations:
-                            try:
-                                self.mutpos[current_construct][-1] = int(annotations['mutation'][0][1:-1])
-                            except ValueError:
-                                pass
-                    else:
-                        print 'Attribute :%s does not belong to a valid section' % line
-
-                elif 'CONSTRUCT' in line:
-                    current_section = 'construct'
-                    if fill_data_types:
-                        self.data_types[current_construct] = [self.data_types[current_construct][0]] * len(self.values[current_construct])
-                        fill_data_types = False
-
-                    current_construct = file.readline().strip().replace('NAME:', '').strip()
-                    data_idx = -1
-                    self.constructs[current_construct] = RDATSection()
-                    self.constructs[current_construct].name = current_construct
-                    self.constructs[current_construct].data = []
-                    self.constructs[current_construct].seqpos = []
-                    self.constructs[current_construct].xsel = []
-                    self.traces[current_construct] = []
-                    self.reads[current_construct] = []
-                    self.values[current_construct] = []
-                    self.xsels[current_construct] = []
-                    self.data_types[current_construct] = []
-                    self.mutpos[current_construct] = []
-                    self.constructs[current_construct].structure = ''
-
-                elif line.startswith('SEQUENCE:'):
-                    self.constructs[current_construct].sequence = line.replace('SEQUENCE:', '').strip()
-
-                elif line.startswith('STRUCTURE:'):
-                    self.constructs[current_construct].structure = line.replace('STRUCTURE:', '').strip()
-
-                elif line.startswith('WELLS:'):
-                    self.constructs[current_construct].wells = line.replace('WELLS:', '').strip().split(',')
-
-                elif line.startswith('OFFSET:'):
-                    self.constructs[current_construct].offset = int(line.replace('OFFSET:', ''))
-
-                elif line.startswith('DATA'):
-                    current_section = 'data'
-                    data_idx += 1
-                    d = RDATSection()
-                    d.xsel = []
-                    d.seqpos = []
-                    self.mutpos[current_construct].append('WT')
-                    self.constructs[current_construct].data.append(d)
-
-                elif line.startswith('SEQPOS:'):
-                    if current_section == 'construct':
-                        self.constructs[current_construct].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
-                    else:
-                        self.constructs[current_construct].data[data_idx].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
-
-                elif line.startswith('VALUES'):
-                    self.constructs[current_construct].data[data_idx].values = [float(x) for x in line.replace('VALUES:', '').strip(' ,').split(',')]
-                    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
-
-                elif line.startswith('TRACE'):
-                    self.constructs[current_construct].data[data_idx].trace = [float(x) for x in line.replace('TRACE:', '').strip(' ,').split(',')]
-                    self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
-
-                elif line.startswith('XSEL:'):
-                    if current_section == 'construct':
-                        self.constructs[current_construct].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
-                    else:
-                        self.constructs[current_construct].data[data_idx].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
-                        self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
-                else:
-                    if line.strip():
-                        print 'Invalid section: ' + line
-
-            elif self.version >= 0.2 and self.version < 0.4:
-                if line.startswith('COMMENT'):
-                    parsed_line = line
-                    for sep in ' \t':
-                        parsed_line = parsed_line.replace('COMMENTS' + sep, '').replace('COMMENT' + sep, '')
-                    self.comments += parsed_line
-
-                elif line.startswith('ANNOTATION') and not line.startswith('ANNOTATION_DATA'):
-                    self.annotations = self._parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
-
-                elif 'CONSTRUCT' in line or line.startswith('NAME'):
-                    if 'CONSTRUCT' in line:
-                        line = file.readline().strip() # Advance to 'NAME' line.
-
-                    current_construct = line.replace('NAME', '').strip()
-                    data_idx = -1
-                    self.constructs[current_construct] = RDATSection()
-                    self.constructs[current_construct].name = current_construct
-                    self.constructs[current_construct].data = []
-                    self.constructs[current_construct].seqpos = []
-                    self.constructs[current_construct].xsel = []
-                    self.constructs[current_construct].annotations = {}
-                    self.traces[current_construct] = []
-                    self.reads[current_construct] = []
-                    self.values[current_construct] = []
-                    self.xsels[current_construct] = []
-                    self.data_types[current_construct] = []
-                    self.mutpos[current_construct] = []
-                    self.errors[current_construct] = []
-                    self.constructs[current_construct].structure = ''
-                    self.constructs[current_construct].sequence = ''
-                    self.constructs[current_construct].structures = defaultdict(str)
-                    self.constructs[current_construct].sequences = defaultdict(str)
-
-                elif line.startswith('SEQUENCE'):
-                    attheader = 'SEQUENCE:' if ':' in line else 'SEQUENCE'
-                    line = line.replace(attheader, '')
-                    if len(line.split()) > 1:
-                        seqidx, seq = line.strip().split()
-                        self.constructs[current_construct].sequences[int(seqidx)] = seq.strip()
-                        self.constructs[current_construct].sequence = seq.strip()
-                    else:
-                        seq = line
-                        self.constructs[current_construct].sequence = seq.strip()
-                        self.constructs[current_construct].sequences[0] = seq.strip()
-
-                elif line.startswith('STRUCTURE'):
-                    attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
-                    line = line.replace(attheader, '')
-                    if len(line.split()) > 1:
-                        # print line, line.replace(attheader, '').strip().split()
-                        structidx, struct = line.strip().split()
-                        self.constructs[current_construct].structures[int(structidx)] = struct.strip()
-                        self.constructs[current_construct].structure = struct.strip()
-                    else:
-                        struct = line
-                        self.constructs[current_construct].structure = struct.strip()
-                        self.constructs[current_construct].structures[0] = struct.strip()
-
-                elif line.startswith('OFFSET'):
-                    self.constructs[current_construct].offset = int(line.replace('OFFSET', ''))
-
-                elif line.startswith('DATA_TYPE'):
-                    self.data_types[current_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t')
-
-                elif line.startswith('SEQPOS'):
-                    seqpos_tmp = split(line.replace('SEQPOS', '').strip(), delims='\t, ')
-                    if self.version >= 0.32:
-                        self.constructs[current_construct].seqpos = [int(x[1:]) for x in seqpos_tmp]
-                    else:
-                        self.constructs[current_construct].seqpos = [int(x) for x in seqpos_tmp]
-
-                elif line.startswith('MUTPOS'):
-                    self.mutpos[current_construct] = [x.strip() for x in split(line.replace('MUTPOS', '').strip(), delims='\t')]
-
-                elif line.startswith('ANNOTATION_DATA'):
-                    fields = split(line.replace('ANNOTATION_DATA:', '').replace('ANNOTATION_DATA ', '').strip(), delims='\t')
-                    if len(fields) < 2:
-                        fields = split(fields[0], delims=' ')
-                    data_idx = int(fields[0]) - 1
-                    annotations = self._parse_annotations(fields[1:])
-                    for l in xrange(data_idx - len(self.constructs[current_construct].data) + 1):
-                        self._append_new_data_section(current_construct)
-                    self.constructs[current_construct].data[data_idx].annotations = annotations
-                    if 'mutation' in annotations:
-                        try:
-                            if len(self.mutpos[current_construct]) > 0:
-                                self.mutpos[current_construct][-1] = int(annotations['mutation'][0][1:-1])
-                            else:
-                                self.mutpos[current_construct].append(int(annotations['mutation'][0][1:-1]))
-                        except ValueError:
-                            pass
-
-                elif line.startswith('AREA_PEAK') or line.startswith('REACTIVITY:'):
-                    (peaks, data_idx) = self._parse_data_block(line, ['AREA_PEAK', 'REACTIVITY'], 1)
-                    if (data_idx >= len(self.constructs[current_construct].data)):
-                        self._append_new_data_section(current_construct)
-                    self.constructs[current_construct].data[data_idx].values = peaks
-                    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
-
-                elif line.startswith('AREA_PEAK_ERROR') or line.startswith('REACTIVITY_ERROR:'):
-                    (errors, data_idx) = self._parse_data_block(line, ['AREA_PEAK_ERROR', 'REACTIVITY_ERROR'], 1)
-                    self.constructs[current_construct].data[data_idx].errors = errors
-                    self.errors[current_construct].append(self.constructs[current_construct].data[data_idx].errors)
-
-                elif line.startswith('TRACE'):
-                    (trace, data_idx) = self._parse_data_block(line, 'TRACE', 1)
-                    if data_idx < len(self.constructs[current_construct].data):
-                        self.constructs[current_construct].data[data_idx].trace = trace
-                        self.traces[current_construct].append(self.constructs[current_construct].data[data_idx].trace)
-
-                elif line.startswith('READS'):
-                    (reads, data_idx) = self._parse_data_block(line, 'READS', 1)
-                    if data_idx < len(self.constructs[current_construct].data):
-                        self.constructs[current_construct].data[data_idx].reads = reads
-                        self.reads[current_construct].append(self.constructs[current_construct].data[data_idx].reads)
-
-                elif line.startswith('XSEL_REFINE'):
-                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL_REFINE', 1)
-                    self.constructs[current_construct].data[data_idx].xsel = xsel
-                    self.xsels[current_construct].append(self.constructs[current_construct].data[data_idx].xsel)
-
-                elif line.startswith('XSEL'):
-                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL', 0)
-                    self.constructs[current_construct].xsel = xsel
-
-                else:
-                    if line.strip():
-                        print 'Invalid section: ' + line
-
-            elif self.version >= 0.4:
-                if line.startswith('COMMENT'):
-                    parsed_line = line
-                    for sep in ' \t':
-                        parsed_line = parsed_line.replace('COMMENTS' + sep, '').replace('COMMENT' + sep, '')
-                    self.comments += parsed_line + '\n'
-
-                elif line.startswith('ANNOTATION'):
-                    self.annotations = self._parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
-
-                elif line.startswith('NAME'):
-                    current_construct = line.replace('NAME', '').strip()
-                    data_idx = -1
-                    self.constructs[current_construct] = RDATSection()
-                    self.constructs[current_construct].name = current_construct
-                    self.constructs[current_construct].data = []
-                    self.constructs[current_construct].seqpos = []
-                    self.constructs[current_construct].xsel = []
-                    self.constructs[current_construct].annotations = {}
-                    self.values[current_construct] = []
-                    self.xsels[current_construct] = []
-                    self.constructs[current_construct].structure = ''
-                    self.constructs[current_construct].sequence = ''
-                    self.constructs[current_construct].structures = defaultdict(str)
-                    self.constructs[current_construct].sequences = defaultdict(str)
-
-                elif line.startswith('SEQUENCE'):
-                    attheader = 'SEQUENCE:' if ':' in line else 'SEQUENCE'
-                    line = line.replace(attheader, '')
-                    self.constructs[current_construct].sequence = line.strip()
-                    self.constructs[current_construct].sequences[0] = line.strip()
-
-                elif line.startswith('STRUCTURE'):
-                    attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
-                    line = line.replace(attheader, '')
-                    self.constructs[current_construct].structure = line.strip()
-                    self.constructs[current_construct].structures[0] = line.strip()
-
-                elif line.startswith('OFFSET'):
-                    self.constructs[current_construct].offset = int(line.replace('OFFSET', ''))
-
-                elif line.startswith('SEQPOS'):
-                    seqpos_tmp = split(line.replace('SEQPOS', '').strip(), delims='\t, ')
-                    self.constructs[current_construct].seqpos = [int(x[1:]) for x in seqpos_tmp]
-
-                elif line.startswith('DATA_ANNOTATION:'):
-                    fields = split(line.replace('DATA_ANNOTATION:', '').strip(), delims='\t')
-
-                    if len(fields) < 2:
-                        fields = split(fields[0], delims=' ')
-                    data_idx = int(fields[0]) - 1
-                    annotations = self._parse_annotations(fields[1:])
-                    for l in xrange(data_idx - len(self.constructs[current_construct].data) + 1):
-                        self._append_new_data_section(current_construct)
-                    self.constructs[current_construct].data[data_idx].annotations = annotations
-
-                elif line.startswith('DATA:'):
-                    (data, data_idx) = self._parse_data_block(line, 'DATA', 1)
-                    if (data_idx >= len(self.constructs[current_construct].data)):
-                        self._append_new_data_section(current_construct)
-                    self.constructs[current_construct].data[data_idx].values = data
-                    self.values[current_construct].append(self.constructs[current_construct].data[data_idx].values)
-
-                elif line.startswith('XSEL'):
-                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL', 0)
-                    self.constructs[current_construct].xsel = xsel
-
-                else:
-                    if line.strip():
-                        print 'Invalid section: ' + line
-
-            else:
-                print 'Unknown version %s!' % self.version
-
-            if self.version == 0.1 and fill_data_types:
-                self.data_types[current_construct] = [self.data_types[current_construct][0]] * len(self.values[current_construct])
-    
-        if self.version >= 0.2:
-            self.comments = self.comments[:-1]
-        self.loaded = True
-
 
     def _parse_annotations(self, s):
         d = {}
@@ -421,7 +96,6 @@ class RDATFile(object):
                     d[pair[0].strip()] = [':'.join(pair[1:])]
         return d
 
-
     def _annotation_str(self, a, delim):
         s = ''
         for k in a:
@@ -433,23 +107,325 @@ class RDATFile(object):
         return s
 
 
+    def load(self, file):
+        self.filename = file.name
+
+        # only used for self.version == 0.1:
+        current_section = 'general'
+        fill_data_types = False
+        # data_dict = {}
+
+        lines = file.readlines()
+        for line in lines:
+            line = line.strip()
+
+            if line.startswith('VERSION:'):
+                self.version = float(line.replace('VERSION:', ''))
+                continue
+            elif line.startswith('RDAT_VERSION') or line.startswith('VERSION'):
+                self.version = float(line.replace('RDAT_VERSION', '').replace('VERSION', ''))
+                continue
+
+            if self.version == 0.1:
+                if line.startswith('COMMENTS:'):
+                    self.comments = line.replace('COMMENTS:', '').strip()
+
+                elif line.startswith('ANNOTATION:'):
+                    if current_section == 'general':
+                        self.annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
+                    elif current_section == 'construct':
+                        annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
+                        self.constructs[this_construct].annotations = annotations
+
+                        if 'modifier' in annotations:
+                            self.data_types[this_construct].append(annotations['modifier'][0])
+                            fill_data_types = True
+                    elif current_section == 'data':
+                        annotations = self._parse_annotations(line.replace('ANNOTATION:', ''))
+                        self.constructs[this_construct].data[data_idx].annotations = annotations
+
+                        if 'modifier' in annotations:
+                            self.data_types[this_construct].append(annotations['modifier'][0])
+                        if 'mutation' in annotations:
+                            try:
+                                self.mutpos[this_construct][-1] = int(annotations['mutation'][0][1:-1])
+                            except ValueError:
+                                pass
+                    else:
+                        print 'Attribute :%s does not belong to a valid section' % line
+
+                elif 'CONSTRUCT' in line:
+                    current_section = 'construct'
+                    if fill_data_types:
+                        self.data_types[this_construct] = [self.data_types[this_construct][0]] * len(self.values[this_construct])
+                        fill_data_types = False
+
+                    this_construct = file.readline().strip().replace('NAME:', '').strip()
+                    data_idx = -1
+                    self.constructs[this_construct] = RDATSection(['seqpos', 'data', 'xsel'], ['structure'])
+                    self.constructs[this_construct].name = this_construct
+                    self.constructs[this_construct].structure = ''
+
+                elif line.startswith('SEQUENCE:'):
+                    self.constructs[this_construct].sequence = line.replace('SEQUENCE:', '').strip()
+
+                elif line.startswith('STRUCTURE:'):
+                    self.constructs[this_construct].structure = line.replace('STRUCTURE:', '').strip()
+
+                elif line.startswith('WELLS:'):
+                    self.constructs[this_construct].wells = line.replace('WELLS:', '').strip().split(',')
+
+                elif line.startswith('OFFSET:'):
+                    self.constructs[this_construct].offset = int(line.replace('OFFSET:', ''))
+
+                elif line.startswith('DATA'):
+                    current_section = 'data'
+                    data_idx += 1
+                    d = RDATSection(['seqpos', 'xsel'])
+                    self.mutpos[this_construct].append('WT')
+                    self.constructs[this_construct].data.append(d)
+
+                elif line.startswith('SEQPOS:'):
+                    if current_section == 'construct':
+                        self.constructs[this_construct].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
+                    else:
+                        self.constructs[this_construct].data[data_idx].seqpos = [int(x) for x in line.replace('SEQPOS:', '').strip(' ,').split(',')]
+
+                elif line.startswith('VALUES'):
+                    self.constructs[this_construct].data[data_idx].values = [float(x) for x in line.replace('VALUES:', '').strip(' ,').split(',')]
+                    self.values[this_construct].append(self.constructs[this_construct].data[data_idx].values)
+
+                elif line.startswith('TRACE'):
+                    self.constructs[this_construct].data[data_idx].trace = [float(x) for x in line.replace('TRACE:', '').strip(' ,').split(',')]
+                    self.traces[this_construct].append(self.constructs[this_construct].data[data_idx].trace)
+
+                elif line.startswith('XSEL:'):
+                    if current_section == 'construct':
+                        self.constructs[this_construct].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
+                    else:
+                        self.constructs[this_construct].data[data_idx].xsel = [float(x) for x in line.replace('XSEL:', '').strip(' ,').split(',')]
+                        self.xsels[this_construct].append(self.constructs[this_construct].data[data_idx].xsel)
+                else:
+                    if line.strip():
+                        print 'Invalid section: ' + line
+
+            elif self.version >= 0.2 and self.version < 0.4:
+                if line.startswith('COMMENT'):
+                    parsed_line = line
+                    for sep in ' \t':
+                        parsed_line = parsed_line.replace('COMMENTS' + sep, '').replace('COMMENT' + sep, '')
+                    self.comments += parsed_line + '\n'
+
+                elif line.startswith('ANNOTATION') and not line.startswith('ANNOTATION_DATA'):
+                    self.annotations = self._parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
+
+                elif 'CONSTRUCT' in line or line.startswith('NAME'):
+                    if 'CONSTRUCT' in line:
+                        line = file.readline().strip() # Advance to 'NAME' line.
+
+                    this_construct = line.replace('NAME', '').strip()
+                    data_idx = -1
+                    self.constructs[this_construct] = RDATSection(['seqpos', 'data', 'xsel'], ['sequence', 'structure'])
+                    self.constructs[this_construct].name = this_construct
+                    self.constructs[this_construct].annotations = {}
+                    self.constructs[this_construct].structures = defaultdict(str)
+                    self.constructs[this_construct].sequences = defaultdict(str)
+
+                elif line.startswith('SEQUENCE'):
+                    attheader = 'SEQUENCE:' if ':' in line else 'SEQUENCE'
+                    line = line.replace(attheader, '')
+                    if len(line.split()) > 1:
+                        seqidx, seq = line.strip().split()
+                        self.constructs[this_construct].sequences[int(seqidx)] = seq.strip()
+                        self.constructs[this_construct].sequence = seq.strip()
+                    else:
+                        seq = line
+                        self.constructs[this_construct].sequence = seq.strip()
+                        self.constructs[this_construct].sequences[0] = seq.strip()
+
+                elif line.startswith('STRUCTURE'):
+                    attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
+                    line = line.replace(attheader, '')
+                    if len(line.split()) > 1:
+                        # print line, line.replace(attheader, '').strip().split()
+                        structidx, struct = line.strip().split()
+                        self.constructs[this_construct].structures[int(structidx)] = struct.strip()
+                        self.constructs[this_construct].structure = struct.strip()
+                    else:
+                        struct = line
+                        self.constructs[this_construct].structure = struct.strip()
+                        self.constructs[this_construct].structures[0] = struct.strip()
+
+                elif line.startswith('OFFSET'):
+                    self.constructs[this_construct].offset = int(line.replace('OFFSET', ''))
+
+                elif line.startswith('DATA_TYPE'):
+                    self.data_types[this_construct] = split(line.replace('DATA_TYPE', '').strip(), delims='\t')
+
+                elif line.startswith('SEQPOS'):
+                    seqpos_tmp = split(line.replace('SEQPOS', '').strip(), delims='\t, ')
+                    if self.version >= 0.32:
+                        self.constructs[this_construct].seqpos = [int(x[1:]) for x in seqpos_tmp]
+                    else:
+                        self.constructs[this_construct].seqpos = [int(x) for x in seqpos_tmp]
+
+                elif line.startswith('MUTPOS'):
+                    self.mutpos[this_construct] = [x.strip() for x in split(line.replace('MUTPOS', '').strip(), delims='\t')]
+
+                elif line.startswith('ANNOTATION_DATA'):
+                    fields = split(line.replace('ANNOTATION_DATA:', '').replace('ANNOTATION_DATA ', '').strip(), delims='\t')
+                    if len(fields) < 2:
+                        fields = split(fields[0], delims=' ')
+                    data_idx = int(fields[0]) - 1
+                    annotations = self._parse_annotations(fields[1:])
+                    for l in xrange(data_idx - len(self.constructs[this_construct].data) + 1):
+                        self._append_new_data_section(this_construct)
+                    self.constructs[this_construct].data[data_idx].annotations = annotations
+                    if 'mutation' in annotations:
+                        try:
+                            if len(self.mutpos[this_construct]) > 0:
+                                self.mutpos[this_construct][-1] = int(annotations['mutation'][0][1:-1])
+                            else:
+                                self.mutpos[this_construct].append(int(annotations['mutation'][0][1:-1]))
+                        except ValueError:
+                            pass
+
+                elif line.startswith('AREA_PEAK') or line.startswith('REACTIVITY:'):
+                    (peaks, data_idx) = self._parse_data_block(line, ['AREA_PEAK', 'REACTIVITY'], 1)
+                    if (data_idx >= len(self.constructs[this_construct].data)):
+                        self._append_new_data_section(this_construct)
+                    self.constructs[this_construct].data[data_idx].values = peaks
+                    self.values[this_construct].append(self.constructs[this_construct].data[data_idx].values)
+
+                elif line.startswith('AREA_PEAK_ERROR') or line.startswith('REACTIVITY_ERROR:'):
+                    (errors, data_idx) = self._parse_data_block(line, ['AREA_PEAK_ERROR', 'REACTIVITY_ERROR'], 1)
+                    self.constructs[this_construct].data[data_idx].errors = errors
+                    self.errors[this_construct].append(self.constructs[this_construct].data[data_idx].errors)
+
+                elif line.startswith('TRACE'):
+                    (trace, data_idx) = self._parse_data_block(line, 'TRACE', 1)
+                    if data_idx < len(self.constructs[this_construct].data):
+                        self.constructs[this_construct].data[data_idx].trace = trace
+                        self.traces[this_construct].append(self.constructs[this_construct].data[data_idx].trace)
+
+                elif line.startswith('READS'):
+                    (reads, data_idx) = self._parse_data_block(line, 'READS', 1)
+                    if data_idx < len(self.constructs[this_construct].data):
+                        self.constructs[this_construct].data[data_idx].reads = reads
+                        self.reads[this_construct].append(self.constructs[this_construct].data[data_idx].reads)
+
+                elif line.startswith('XSEL_REFINE'):
+                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL_REFINE', 1)
+                    self.constructs[this_construct].data[data_idx].xsel = xsel
+                    self.xsels[this_construct].append(self.constructs[this_construct].data[data_idx].xsel)
+
+                elif line.startswith('XSEL'):
+                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL', 0)
+                    self.constructs[this_construct].xsel = xsel
+
+                else:
+                    if line.strip():
+                        print 'Invalid section: ' + line
+
+            elif self.version >= 0.4:
+                if line.startswith('COMMENT'):
+                    parsed_line = line
+                    for sep in ' \t':
+                        parsed_line = parsed_line.replace('COMMENTS' + sep, '').replace('COMMENT' + sep, '')
+                    self.comments += parsed_line + '\n'
+
+                elif line.startswith('ANNOTATION'):
+                    self.annotations = self._parse_annotations(split(line.replace('ANNOTATION', ''), delims='\t'))
+
+                elif line.startswith('NAME'):
+                    this_construct = line.replace('NAME', '').strip()
+                    data_idx = -1
+                    self.constructs[this_construct] = RDATSection(['seqpos', 'data', 'xsel'], ['sequence', 'structure'])
+                    self.constructs[this_construct].name = this_construct
+                    self.constructs[this_construct].annotations = {}
+                    self.constructs[this_construct].structures = defaultdict(str)
+                    self.constructs[this_construct].sequences = defaultdict(str)
+
+                elif line.startswith('SEQUENCE'):
+                    attheader = 'SEQUENCE:' if ':' in line else 'SEQUENCE'
+                    line = line.replace(attheader, '')
+                    self.constructs[this_construct].sequence = line.strip()
+                    self.constructs[this_construct].sequences[0] = line.strip()
+
+                elif line.startswith('STRUCTURE'):
+                    attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
+                    line = line.replace(attheader, '')
+                    self.constructs[this_construct].structure = line.strip()
+                    self.constructs[this_construct].structures[0] = line.strip()
+
+                elif line.startswith('OFFSET'):
+                    self.constructs[this_construct].offset = int(line.replace('OFFSET', ''))
+
+                elif line.startswith('SEQPOS'):
+                    seqpos_tmp = split(line.replace('SEQPOS', '').strip(), delims='\t, ')
+                    self.constructs[this_construct].seqpos = [int(x[1:]) for x in seqpos_tmp]
+
+                elif line.startswith('DATA_ANNOTATION:'):
+                    fields = split(line.replace('DATA_ANNOTATION:', '').strip(), delims='\t')
+
+                    if len(fields) < 2:
+                        fields = split(fields[0], delims=' ')
+                    data_idx = int(fields[0]) - 1
+                    annotations = self._parse_annotations(fields[1:])
+                    for l in xrange(data_idx - len(self.constructs[this_construct].data) + 1):
+                        self._append_new_data_section(this_construct)
+                    self.constructs[this_construct].data[data_idx].annotations = annotations
+
+                elif line.startswith('DATA:'):
+                    (data, data_idx) = self._parse_data_block(line, 'DATA', 1)
+                    if (data_idx >= len(self.constructs[this_construct].data)):
+                        self._append_new_data_section(this_construct)
+                    self.constructs[this_construct].data[data_idx].values = data
+                    self.values[this_construct].append(self.constructs[this_construct].data[data_idx].values)
+
+                elif line.startswith('XSEL_REFINE'):
+                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL_REFINE', 1)
+                    self.constructs[this_construct].data[data_idx].xsel = xsel
+                    self.xsels[this_construct].append(self.constructs[this_construct].data[data_idx].xsel)
+
+                elif line.startswith('XSEL'):
+                    (xsel, data_idx) = self._parse_data_block(line, 'XSEL', 0)
+                    self.constructs[this_construct].xsel = xsel
+
+                else:
+                    if line.strip():
+                        print 'Invalid section: ' + line
+
+            else:
+                print 'Unknown version %s!' % self.version
+
+            if self.version == 0.1 and fill_data_types:
+                self.data_types[this_construct] = [self.data_types[this_construct][0]] * len(self.values[this_construct])
+    
+        if self.version >= 0.2:
+            self.comments = self.comments[:-1]
+        self.loaded = True
+
+
     def save_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32, seqpos=None):
         self.version = version
         self.constructs[construct] = RDATSection()
+        self.constructs[construct].sequences = defaultdict(int)
+        self.constructs[construct].structures = defaultdict(int)
         self.constructs[construct].name = construct
+        self.comments = comments
+
+        self.mutpos[construct] = []
         if seqpos is not None:
             self.constructs[construct].seqpos = seqpos
         else:
             self.constructs[construct].seqpos = [i + offset for i in range(len(sequence))]
         self.constructs[construct].sequence = sequence
-        self.constructs[construct].sequences = defaultdict(int)
-        self.constructs[construct].structures = defaultdict(int)
         self.constructs[construct].structure = structure
         self.constructs[construct].offset = offset
         self.constructs[construct].annotations = {}
         self.constructs[construct].xsel = []
-        self.mutpos[construct] = []
-        self.comments = comments
+
         self.constructs[construct].data = []
         if isinstance(data_annotations, dict):
             self.values[construct] = [data]
@@ -462,6 +438,7 @@ class RDATFile(object):
             self._append_new_data_section(construct)
             self.constructs[construct].data[-1].values = data[i, :]
             self.constructs[construct].data[-1].annotations = data_annotation
+
         self.loaded = True
         self.save(filename)
 
@@ -497,6 +474,7 @@ class RDATFile(object):
             elif version == 0.2 or version == 0.21:
                 f.write('VERSION %s\n' % str(version))
                 f.write('COMMENTS %s\n' % str(self.comments))
+
                 for name in self.constructs:
                     construct = self.constructs[name]
                     f.write('CONSTRUCT\n')
@@ -528,31 +506,26 @@ class RDATFile(object):
 
             elif version >= 0.24 and version < 0.4:
                 f.write('RDAT_VERSION%s%s\n' % (delim, str(version)))
-                if self.comments:
-                    for com in self.comments.split('\n'):
-                        f.write('COMMENT%s%s\n' % (delim, com))
-                    f.write('\n')
 
-                f.write('ANNOTATION%s%s\n\n' % (delim, self._annotation_str(self.annotations, delim)))
-
-                for name in self.constructs:
+                if len(self.constructs) == 1:
+                    name = self.constructs.keys()[0]
                     construct = self.constructs[name]
                     f.write('NAME%s%s\n' % (delim, name))
-
-                    if construct.sequence:
-                        f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
-                    if 'sequences' in construct.__dict__:
-                        for k, v in construct.sequences.iteritems():
-                            f.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
-                    if construct.structure:
-                        f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
-                    if 'structures' in construct.__dict__:
-                        for k, v in construct.structures.iteritems():
-                            f.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+                    f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
+                    # if 'sequences' in construct.__dict__:
+                    #     for k, v in construct.sequences.iteritems():
+                    #         f.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
+                    f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
+                    # if 'structures' in construct.__dict__:
+                    #     for k, v in construct.structures.iteritems():
+                    #         f.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
                     f.write('OFFSET%s%s\n\n' % (delim, str(construct.offset)))
 
-                    if construct.annotations:
-                        f.write('ANNOTATION%s%s\n' % (delim, self._annotation_str(construct.annotations, delim)))
+                    if self.comments:
+                        for com in self.comments.split('\n'):
+                            f.write('COMMENT%s%s\n' % (delim, com))
+                        f.write('\n')
+
                     if version < 0.32:
                         if name in self.mutpos:
                             f.write('MUTPOS%s%s\n' % (delim, delim.join([str(x) for x in self.mutpos[name]])))
@@ -563,63 +536,164 @@ class RDATFile(object):
                     else:
                         f.write('SEQPOS%s%s\n\n' % (delim, delim.join([str(x + 1) for x in construct.seqpos])))
 
+                    f.write('ANNOTATION%s%s\n\n' % (delim, self._annotation_str(self.annotations, delim)))
+                    if construct.annotations:
+                        f.write('ANNOTATION%s%s\n' % (delim, self._annotation_str(construct.annotations, delim)))
+
                     for i, d in enumerate(construct.data):
                         f.write('ANNOTATION_DATA:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
                     f.write('\n')
 
-                    if name in self.values:
-                        for i, row in enumerate(self.values[name]):
-                            f.write('REACTIVITY:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
-                    if name in self.traces:
-                        for i, row in enumerate(self.traces[name]):
-                            if len(row) > 0:
-                                f.write('TRACE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
-                    if name in self.reads:
-                        for i, row in enumerate(self.reads[name]):
-                            if len(row) > 0:
-                                f.write('READS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
-                    if name in self.errors:
-                        for i, row in enumerate(self.errors[name]):
-                            if len(row) > 0:
-                                f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                    for i, row in enumerate(self.values[name]):
+                        f.write('REACTIVITY:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
+                    for i, row in enumerate(self.traces[name]):
+                        if len(row) > 0:
+                            f.write('TRACE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                    for i, row in enumerate(self.reads[name]):
+                        if len(row) > 0:
+                            f.write('READS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                    for i, row in enumerate(self.errors[name]):
+                        if len(row) > 0:
+                            f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     if construct.xsel:
                         f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
-                    if name in self.xsels:
-                        for i, row in enumerate(self.xsels[name]):
-                            if len(row) > 0:
-                                f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                    for i, row in enumerate(self.xsels[name]):
+                        if len(row) > 0:
+                            f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+
+                else:
+                    if self.comments:
+                        for com in self.comments.split('\n'):
+                            f.write('COMMENT%s%s\n' % (delim, com))
+                        f.write('\n')
+
+                    f.write('ANNOTATION%s%s\n\n' % (delim, self._annotation_str(self.annotations, delim)))
+
+                    for name in self.constructs:
+                        construct = self.constructs[name]
+                        f.write('NAME%s%s\n' % (delim, name))
+
+                        if construct.sequence:
+                            f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
+                        # if 'sequences' in construct.__dict__:
+                        #     for k, v in construct.sequences.iteritems():
+                        #         f.write('SEQUENCE:%s%s%s\n' % (k, delim, v))
+                        if construct.structure:
+                            f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
+                        # if 'structures' in construct.__dict__:
+                        #     for k, v in construct.structures.iteritems():
+                        #         f.write('STRUCTURE:%s%s%s\n' % (k, delim, v))
+                        f.write('OFFSET%s%s\n\n' % (delim, str(construct.offset)))
+
+                        if construct.annotations:
+                            f.write('ANNOTATION%s%s\n' % (delim, self._annotation_str(construct.annotations, delim)))
+                        if version < 0.32:
+                            if name in self.mutpos:
+                                f.write('MUTPOS%s%s\n' % (delim, delim.join([str(x) for x in self.mutpos[name]])))
+                            else:
+                                f.write('MUTPOS%s%s\n' % (delim, 'WT ' * len(construct.data)))
+                        if version >= 0.32:
+                            f.write('SEQPOS%s%s\n\n' % (delim, delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])))
+                        else:
+                            f.write('SEQPOS%s%s\n\n' % (delim, delim.join([str(x + 1) for x in construct.seqpos])))
+
+                        for i, d in enumerate(construct.data):
+                            f.write('ANNOTATION_DATA:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
+                        f.write('\n')
+
+                        if name in self.values:
+                            for i, row in enumerate(self.values[name]):
+                                f.write('REACTIVITY:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
+                        if name in self.traces:
+                            for i, row in enumerate(self.traces[name]):
+                                if len(row) > 0:
+                                    f.write('TRACE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                        if name in self.reads:
+                            for i, row in enumerate(self.reads[name]):
+                                if len(row) > 0:
+                                    f.write('READS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                        if name in self.errors:
+                            for i, row in enumerate(self.errors[name]):
+                                if len(row) > 0:
+                                    f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                        if construct.xsel:
+                            f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+                        if name in self.xsels:
+                            for i, row in enumerate(self.xsels[name]):
+                                if len(row) > 0:
+                                    f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
 
             elif version >= 0.4:
                 f.write('RDATVERSION%s%s\n' % (delim, str(version)))
 
-                name = self.constructs.keys()[0]
-                construct = self.constructs[name]
-                f.write('NAME%s%s\n' % (delim, name))
+                if len(self.constructs) == 1:
+                    name = self.constructs.keys()[0]
+                    construct = self.constructs[name]
+                    f.write('NAME%s%s\n' % (delim, name))
 
-                if construct.sequence:
-                    f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
-                if construct.structure:
-                    f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
-                f.write('OFFSET%s%s\n' % (delim, str(construct.offset)))
-                f.write('SEQPOS%s%s\n\n' % (delim, delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])))
+                    if construct.sequence:
+                        f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
+                    if construct.structure:
+                        f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
+                    f.write('OFFSET%s%s\n' % (delim, str(construct.offset)))
+                    f.write('SEQPOS%s%s\n\n' % (delim, delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])))
 
-                if self.comments:
-                    for com in self.comments.split('\n'):
-                        f.write('COMMENT%s%s\n' % (delim, com))
-                    f.write('\n')
+                    if self.comments:
+                        for com in self.comments.split('\n'):
+                            f.write('COMMENT%s%s\n' % (delim, com))
+                        f.write('\n')
 
-                if self.annotations:
                     f.write('ANNOTATION%s%s\n\n' % (delim, self._annotation_str(self.annotations, delim)))
-                for i, d in enumerate(construct.data):
-                    f.write('DATA_ANNOTATION:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
-                f.write('\n')
-                if name in self.values:
-                    for i, row in enumerate(self.values[name]):
-                        f.write('DATA:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
-
-                if construct.xsel:
+                    for i, d in enumerate(construct.data):
+                        f.write('DATA_ANNOTATION:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
                     f.write('\n')
-                    f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+
+                    if name in self.values:
+                        for i, row in enumerate(self.values[name]):
+                            f.write('DATA:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
+
+                    if construct.xsel:
+                        f.write('\nXSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+                    for i, row in enumerate(self.xsels[name]):
+                        if len(row) > 0:
+                            f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+
+                else:
+                    if self.comments:
+                        for com in self.comments.split('\n'):
+                            f.write('COMMENT%s%s\n' % (delim, com))
+                        f.write('\n')
+
+                    f.write('ANNOTATION%s%s\n\n' % (delim, self._annotation_str(self.annotations, delim)))
+
+                    for name in self.constructs:
+                        construct = self.constructs[name]
+                        f.write('NAME%s%s\n' % (delim, name))
+
+                        if construct.sequence:
+                            f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
+                        if construct.structure:
+                            f.write('STRUCTURE%s%s\n' % (delim, construct.structure))
+                        f.write('OFFSET%s%s\n\n' % (delim, str(construct.offset)))
+
+                        if construct.annotations:
+                            f.write('ANNOTATION%s%s\n' % (delim, self._annotation_str(construct.annotations, delim)))
+                        f.write('SEQPOS%s%s\n\n' % (delim, delim.join([construct.sequence[x - construct.offset - 1] + str(x) for x in construct.seqpos])))
+
+                        for i, d in enumerate(construct.data):
+                            f.write('DATA_ANNOTATION:%s%s%s\n' % (i + 1, delim, self._annotation_str(d.annotations, delim)))
+                        f.write('\n')
+
+                        if name in self.values:
+                            for i, row in enumerate(self.values[name]):
+                                f.write('DATA:%s%s%s\n' % (i + 1, delim, delim.join(['%.4f' % x for x in row])))
+
+                        if construct.xsel:
+                            f.write('\nXSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
+                        if name in self.xsels:
+                            for i, row in enumerate(self.xsels[name]):
+                                if len(row) > 0:
+                                    f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
 
             else:
                 print 'Wrong version number %s' % version
