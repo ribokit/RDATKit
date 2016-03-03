@@ -303,7 +303,6 @@ def _get_dot_structs(ct_name, N_structs, unique=False):
         dbnfile = tempfile.NamedTemporaryFile(delete=False)
         dbnname = dbnfile.name
         dbnfile.close()
-
         subprocess.check_call(PATH_RNA_STRUCTURE_CT2DOT + ' %s %d %s ' % (ct_name, i + 1, dbnname), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         dbn = open(dbnname).readlines()[-1].strip()
         # Append only non trivial structures
@@ -315,6 +314,7 @@ def _get_dot_structs(ct_name, N_structs, unique=False):
             else:
                 structs.append(SecondaryStructure(dbn=dbn))
         remove_file(dbnfile)
+
     return structs
 
 
