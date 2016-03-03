@@ -3,6 +3,7 @@ datahandlers is a module that contains classes for representing structure mappin
 @author Pablo Sanchez Cordero
 """
 from collections import defaultdict
+import copy
 # from itertools import chain
 import os
 import xlwt
@@ -808,7 +809,7 @@ class RDATFile(object):
                 isatabfile.assays_keys.append('Unit[%s concentration]' % name)
         """
         for cname in self.constructs:
-            construct = self.constructs[cname] 
+            construct = self.constructs[cname]
             for i, d in enumerate(construct.data):
                 name = cname.replace(' ', '-')
                 seq = ''
@@ -878,7 +879,7 @@ class RDATFile(object):
 
                 if 'date' in d.annotations:
                     isatabfile.assays_dict['Date'].append(d.annotations['date'][0])
-                elif 'date' in self.annotations: 
+                elif 'date' in self.annotations:
                     isatabfile.assays_dict['Date'].append(self.annotations['date'][0])
                 else:
                     isatabfile.assays_dict['Date'].append('')
@@ -903,7 +904,7 @@ class RDATFile(object):
                             isatabfile.assays_factors[k]['ref'] = []
                             isatabfile.assays_factors[k]['concentration'] = []
                             isatabfile.assays_factors[k]['unit'] = []
-                            isatabfile.assays_factors[k]['accession'] =  []
+                            isatabfile.assays_factors[k]['accession'] = []
                         isatabfile.assays_factors[k]['value'].append(chemical)
                         isatabfile.assays_factors[k]['ref'].append(term.split(':')[0])
                         isatabfile.assays_factors[k]['concentration'].append(concentration)
@@ -941,7 +942,8 @@ class RDATFile(object):
                 isatabfile.investigation_dict['Study Factor Name'].append(ch)
                 isatabfile.investigation_dict['Study Factor Type'].append('Compound')
                 isatabfile.investigation_dict['Study Factor Type Term Source REF'].append('CHEBI')
-            return isatabfile
+
+        return isatabfile
 
 
 
@@ -949,119 +951,11 @@ class RDATFile(object):
 For the ISATAB format for chemical footprinting experiments
 """
 
-investigation_keys = ['ONTOLOGY SOURCE REFERENCE', 'Term Source Name', 'Term Source File', 'Term Source Version', 'Term Source Description', 'INVESTIGATION', 'Investigation Identifier', 'Investigation Title', 'Investigation Description', 'Investigation Submission Date', 'Investigation Public Release Date', 'INVESTIGATION PUBLICATIONS', 'Investigation PubMed ID', 'Investigation Publication DOI', 'Investigation Publication Author list', 'Investigation Publication Title', 'Investigation Publication Status', 'Investigation Publication Status Term Accession Number', 'Investigation Publication Status Term Source REF', 'INVESTIGATION CONTACTS', 'Investigation Person Last Name', 'Investigation Person First Name', 'Investigation Person Mid Initials', 'Investigation Person Email', 'Investigation Person Phone', 'Investigation Person Fax', 'Investigation Person Address', 'Investigation Person Affiliation', 'Investigation Person Roles', 'Investigation Person Roles Term Accession Number', 'Investigation Person Roles Term Source REF', 'STUDY', 'Study Identifier', 'Study Title', 'Study Submission Date', 'Study Public Release Date', 'Study Description', 'Study File Name', 'STUDY DESIGN DESCRIPTORS', 'Study Design Type', 'Study Design Type Term Accession Number', 'Study Design Type Term Source REF', 'STUDY PUBLICATIONS', 'Study PubMed ID', 'Study Publication DOI', 'Study Publication Author list', 'Study Publication Title', 'Study Publication Status', 'Study Publication Status Term Accession Number', 'Study Publication Status Term Source REF', 'STUDY FACTORS', 'Study Factor Name', 'Study Factor Type', 'Study Factor Type Term Accession Number', 'Study Factor Type Term Source REF', 'Study Assay Measurement Type', 'Study Assay Measurement Type Term Accession Number', 'Study Assay Measurement Type Term Source REF', 'Study Assay Technology Type', 'Study Assay Technology Type Term Accession Number', 'Study Assay Technology Type Term Source REF', 'Study Assay Technology Platform', 'Study Assay File Name', 'STUDY PROTOCOLS', 'Study Protocol Name', 'Study Protocol Type', 'Study Protocol Type Term Accession Number', 'Study Protocol Type Term Source REF', 'Study Protocol Description', 'Study Protocol URI', 'Study Protocol Version', 'Study Protocol Parameters Name', 'Study Protocol Parameters Name Term Accession Number', 'Study Protocol Parameters Name Term Source REF', 'Study Protocol Components Name', 'Study Protocol Components Type', 'Study Protocol Components Type Term Accession Number', 'Study Protocol Components Type Term Source REF', 'STUDY CONTACTS', 'Study Person Last Name', 'Study Person First Name', 'Study Person Mid Initials', 'Study Person Email', 'Study Person Phone', 'Study Person Fax', 'Study Person Address', 'Study Person Affiliation', 'Study Person Roles', 'Study Person Roles Term Accession Number', 'Study Person Roles Term Source REF']
-assays_optional_columns = ['Factor Value[chemical]', 'Term Source REF[chemical]', 'Term Accession Number[chemical]', 'Factor Value[chemical concentration]', 'Unit[chemical]']
-
-
 class ISATABFile(object):
     def __init__(self):
-        self.assays_keys = ['Source Name', 'Characteristics[Nucleotide Sequence]', 'Characteristics[Nucleotide Type]', 'Characteristics[RNA Production]', 'Protocol REF', 'Parameter Value[Data Starts at Sequence Position]', 'Term Source REF', 'Term Accession Number', 'Assay Name', 'Raw Data File', 'Performer', 'Date']
-        self.investigation_dict = {
-            'ONTOLOGY SOURCE REFERENCE': [],
-            'Term Source Name': ['OBI','CHEBI', 'UO'],
-            'Term Source File': [],
-            'Term Source Version': ['v 1.26', 'v 1.26', 'v 1.26'],
-            'Term Source Description': ['Ontology for Biomedical Investigations', 'Chemical Entity of Biological Interest', 'Unit Ontology'],
-            'INVESTIGATION': [],
-            'Investigation Identifier': [],
-            'Investigation Title': [],
-            'Investigation Description': [],
-            'Investigation Submission Date': [],
-            'Investigation Public Release Date': [],
-            'INVESTIGATION PUBLICATIONS': [],
-            'Investigation PubMed ID': [],
-            'Investigation Publication DOI': [],
-            'Investigation Publication Author list': [],
-            'Investigation Publication Title': [],
-            'Investigation Publication Status': [],
-            'Investigation Publication Status Term Accession Number': [],
-            'Investigation Publication Status Term Source REF': [],
-            'INVESTIGATION CONTACTS': [],
-            'Investigation Person Last Name': [],
-            'Investigation Person First Name': [],
-            'Investigation Person Mid Initials': [],
-            'Investigation Person Email': [],
-            'Investigation Person Phone': [],
-            'Investigation Person Fax': [],
-            'Investigation Person Address': [],
-            'Investigation Person Affiliation': [],
-            'Investigation Person Roles': [],
-            'Investigation Person Roles Term Accession Number': [],
-            'Investigation Person Roles Term Source REF': [],
-            'STUDY': [],
-            'Study Identifier': [],
-            'Study Title': [],
-            'Study Submission Date': [],
-            'Study Public Release Date': [],
-            'Study Description': [],
-            'Study File Name': [],
-            'STUDY DESIGN DESCRIPTORS': [],
-            'Study Design Type': ['SNRNASM'],
-            'Study Design Type Term Accession Number': ['OBI'],
-            'Study Design Type Term Source REF': [],
-            'STUDY PUBLICATIONS': [],
-            'Study PubMed ID': [],
-            'Study Publication DOI': [],
-            'Study Publication Author list': [],
-            'Study Publication Title': [],
-            'Study Publication Status': [],
-            'Study Publication Status Term Accession Number': [],
-            'Study Publication Status Term Source REF': [],
-            'STUDY FACTORS': [],
-            'Study Factor Name': [],
-            'Study Factor Type': [],
-            'Study Factor Type Term Accession Number': [],
-            'Study Factor Type Term Source REF': [],
-            'Study Assay Measurement Type': [],
-            'Study Assay Measurement Type Term Accession Number': [],
-            'Study Assay Measurement Type Term Source REF': [],
-            'Study Assay Technology Type': [],
-            'Study Assay Technology Type Term Accession Number': [],
-            'Study Assay Technology Type Term Source REF': [],
-            'Study Assay Technology Platform': [],
-            'Study Assay File Name': [],
-            'STUDY PROTOCOLS': [],
-            'Study Protocol Name': [],
-            'Study Protocol Type': [],
-            'Study Protocol Type Term Accession Number': [],
-            'Study Protocol Type Term Source REF': [],
-            'Study Protocol Description': [],
-            'Study Protocol URI': [],
-            'Study Protocol Version': [],
-            'Study Protocol Parameters Name': ['data starts at sequence position'],
-            'Study Protocol Parameters Name Term Accession Number': [],
-            'Study Protocol Parameters Name Term Source REF': [],
-            'Study Protocol Components Name': [],
-            'Study Protocol Components Type': [],
-            'Study Protocol Components Type Term Accession Number': [],
-            'Study Protocol Components Type Term Source REF': [],
-            'STUDY CONTACTS': [],
-            'Study Person Last Name': [],
-            'Study Person First Name': [],
-            'Study Person Mid Initials': [],
-            'Study Person Email': [],
-            'Study Person Phone': [],
-            'Study Person Fax': [],
-            'Study Person Address': [],
-            'Study Person Affiliation': [],
-            'Study Person Roles': [],
-            'Study Person Roles Term Accession Number': [],
-            'Study Person Roles Term Source REF': []        
-        }
-        self.assays_dict = {
-            'Source Name': [],
-            'Characteristics[Nucleotide Sequence]': [],
-            'Characteristics[Nucleotide Type]': [],
-            'Characteristics[RNA Production]': [],
-            'Protocol REF': [],
-            'Parameter Value[Data Starts at Sequence Position]': [],
-            'Assay Name': [],
-            'Raw Data File': [],
-            'Performer': [],
-            'Date': [],
-            'Term Source REF': [],
-            'Term Accession Number': []
-        }
+        self.assays_keys = copy.deepcopy(ISATAB_ASSAY_KEYS)
+        self.investigation_dict = copy.deepcopy(ISATAB_INVEST_DICT)
+        self.assays_dict = copy.deepcopy(ISATAB_ASSAY_DICT)
 
         self.sample_id_name_map = {}
         self.data_id_order = []
@@ -1069,26 +963,102 @@ class ISATABFile(object):
         self.data = {}
 
 
+    def load(self, name, type='xls'):
+        self.name = name
+
+        if type == 'dir':
+            investigation_file = open(name + '/investigation.txt')
+            for l in investigation_file.readlines():
+                fields = l.strip().split('\t')
+                self.investigation_dict[fields[0]] = fields[1:]
+
+            assays_file = open(name+'/'+self.investigation_dict['Study Assay File Name'][0])
+            assays_keys = assays_file.readline().strip().split('\t')
+            l = assays_file.readline()
+
+            while l:
+                for i, f in enumerate(l.strip().split('\t')):
+                    if assays_keys[i] in self.assays_dict:
+                        self.assays_dict[assays_keys[i]].append(f)
+                    else:
+                        self.assays_dict[assays_keys[i]] = [f]
+                l = assays_file.readline()
+
+            datamatrix_file = open(name + '/' + self.assays_dict['Raw Data File'][0])
+            data_keys = datamatrix_file.readline().strip().split('\t')
+            for i, k in enumerate(data_keys):
+                self.data[k + '_' + str(i+1)] = []
+                self.sample_id_name_map[k + '_' + str(i+1)] = k
+                self.data_id_order.append(k + '_' + str(i+1))
+            l = datamatrix_file.readline()
+
+            while l:
+                for i, f in enumerate(l.strip().split('\t')):
+                    if f != '':
+                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
+                l = datamatrix_file.readline()
+
+            assays_file.close()
+            datamatrix_file.close()
+            investigation_file.close()
+
+        elif type == 'xls':
+            wb = xlrd.open_workbook(name)
+            investigation_sh = wb.sheet_by_name('investigation')
+
+            for j in range(investigation_sh.nrows):
+                fields = investigation_sh.row_values(j)
+                self.investigation_dict[fields[0]] = fields[1:]
+
+            try:
+                assays_sh = wb.sheet_by_name(self.investigation_dict['Study Assay File Name'][0].replace('.txt', ''))
+            except xlrd.biffh.XLRDError:
+                assays_sh = wb.sheet_by_name(self.investigation_dict['Study File Name'][0].replace('.txt', ''))
+
+            assays_keys = assays_sh.row_values(0)
+            for j in range(1, assays_sh.nrows):
+                l = assays_sh.row_values(j)
+                for i, f in enumerate(l):
+                    if assays_keys[i] in self.assays_dict:
+                        self.assays_dict[assays_keys[i]].append(f)
+                    else:
+                        self.assays_dict[assays_keys[i]] = [f]
+
+            datamatrix_sh = wb.sheet_by_name(self.assays_dict['Raw Data File'][0].replace('.txt', ''))
+            data_keys = datamatrix_sh.row_values(0)
+            for i, k in enumerate(data_keys):
+                self.data[k + '_' + str(i + 1)] = []
+                self.sample_id_name_map[k + '_' + str(i + 1)] = k
+                self.data_id_order.append(k + '_' + str(i + 1))
+
+            for j in range(1, datamatrix_sh.nrows):
+                l = datamatrix_sh.row_values(j)
+                for i, f in enumerate(l):
+                    if f != '':
+                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
+        else:
+            print 'Unrecognized type %s for loading isatab file' % type
+
+
     def save(self, name, type='xls'):
         self.name = name
-        global investigation_keys
 
         if type == 'dir':
             if not os.path.exists(name):
                 os.mkdir(name)
-            investigationfile = open(name + '/investigation.txt', 'w')
-            assaysfile = open(name + '/study-assay.txt', 'w')
-            datamatrixfile = open(name + '/datamatrix.txt', 'w')
+            investigation_file = open(name + '/investigation.txt', 'w')
+            assays_file = open(name + '/study-assay.txt', 'w')
+            datamatrix_file = open(name + '/datamatrix.txt', 'w')
 
             for k in self.assays_keys:
-                assaysfile.write(k + '\t')
+                assays_file.write(k + '\t')
             for k in self.assays_factors:
-                assaysfile.write('Factor Value[%s]\t' % k.replace('-', ' '))
-                assaysfile.write('Term Source REF\t')
-                assaysfile.write('Term Accession Number\t')
-                assaysfile.write('Factor Value[%s concentration]\t' % k.replace('-', ' '))
-                assaysfile.write('Unit\t')
-            assaysfile.write('\n')
+                assays_file.write('Factor Value[%s]\t' % k.replace('-', ' '))
+                assays_file.write('Term Source REF\t')
+                assays_file.write('Term Accession Number\t')
+                assays_file.write('Factor Value[%s concentration]\t' % k.replace('-', ' '))
+                assays_file.write('Unit\t')
+            assays_file.write('\n')
 
             for i in range(len(self.assays_dict.values()[0])):
                 line = ''
@@ -1104,22 +1074,22 @@ class ISATABFile(object):
                     line += self.assays_factors[k]['accession'][i] + '\t'
                     line += self.assays_factors[k]['concentration'][i] + '\t'
                     line += self.assays_factors[k]['unit'][i] + '\t'
-                assaysfile.write(line.strip('\t') + '\n')
+                assays_file.write(line.strip('\t') + '\n')
 
-            for k in investigation_keys:
+            for k in ISATAB_INVEST_KEYS:
                 line = k + '\t'
                 for i in range(len(self.investigation_dict[k])):
                     line += self.investigation_dict[k][i] + '\t'
-                investigationfile.write(line.strip('\t') + '\n')
+                investigation_file.write(line.strip('\t') + '\n')
 
             maxlen = max([len(x) for x in self.data.values()])
-            datamatrixfile.write('\t'.join(self.assays_dict['Source Name']) + '\n')
+            datamatrix_file.write('\t'.join(self.assays_dict['Source Name']) + '\n')
             for i in range(maxlen):
-                datamatrixfile.write('\t'.join(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]) + '\n')
+                datamatrix_file.write('\t'.join(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]) + '\n')
 
-            assaysfile.close()
-            datamatrixfile.close()
-            investigationfile.close()
+            assays_file.close()
+            datamatrix_file.close()
+            investigation_file.close()
 
         elif type == 'xls':
             (assay_row, inv_row, data_row) = (0, 0, 0)
@@ -1163,7 +1133,7 @@ class ISATABFile(object):
                     assays_sh.write(assay_row, j, line[j])
                 assay_row += 1
 
-            for i, k in enumerate(investigation_keys):
+            for i, k in enumerate(ISATAB_INVEST_KEYS):
                 line = [k]
                 for j in range(len(self.investigation_dict[k])):
                     line.append(self.investigation_dict[k][j])
@@ -1185,84 +1155,7 @@ class ISATABFile(object):
         else:
             print 'Unrecognized type %s to save isatab file' % type
 
-
-    def load(self, name, type='xls'):
-        self.name = name
-
-        if type == 'dir':
-            investigationfile = open(name + '/investigation.txt')
-            for l in investigationfile.readlines():
-                fields = l.strip().split('\t')
-                self.investigation_dict[fields[0]] = fields[1:]
-
-            assaysfile = open(name+'/'+self.investigation_dict['Study Assay File Name'][0])
-            assays_keys = assaysfile.readline().strip().split('\t')
-            l = assaysfile.readline()
-
-            while l:
-                for i, f in enumerate(l.strip().split('\t')):
-                    if assays_keys[i] in self.assays_dict:
-                        self.assays_dict[assays_keys[i]].append(f)
-                    else:
-                        self.assays_dict[assays_keys[i]] = [f]
-                l = assaysfile.readline()
-
-            datamatrixfile = open(name + '/' + self.assays_dict['Raw Data File'][0])
-            data_keys = datamatrixfile.readline().strip().split('\t')
-            for i, k in enumerate(data_keys):
-                self.data[k + '_' + str(i+1)] = []
-                self.sample_id_name_map[k + '_' + str(i+1)] = k
-                self.data_id_order.append(k + '_' + str(i+1))
-            l = datamatrixfile.readline()
-
-            while l:
-                for i, f in enumerate(l.strip().split('\t')):
-                    if f != '':
-                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
-                l = datamatrixfile.readline()
-
-            assaysfile.close()
-            datamatrixfile.close()
-            investigationfile.close()
-
-        elif type == 'xls':
-            wb = xlrd.open_workbook(name)
-            investigation_sh = wb.sheet_by_name('investigation')
-
-            for j in range(investigation_sh.nrows):
-                fields = investigation_sh.row_values(j)
-                self.investigation_dict[fields[0]] = fields[1:]
-
-            try:
-                assays_sh = wb.sheet_by_name(self.investigation_dict['Study Assay File Name'][0].replace('.txt', ''))
-            except xlrd.biffh.XLRDError:
-                assays_sh = wb.sheet_by_name(self.investigation_dict['Study File Name'][0].replace('.txt', ''))
-
-            assays_keys = assays_sh.row_values(0)
-            for j in range(1, assays_sh.nrows):
-                l = assays_sh.row_values(j)
-                for i, f in enumerate(l):
-                    if assays_keys[i] in self.assays_dict:
-                        self.assays_dict[assays_keys[i]].append(f)
-                    else:
-                        self.assays_dict[assays_keys[i]] = [f]
-
-            datamatrix_sh = wb.sheet_by_name(self.assays_dict['Raw Data File'][0].replace('.txt', ''))
-            data_keys = datamatrix_sh.row_values(0)
-            for i, k in enumerate(data_keys):
-                self.data[k + '_' + str(i + 1)] = []
-                self.sample_id_name_map[k + '_' + str(i + 1)] = k
-                self.data_id_order.append(k + '_' + str(i + 1))
-
-            for j in range(1, datamatrix_sh.nrows):
-                l = datamatrix_sh.row_values(j)
-                for i, f in enumerate(l):
-                    if f != '':
-                        self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
-        else:
-            print 'Unrecognized type %s for loading isatab file' % type
-
-
+            
     def validate(self):
         messages = []
 
@@ -1273,25 +1166,25 @@ class ISATABFile(object):
                     if t.strip() == '':
                         pass
                     else:
-                        m.append( 'WARNING! For %s, term %s is unknown for its respective ontology' % (prefix, t))
+                        m.append('WARNING! For %s, term %s is unknown for its respective ontology' % (prefix, t))
                 else:
                     r = d[prefix + ' Term Accession Number'][i].strip().replace('_', ':')
                     if ontdict[t.replace(' ', '-')] != r:
-                        m.append( 'WARNING! For %s, term %s and accession number %s do not match' % (prefix, t, r))
+                        m.append('WARNING! For %s, term %s and accession number %s do not match' % (prefix, t, r))
 
             for i, t in enumerate(d[prefix + ' Term Accession Number']):
                 if not d[prefix + ' Term Source REF'][i] in t:
-                    m.append( 'WARNING! For %s, accession number and REF ontology do not match.' % prefix)
+                    m.append('WARNING! For %s, accession number and REF ontology do not match.' % prefix)
             return m
 
         if len(self.data) != len(self.assays_dict['Source Name']):
-            messages.append( 'WARNING! Number of samples in assays and data file do not match')
+            messages.append('WARNING! Number of samples in assays and data file do not match')
         for k in self.data:
             if not self.sample_id_name_map[k] in self.assays_dict['Source Name']:
-                messages.append( 'WARNING! Sample %s in data file not referenced from assays file' % k)
+                messages.append('WARNING! Sample %s in data file not referenced from assays file' % k)
         for i, k in enumerate(self.assays_dict['Source Name']):
             if not k + '_' + str(i) in self.data:
-                messages.append( 'WARNING! Sample %s in assays file is missing from data file' % k)
+                messages.append('WARNING! Sample %s in assays file is missing from data file' % k)
         for p in self.investigation_dict['Study Protocol Name']:
             if p.strip() != '' and (p.strip().lower() not in [x.strip().lower() for x in self.assays_dict['Protocol REF']]):
                 messages.append('WARNING! Protocol %s in investigation file is not in assays file' % p)
@@ -1300,7 +1193,7 @@ class ISATABFile(object):
         #messages = messages + check_terms(self.investigation_dict, 'Study Factor Type', ONTOLOGY.CHEMICAL)
         for i, seq in enumerate(self.assays_dict['Characteristics[Nucleotide Sequence]']):
             if i >= len(self.assays_dict['Source Name']):
-                messages.append( 'ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
+                messages.append('ERROR! Cannot continue validation as list of source names and sequences do not match in number!')
                 return messages
             for k in ['Source Name', 'Parameter Value[Data Starts at Sequence Position]', 'Characteristics[Nucleotide Type]']:
                 stop = False
@@ -1326,34 +1219,26 @@ class ISATABFile(object):
 
     def toRDAT(self):
         rdatfile = RDATFile()
-        rdatfile.comments = ''
         general_annotations = defaultdict(list)
+
         for i, name in enumerate(self.assays_dict['Assay Name']):
-            rdatfile.constructs[name] = RDATSection()
-            d = RDATSection()
-            c = rdatfile.constructs[name]
+            d = RDATSection(['seqpos', 'errors', 'trace', 'xsel'])
+            d.annotations = {}
+            d.values = self.data[name]
+            rdatfile.values[name] = [d.values]
+
+            c = RDATSection(['values', 'traces', 'mutpos', 'data_types', 'xsel'])
             c.name = name
             c.annotations = {}
             for k, v in general_annotations.iteritems():
                 c._annotation_strtations[k] = v
 
-            d.values = self.data[name]
-            rdatfile.values[name] = [d.values]
-            d.annotations = {}
-            d.xsel = []
-            d.errors = []
-            d.trace = []
-            d.seqpos = []
             c.sequence = self.assays_dict['Characteristics[Nucleotide Sequence]'][i]
             c.seqpos = range(len(c.sequence))
-            c.xsel = []
-            c.values = []
-            c.traces = []
-            c.mutpos = []
-            c.data_types = []
             c.data = [d]
             c.offset = 0
             c.structure = '.' * len(c.sequence)
+            rdatfile.constructs[name] = c
 
         rdatfile.loaded = True
         return rdatfile
