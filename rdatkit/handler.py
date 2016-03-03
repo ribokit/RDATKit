@@ -208,7 +208,7 @@ class RDATFile(object):
                         self.xsels[this_construct].append(self.constructs[this_construct].data[data_idx].xsel)
                 else:
                     if line.strip():
-                        print 'Invalid section: ' + line
+                        raise AttributeError('Invalid section: ' + line)
 
             elif self.version >= 0.2 and self.version < 0.4:
                 if line.startswith('COMMENT'):
@@ -248,7 +248,6 @@ class RDATFile(object):
                     attheader = 'STRUCTURE:' if ':' in line else 'STRUCTURE'
                     line = line.replace(attheader, '')
                     if len(line.split()) > 1:
-                        # print line, line.replace(attheader, '').strip().split()
                         structidx, struct = line.strip().split()
                         self.constructs[this_construct].structures[int(structidx)] = struct.strip()
                         self.constructs[this_construct].structure = struct.strip()
@@ -326,7 +325,7 @@ class RDATFile(object):
 
                 else:
                     if line.strip():
-                        print 'Invalid section: ' + line
+                        raise AttributeError('Invalid section: ' + line)
 
             elif self.version >= 0.4:
                 if line.startswith('COMMENT'):
@@ -395,10 +394,10 @@ class RDATFile(object):
 
                 else:
                     if line.strip():
-                        print 'Invalid section: ' + line
+                        raise AttributeError('Invalid section: ' + line)
 
             else:
-                print 'Unknown version %s!' % self.version
+                raise ValueError('Wrong version number %s' % version)
 
             if self.version == 0.1 and fill_data_types:
                 self.data_types[this_construct] = [self.data_types[this_construct][0]] * len(self.values[this_construct])
@@ -449,7 +448,7 @@ class RDATFile(object):
             version = 0.3 if not self.version else self.version
 
         if not self.loaded:
-            print 'Data not loaded yet ...'
+            raise UnboundLocalError('Data not loaded yet ...')
         else:
             f = open(filename, 'w')
 
@@ -697,7 +696,7 @@ class RDATFile(object):
                                     f.write('XSEL_REFINE:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
 
             else:
-                print 'Wrong version number %s' % version
+                raise ValueError('Wrong version number %s' % version)
             f.close()
 
 
@@ -1037,7 +1036,7 @@ class ISATABFile(object):
                     if f != '':
                         self.data[data_keys[i] + '_' + str(i + 1)].append(float(f))
         else:
-            print 'Unrecognized type %s for loading isatab file' % type
+            raise TypeError('Unrecognized type %s for loading isatab file' % type)
 
 
     def save(self, name, type='xls'):
@@ -1153,7 +1152,7 @@ class ISATABFile(object):
             wb.save(name)
 
         else:
-            print 'Unrecognized type %s to save isatab file' % type
+            raise TypeError('Unrecognized type %s for saving isatab file' % type)
 
             
     def validate(self):

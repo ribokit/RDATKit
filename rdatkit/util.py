@@ -55,7 +55,6 @@ class Ontology(object):
         self.CHEMICAL = {
             'MgCl2': 'CHEBI:6636',
             'Na-HEPES': 'NCIM:C0887237'
-            
         }
 
         self.PROTOCOL = {
@@ -118,7 +117,7 @@ ISATAB_ASSAY_KEYS = ['Source Name', 'Characteristics[Nucleotide Sequence]', 'Cha
 
 ISATAB_INVEST_DICT = {
     'ONTOLOGY SOURCE REFERENCE': [],
-    'Term Source Name': ['OBI','CHEBI', 'UO'],
+    'Term Source Name': ['OBI', 'CHEBI', 'UO'],
     'Term Source File': [],
     'Term Source Version': ['v 1.26', 'v 1.26', 'v 1.26'],
     'Term Source Description': ['Ontology for Biomedical Investigations', 'Chemical Entity of Biological Interest', 'Unit Ontology'],
@@ -206,7 +205,7 @@ ISATAB_INVEST_DICT = {
     'Study Person Affiliation': [],
     'Study Person Roles': [],
     'Study Person Roles Term Accession Number': [],
-    'Study Person Roles Term Source REF': []        
+    'Study Person Roles Term Source REF': []
 }
 
 ISATAB_ASSAY_DICT = {
