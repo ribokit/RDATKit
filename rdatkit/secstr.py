@@ -26,7 +26,7 @@ class SecondaryStructure(object):
 
     def __str__(self):
         return self.dbn
-    
+
 
     def _get_base_pairs(self, l_char, r_char):
         stack = []
@@ -39,11 +39,11 @@ class SecondaryStructure(object):
         return bps
 
     def base_pairs(self):
-        bps = self._get_base_pairs('(',')')
-        bps += self._get_base_pairs('{','}')
-        bps += self._get_base_pairs('[',']')
+        bps = self._get_base_pairs('(', ')')
+        bps += self._get_base_pairs('{', '}')
+        bps += self._get_base_pairs('[', ']')
         return bps
-    
+
 
     def _get_base_pair_dict(self, l_char, r_char):
         stack = []
@@ -80,7 +80,7 @@ class SecondaryStructure(object):
                         helices.append(curr_helix)
                         curr_helix = [(prev_base, i)]
                 else:
-                    curr_helix.append((prev_base,i))
+                    curr_helix.append((prev_base, i))
             if s == '.':
                 if len(curr_helix) > 0:
                     helices.append(curr_helix)
@@ -90,17 +90,17 @@ class SecondaryStructure(object):
         return helices
 
     def helices(self):
-        helices = self._get_helices('(',')')
-        helices += self._get_helices('{','}')
-        helices += self._get_helices('[',']')
+        helices = self._get_helices('(', ')')
+        helices += self._get_helices('{', '}')
+        helices += self._get_helices('[', ']')
         return helices
 
 
     def explode(self):
-        hstack = [] # for helices
-        statestack = [] # for single stranded regions
-        jlist = [] # for junctions
-        wstack = [] # for junction ways
+        hstack = []  # for helices
+        statestack = []  # for single stranded regions
+        jlist = []  # for junctions
+        wstack = []  # for junction ways
         jstartstack = []
         fragments = {'helices': [], 'interiorloops': [], 'hairpins': [], 'dangles': [], 'bulges': []}
         helices = self.helices()
@@ -124,7 +124,7 @@ class SecondaryStructure(object):
 
         def _get_ssregion(start, i):
             if start < 0:
-                return  []
+                return []
             else:
                 return range(start, i)
 
@@ -178,7 +178,7 @@ class SecondaryStructure(object):
                         if s_state == ')':
                             fragments['bulges'].append(_get_ssregion(ss_region_start, i))
                     ss_region_start = -1
-                
+
                 elif prev_state == ')':
                     if len(jstartstack) > 0 and jstartstack[-1] == prev_base:
                         jstartstack.pop()
@@ -203,7 +203,7 @@ class SecondaryStructure(object):
 
         if self.dbn[-1] == '.':
             fragments['dangles'].append(_get_ssregion(ss_region_start, len(self.dbn)))
-        
+
         # Eliminate spurious adds for single stranded regions and re-assign aptamer regions
         aptamers = []
         for k, v in fragments.iteritems():
@@ -291,7 +291,7 @@ def _get_fasta_structures(fname):
     structures = []
     for l in open(fname).readlines():
         l = l.strip()
-        if l[0] not in  ['.', '(', ')']:
+        if l[0] not in ['.', '(', ')']:
             continue
         structures.append(SecondaryStructure(dbn=l.split()[0]))
     return structures
@@ -356,7 +356,7 @@ def get_boltzmann_weight(sequence, structure, algorithm='rnastructure'):
 
         remove_file(seq_name)
         remove_file(ct_name)
-        kT = 0.5905 #TODO Need to generalize/correct this
+        kT = 0.5905  # TODO Need to generalize/correct this
         weight = exp(-energy / kT) / exp(-ensemble_energy / kT)
     return weight
 
@@ -413,7 +413,7 @@ def fold(sequence, algorithm='rnastructure', modifier='shape', mapping_data=[], 
         structs = _get_dot_structs(ct_name, N_structs)
         remove_file(seq_name)
         remove_file(ct_name)
-        if tmp != None:
+        if tmp is not None:
             remove_file(tmp)
 
     elif algorithm == 'viennarna':
@@ -423,7 +423,7 @@ def fold(sequence, algorithm='rnastructure', modifier='shape', mapping_data=[], 
 
         structs = [SecondaryStructure(dbn=l.split()[0].strip()) for l in open(fastaname + '.out').readlines() if l.strip()[0] in ['(', ')', '.']]
         remove_file(fastaname)
-    
+
     return structs
 
 
@@ -434,13 +434,13 @@ def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts='
         if mapping_data:
             CMD += _get_mapping_data_file(mapping_data, bonus2d=bonus2d)
             CMD += fold_opts
-        subprocess.check_call(CMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)        
+        subprocess.check_call(CMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     bppm = loadtxt('bpp.txt')
     for i in range(bppm.shape[0]):
-        for j in range(i,bppm.shape[1]):
-            if bppm[i,j] != 0:
-                bppm[j,i] = bppm[i,j]
+        for j in range(i, bppm.shape[1]):
+            if bppm[i, j] != 0:
+                bppm[j, i] = bppm[i, j]
     remove_file(seq_name)
     remove_file(ct_name)
     return bppm
@@ -496,7 +496,7 @@ def get_energies(fname, format='ct', mapping_data=None):
         energies = []
         for l in open(fname + '.out').readlines():
             l = l.strip()
-            if l[0] not in  ['.', '(', ')']:
+            if l[0] not in ['.', '(', ')']:
                 continue
             energies.append(float(l.split()[-1].strip(')(')))
         remove_file(fname + '.out')
@@ -578,10 +578,10 @@ def base_pair_fractions_in_structures(reference, structures, factors=None):
 
     for bp in bp_dict.keys():
         if factors is None:
-            bp_dict[bp] *= 100./len(structures)
+            bp_dict[bp] *= 100. / len(structures)
         else:
             bp_dict[bp] *= 100.
-    
+
     for bp in ref_bp:
         bp_dict[bp[::-1]] = bp_dict[bp]
 

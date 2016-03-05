@@ -44,7 +44,7 @@ def maximum_likelihood_probabilities(X, Y):
 def matrix_to_mapping(matrix):
     md = []
     for i in range(shape(matrix)[0]):
-        md.append(MappingData(data=matrix[i,:]))
+        md.append(MappingData(data=matrix[i, :]))
     return md
 
 
@@ -62,7 +62,7 @@ class MappingData(object):
         if norm:
             self._data = normalize(self._data)
         self.type = type
-    
+
 
     def __iter__(self):
         return iter(self._data)
@@ -85,7 +85,7 @@ class MappingData(object):
 
     def data(self):
         return self._data
-    
+
     def load(self, shape_file):
         self.seqpos = []
         mdata = []
@@ -96,7 +96,7 @@ class MappingData(object):
         self._data = [None] * (max(self.seqpos) + 1)
         for i, dat in enumerate(mdata):
             self._data[self.seqpos[i]] = dat
-        
+
     def sample(self, N_samples, is_replacement=False):
         if is_replacement:
             nseqpos = [0] * N_samples

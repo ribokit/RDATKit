@@ -27,14 +27,14 @@ class VARNA(object):
             return '-0.001:#C0C0C0,0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
         else:
             return '0:#FFFFFF;0.1:#FFFFFF,0.8:#FF8800;1:#FF0000'
-    
+
     @classmethod
     def run(self, sequence, structure, outfile, options={}):
         option_str = ''
         for key in options:
             val = options[key]
             if isinstance(val, list):
-                argval = str(val).strip('[]').replace('L', '').replace('u','')
+                argval = str(val).strip('[]').replace('L', '').replace('u', '')
             else:
                 argval = str(val)
             option_str += '-%s "%s" ' % (key, argval)
@@ -46,7 +46,7 @@ class VARNA(object):
         if att == 'structures':
             return [struct.dbn for struct in self.structures]
         return getattr(self, att)
-    
+
     def get_frames(self, overlap_structures):
         res = -1
         for key, val in self.__dict__.items():
@@ -67,7 +67,7 @@ class VARNA(object):
                 arg_val = str(val)
             option_str += '-%s "%s" ' % (key, arg_val)
         return option_str
-    
+
 
     def _get_base_annotation_string(self, base_annotations, annotation_by_helix=False, helix_function=(lambda x, y: x), is_applet=False, base_offset=0, stype='L', helix_side=0):
         base_annotation_string = ''
@@ -92,8 +92,8 @@ class VARNA(object):
                     base_annotation_string += '%s:type=%s,anchor=%d,size=%d,color=%s;' % (annotation_value, stype, anchor, self.annotation_font_size, self.annotation_color)
             else:
                 for bp in base_annotations:
-                    base_annotation_string += '%s:type=B,anchor=%d,size=%d,color=%s;' % (base_annotations[bp], bp[0] + base_offset, self.annotation_font_size, self.annotation_color)   
-            base_annotation_string = base_annotation_string.strip() 
+                    base_annotation_string += '%s:type=B,anchor=%d,size=%d,color=%s;' % (base_annotations[bp], bp[0] + base_offset, self.annotation_font_size, self.annotation_color)
+            base_annotation_string = base_annotation_string.strip()
         if is_applet:
             base_annotation_string += '"/>\n'
         return base_annotation_string
@@ -118,7 +118,7 @@ class VARNA(object):
                             struct_string += '(%s,%s):edge5=s,edge3=h,stericity=cis;' % (bp[0] + 1, bp[1] + 1)
                 struct_string += '"/>\n'
 
-            applet_string += self._get_base_annotation_string(base_annotations, annotation_by_helix=annotation_by_helix, helix_function=helix_function, is_applet=True) 
+            applet_string += self._get_base_annotation_string(base_annotations, annotation_by_helix=annotation_by_helix, helix_function=helix_function, is_applet=True)
 
             if self.rows * self.columns != frames:
                 rows = frames
@@ -172,7 +172,7 @@ class VARNA(object):
                             if is_default_colormap:
                                 param_string += '<param name="colorMapStyle%s" value="%s" />\n' % (frame_idx, VARNA.get_colormap(val, sequence=self.sequences[idx]))
                             val = [map_data_function(val[x]) if (val[x] is not None) and val[x] > 0 else -0.001 for x in range(len(self.sequences[idx]))]
-                            val = str(val).strip('[]').replace(' ','')
+                            val = str(val).strip('[]').replace(' ', '')
                         param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, val)
 
             applet_string += param_string

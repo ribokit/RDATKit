@@ -222,7 +222,7 @@ class RDATFile(object):
 
                 elif 'CONSTRUCT' in line or line.startswith('NAME'):
                     if 'CONSTRUCT' in line:
-                        line = file.readline().strip() # Advance to 'NAME' line.
+                        line = file.readline().strip()  # Advance to 'NAME' line.
 
                     this_construct = line.replace('NAME', '').strip()
                     data_idx = -1
@@ -401,7 +401,7 @@ class RDATFile(object):
 
             if self.version == 0.1 and fill_data_types:
                 self.data_types[this_construct] = [self.data_types[this_construct][0]] * len(self.values[this_construct])
-    
+
         if self.version >= 0.2:
             self.comments = self.comments[:-1]
         self.loaded = True
@@ -713,20 +713,20 @@ class RDATFile(object):
             if min(c.seqpos) - c.offset < 1:
                 messages.append('WARNING! Offset/seqpos does not look right -- at least one index is too low for sequence')
             if max(c.seqpos) - c.offset > len(c.sequence):
-                messages.append('WARNING! Offset/seqpos does not look right -- at least one index is too high for sequence') 
+                messages.append('WARNING! Offset/seqpos does not look right -- at least one index is too high for sequence')
             if len(c.data[0].values) != len(c.seqpos):
                 messages.append('WARNING! Number of bands in area_peak [%s] does not match len of seqpos [%s]' % (len(c.data[0].values), len(c.seqpos)))
 
             for i, d in enumerate(c.data):
-                if not d.has_key('annotations'):
+                if 'annotations' not in d:
                     messages.append('WARNING! Data for index %s has no annotations' % i)
-                if not d.has_key('values'):
+                if 'values' not in d:
                     messages.append('WARNING! Data for index %s has no values for area peaks' % i)
-                if not d.has_key('trace'):
+                if 'trace' not in d:
                     messages.append('WARNING! Data for index %s has no trace' % i)
-                if len(self.xsels) > 0 and (not d.has_key('xsel')):
+                if len(self.xsels) > 0 and ('xsel' not in d):
                     messages.append('WARNING! Data for index %s has no xsel refine' % i)
-                if d.has_key('xsel'):
+                if 'xsel' in d:
                     if len(c.xsel) != len(d.values):
                         messages.append('WARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s' % (len(c.xsel), len(d.values), i))
                     if len(d.xsel) != 0 and len(d.xsel) != len(d.values):
@@ -1154,7 +1154,7 @@ class ISATABFile(object):
         else:
             raise TypeError('Unrecognized type %s for saving isatab file' % type)
 
-            
+
     def validate(self):
         messages = []
 
