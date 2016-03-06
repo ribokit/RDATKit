@@ -77,7 +77,7 @@ class RDATFile(object):
 
         fields = split(line.strip('\n ,'), delims='\t, ')
         data_idx = int(fields[0]) - 1 if start_idx else None
-        data = [float(x) for x in fields[start_idx:]]
+        data = [float(x) if ':' not in x else float(x[:x.find(':')]) for x in fields[start_idx:]]
         return (data, data_idx)
 
     def _parse_annotations(self, s):
