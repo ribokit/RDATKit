@@ -718,15 +718,15 @@ class RDATFile(object):
                 messages.append('WARNING! Number of bands in area_peak [%s] does not match len of seqpos [%s]' % (len(c.data[0].values), len(c.seqpos)))
 
             for i, d in enumerate(c.data):
-                if 'annotations' not in d:
+                if not hasattr(d, 'annotations'):
                     messages.append('WARNING! Data for index %s has no annotations' % i)
-                if 'values' not in d:
+                if not hasattr(d, 'values'):
                     messages.append('WARNING! Data for index %s has no values for area peaks' % i)
-                if 'trace' not in d:
+                if not hasattr(d, 'trace'):
                     messages.append('WARNING! Data for index %s has no trace' % i)
-                if len(self.xsels) > 0 and ('xsel' not in d):
+                if len(self.xsels) > 0 and (not hasattr(d, 'xsel')):
                     messages.append('WARNING! Data for index %s has no xsel refine' % i)
-                if 'xsel' in d:
+                if hasattr(d, 'xsel'):
                     if len(c.xsel) != len(d.values):
                         messages.append('WARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s' % (len(c.xsel), len(d.values), i))
                     if len(d.xsel) != 0 and len(d.xsel) != len(d.values):
