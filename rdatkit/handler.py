@@ -727,7 +727,7 @@ class RDATFile(object):
                 if len(self.xsels) > 0 and (not hasattr(d, 'xsel')):
                     messages.append('WARNING! Data for index %s has no xsel refine' % i)
                 if hasattr(d, 'xsel'):
-                    if len(c.xsel) != len(d.values):
+                    if len(c.xsel) != 0 and len(c.xsel) != len(d.values):
                         messages.append('WARNING! Number of bands in construct xsel [%s] does not match number of bands in values area peak [%s] of data indexed %s' % (len(c.xsel), len(d.values), i))
                     if len(d.xsel) != 0 and len(d.xsel) != len(d.values):
                         messages.append('WARNING! Number of bands in xsel indexed %s [%s] does not match number of bands in values area peak [%s]' % (i, len(d.xsel), len(d.values)))
