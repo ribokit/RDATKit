@@ -321,9 +321,9 @@ def _get_dot_structs(ct_name, N_structs, unique=False):
 def _to_ct_file(sequence, struct, filename):
     f = open(filename, 'w')
     if isinstance(struct, list):
-        structs = [struct]
-    else:
         structs = struct
+    else:
+        structs = [struct]
 
     for s in structs:
         f.write('%s bla\n' % len(sequence))

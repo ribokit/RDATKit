@@ -48,4 +48,5 @@ Copyright &copy; of **RDATKit** _Source Code_ is described in [LICENSE.md](https
 
 <br/>
 Developed by **Das lab**, _Leland Stanford Junior University_.
+<br/>
 README by [**t47**](http://t47.io/), *March 2016*.
