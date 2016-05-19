@@ -14,10 +14,7 @@ def _bppm_thresh_indices(bppm_pred, bppm_true, thresh):
 def get_helices_from_structures(structures):
     helices = []
     for struct in structures:
-        if isinstance(struct, str):
-            obj = secstr.SecondaryStructure(dbn=struct)
-        else:
-            obj = struct
+        obj = secstr.SecondaryStructure(dbn=struct) if isinstance(struct, str) else struct
 
         struct_helices = obj.helices()
         for struct_helix in struct_helices:
@@ -74,8 +71,7 @@ def get_indv_bppm_tp_fp_tn_fn(bppm_pred, bppm_true, thresh, diff_thresh=None, th
         helices = _find_helices_from_bppm(bppm_true >= thresh2)
         helices_pred = _find_helices_from_bppm(bppm_pred >= thresh2)
         for h in helices:
-            if len(h) < 3:
-                continue
+            if len(h) < 3: continue
             (bps_tp, bps_tn, bps_fn) = (0., 0., 0.)
             for n1, n2 in h:
                 if bppm_pred[n1, n2] >= thresh or bppm_true[n1, n2] >= thresh2:
@@ -231,16 +227,16 @@ def bpp_roc(bppm_pred, bppm_true, interval=None):
     for thresh in interval:
         ppv.append(bpp_ppv(bppm_pred, bppm_true, diff_thresh=thresh))
         sens.append(bpp_sensitivity(bppm_pred, bppm_true, diff_thresh=thresh))
-    sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x:x[1])]
+    sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x: x[1])]
     return [ppv[i] for i in sorted_indices], [sens[i] for i in sorted_indices]
 
 
 def auc(ppv, sens):
     res = 0
-    sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x:x[1])]
+    sorted_indices = [i for i, p in sorted(enumerate(ppv), key=lambda x: x[1])]
     for idx, i in enumerate(sorted_indices[:-1]):
         j = sorted_indices[idx + 1]
-        base = (ppv[j]-ppv[i])
+        base = (ppv[j] - ppv[i])
         h = max(sens[j], sens[i])
         res += base * h - (base * (h - min(sens[j], sens[i])) / 2.)
     return res

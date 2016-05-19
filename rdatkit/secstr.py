@@ -73,7 +73,7 @@ class SecondaryStructure(object):
                 stack.append(i)
             if s == r_char:
                 prev_base = stack.pop()
-                if len(curr_helix) > 0:
+                if len(curr_helix):
                     if curr_helix[-1][0] == prev_base + 1 and curr_helix[-1][1] == i - 1:
                         curr_helix.append((prev_base, i))
                     else:
@@ -82,10 +82,10 @@ class SecondaryStructure(object):
                 else:
                     curr_helix.append((prev_base, i))
             if s == '.':
-                if len(curr_helix) > 0:
+                if len(curr_helix):
                     helices.append(curr_helix)
                     curr_helix = []
-        if len(curr_helix) > 0:
+        if len(curr_helix):
             helices.append(curr_helix)
         return helices
 
@@ -113,10 +113,10 @@ class SecondaryStructure(object):
             ways = 0
             startj = len(junctions)
             for i, jun in enumerate(junctions):
-                if len(jun) > 0 and jun[0] - 1 == pos:
+                if len(jun) and jun[0] - 1 == pos:
                     startj = i
                     break
-            for i in range(startj, len(junctions)):
+            for i in xrange(startj, len(junctions)):
                 ways += 1
                 junction += [x for x in junctions[i] if self.dbn[x] == '.' or self.dbn[x].lower() == 'a']
             newjunctions = junctions[:startj]
@@ -141,7 +141,7 @@ class SecondaryStructure(object):
             if s == '(':
                 hstack.append(i)
                 s_state = ''
-                if len(statestack) > 0:
+                if len(statestack):
                     s_state = statestack.pop()
                 if prev_state == '.' and s_state == '-':
                     fragments['dangles'].append(range(i))
@@ -162,7 +162,7 @@ class SecondaryStructure(object):
                 if prev_state == '.':
                     (junction, ways, jlist) = _close_junction(jlist, prev_base)
                     if ways > 0:
-                        for w in range(ways):
+                        for w in xrange(ways):
                             jstartstack.pop()
                         if ways == 1:
                             fragments['interiorloops'].append(junction + _get_ssregion(ss_region_start, i))
@@ -180,7 +180,7 @@ class SecondaryStructure(object):
                     ss_region_start = -1
 
                 elif prev_state == ')':
-                    if len(jstartstack) > 0 and jstartstack[-1] == prev_base:
+                    if len(jstartstack) and jstartstack[-1] == prev_base:
                         jstartstack.pop()
                         bulge = jlist.pop()
                         fragments['bulges'].append(bulge)
@@ -189,7 +189,7 @@ class SecondaryStructure(object):
                     else:
                         (junction, ways, jlist) = _close_junction(jlist, prev_base)
                         if ways > 0:
-                            for w in range(ways):
+                            for w in xrange(ways):
                                 jstartstack.pop()
                                 if ways == 1:
                                     fragments['interiorloops'].append(junction + _get_ssregion(ss_region_start, i))
@@ -211,10 +211,10 @@ class SecondaryStructure(object):
                 for i, ntlist in enumerate(v):
                     v[i] = [x for x in ntlist if self.dbn[x] == '.']
                     apt = [x for x in ntlist if self.dbn[x].lower() == 'a']
-                    if len(apt) > 0:
+                    if len(apt):
                         aptamers.append(apt)
             # Get rid of empty lists
-            fragments[k] = [x for x in v if len(x) > 0]
+            fragments[k] = [x for x in v if len(x)]
         fragments['aptamers'] = aptamers
 
         prev_i = -1
@@ -235,7 +235,7 @@ class SecondaryStructure(object):
                 sstrand_region.append(i)
                 prev_i = i
 
-        if len(sstrand_region) > 0:
+        if len(sstrand_region):
             fragments['sstrand'].append(sstrand_region)
 
         return fragments
@@ -251,7 +251,7 @@ class SecondaryStructure(object):
         data = mapping.normalize(mapping_data)
         probs = array([1.] * len(self.dbn))
         for k in frags:
-            if len(frags[k]) > 0 and k in db:
+            if len(frags[k]) and k in db:
                 g = gamma(db[k][0], db[k][1], db[k][2])
                 for frag in frags[k]:
                     for i in frag:
@@ -299,7 +299,7 @@ def _get_fasta_structures(fname):
 def _get_dot_structs(ct_name, N_structs, unique=False):
     structs = []
     dbns = []
-    for i in range(N_structs):
+    for i in xrange(N_structs):
         dbnfile = tempfile.NamedTemporaryFile(delete=False)
         dbnname = dbnfile.name
         dbnfile.close()
@@ -328,7 +328,7 @@ def _to_ct_file(sequence, struct, filename):
     for s in structs:
         f.write('%s bla\n' % len(sequence))
         bps = s.base_pair_dict()
-        for i in range(len(sequence)):
+        for i in xrange(len(sequence)):
             pair = bps[i] + 1 if i in bps else 0
             n = 0 if i == len(sequence) - 1 else i + 1
             f.write('%s %s %s %s %s %s\n' % (i+1, sequence[i], i, i+2, pair, n))
@@ -437,8 +437,8 @@ def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts='
         subprocess.check_call(CMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     bppm = loadtxt('bpp.txt')
-    for i in range(bppm.shape[0]):
-        for j in range(i, bppm.shape[1]):
+    for i in xrange(bppm.shape[0]):
+        for j in xrange(i, bppm.shape[1]):
             if bppm[i, j] != 0:
                 bppm[j, i] = bppm[i, j]
     remove_file(seq_name)

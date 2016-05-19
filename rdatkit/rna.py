@@ -28,7 +28,7 @@ class RNA(object):
         # print full_bps
         full_bps = full_bps[0].base_pairs()
         bp_dict = dict([(bp, 0) for bp in full_bps])
-        for i in range(nboot):
+        for i in xrange(nboot):
             print 'Doing bootstrap iteration %s' % i
             if bonus2d:
                 md = zeros(mapping_data.shape)
