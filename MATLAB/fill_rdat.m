@@ -11,17 +11,17 @@ if nargin==0; help( mfilename ); return; end;
 rdat = RDATFile;
 rdat.name = ''; % signal that we're not filled yet.
 
-if ~exist( 'reactivity' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
-if ~exist( 'structure' ); structure=''; end;
-if ~exist( 'annotations' ); annotations = {}; end;
-if ~exist( 'data_annotations' ); data_annotations = {}; end;
-if ~exist( 'reactivity_error' ); reactivity_error = {}; end;
-if ~exist( 'trace_in' ); trace_in = []; end;
-if ~exist( 'xsel' ); xsel = []; end;
-if ~exist( 'xsel_refine' ); xsel_refine = []; end;
-if ~exist( 'comments' ); comments = {}; end;
+if ~exist( 'reactivity', 'var' );  fprintf( 'Must specify six variables: filename, name, sequence, offset, seqpos, reactivity'); end
+if ~exist( 'structure', 'var' ); structure=''; end;
+if ~exist( 'annotations', 'var' ); annotations = {}; end;
+if ~exist( 'data_annotations', 'var' ); data_annotations = {}; end;
+if ~exist( 'reactivity_error', 'var' ); reactivity_error = {}; end;
+if ~exist( 'trace_in', 'var' ); trace_in = []; end;
+if ~exist( 'xsel', 'var' ); xsel = []; end;
+if ~exist( 'xsel_refine', 'var' ); xsel_refine = []; end;
+if ~exist( 'comments', 'var' ); comments = {}; end;
 
-if length( xsel_refine ) > 0 & ( size( reactivity, 2) ~= size( xsel_refine, 2 ) )
+if ~isempty( xsel_refine ) & ( size( reactivity, 2) ~= size( xsel_refine, 2 ) )
   xsel_refine = xsel_refine';
 end
 
