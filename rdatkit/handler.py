@@ -738,7 +738,7 @@ class RDATFile(object):
 
         def parse_concentration(s):
             for i, ch in enumerate(s):
-                if not ch in [str(x) for x in xrange(10) + ['.']]:
+                if not ch in [str(x) for x in xrange(10)] + ['.']:
                     idx = i
                     break
             return s[:idx], s[idx:]
