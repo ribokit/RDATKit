@@ -78,7 +78,7 @@ end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ok = check_annotation( annotation )
-ok_annotations = {'chemical','modifier','experimentType','temperature','chemical','mutation','processing','ERROR','warning','EteRNA','sequence','structure','MAPseq','sequenceSource','signal_to_noise','feature','lig_pos','offset','scaling'};
+ok_annotations = {'chemical','modifier','experimentType','temperature','chemical','mutation','processing','ERROR','warning','EteRNA','sequence','structure','MAPseq','sequenceSource','signal_to_noise','feature','lig_pos','offset','scaling','normalization'};
 
 ok = 0;
 
