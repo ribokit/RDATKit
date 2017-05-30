@@ -45,7 +45,7 @@ while 1
     elseif strfind(line, 'COMMENT') == 1
       rdat.comments = [ rdat.comments, remove_tag(line, 'COMMENT') ];
     elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA'))
-      rdat.annotations = str2cell( remove_tag(line,'ANNOTATION') );
+      rdat.annotations = remove_empty_cells( str2cell( remove_tag(line,'ANNOTATION') ) );
     elseif strfind(line, 'NAME') == 1
       rdat.name = remove_tag(line, 'NAME');
     elseif strfind(line, 'SEQUENCE') == 1
@@ -76,7 +76,7 @@ while 1
       cols = str2cell( line );
       idx = str2num( cols{1} );
       anot = cols(2:end);
-      rdat.data_annotations{idx} = anot;
+      rdat.data_annotations{idx} = remove_empty_cells( anot );
       % look for a 'sequence' tag.
       for j = 1:length( anot )
 	if ~isempty( strfind( anot{j}, 'sequence:' ) )
@@ -260,6 +260,14 @@ end
 
 return;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function c_new = remove_empty_cells( c );
+c_new = {};
+for i = 1:length( c )
+    if length( c{i} ) > 0 
+        c_new = [ c_new, c{i} ];
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
