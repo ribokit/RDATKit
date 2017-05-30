@@ -31,12 +31,12 @@ for i = 1:size(  rdat.reactivity, 2 )
                 tag = cell2str( c(2:end), ':' );
                 
                 q = 1;
-                while ( q <= length(tag)  & isempty( str2num( tag(q) ) ) & tag(q)~='(' )
+                while ( q <= length(tag)  & isempty( str2num( tag(q) ) ) & tag(q)~='(' & tag(q)~='-' )
                     start_seq = [start_seq, tag(q) ];
                     q = q+1;
                 end
                 if q <= length(tag) & tag(q) == '('; q = q+1; end;
-                while ( q <= length( tag ) &  (~isempty( str2num( tag(q) ) ) | tag(q)==':')  )
+                while ( q <= length( tag ) &  (~isempty( str2num( tag(q) ) ) | tag(q)==':' | tag(q)=='-' )  )
                     mut_num = [mut_num, tag(q) ];
                     q = q+1;
                 end
@@ -45,7 +45,6 @@ for i = 1:size(  rdat.reactivity, 2 )
                     mut_seq = [mut_seq, tag(q) ];
                     q = q+1;
                 end
-                
                 if  length( mut_num ) == 0
                     if ~strcmp( start_seq, 'WT' )
                         fprintf( 'WARNING! Could not find mutation position in mutation annotation: %s\n', tag );
@@ -60,11 +59,12 @@ for i = 1:size(  rdat.reactivity, 2 )
                 end
                 
                 mutpos = str2num( mut_num ) - rdat.offset;
-                if ( ~strcmp( rdat.sequence( mutpos ), start_seq ) )
+                if ( mutpos < 1 | ~strcmp( rdat.sequence( mutpos ), start_seq ) )
                     mutpos = str2num( mut_num ); % perhaps specified without offset...
-                    fprintf( 'WARNING! Mismatch between mutation nucleotides: %s (mutation annotation) vs. %s. (sequence)\n', rdat.sequence(mutpos), start_seq );
                     if ( strcmp( rdat.sequence( mutpos ), start_seq ) )
                         fprintf( 'OK, specified mutpos without taking into account offset...\n' );
+                    else
+                        fprintf( 'WARNING! Mismatch between mutation nucleotides: %s (mutation annotation) vs. %s. (sequence)\n', rdat.sequence(mutpos), start_seq );
                     end
                 end
                 rdat.sequences{i} = [rdat.sequence(1: (min(mutpos)-1) ), mut_seq, rdat.sequence( max(mutpos)+1 : end )];
