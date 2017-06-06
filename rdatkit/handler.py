@@ -435,9 +435,9 @@ class RDATFile(object):
         else:
             for i, data_annotation in enumerate(data_annotations):
                 self.values[construct] = data
-            self._append_new_data_section(construct)
-            self.constructs[construct].data[-1].values = data[i, :]
-            self.constructs[construct].data[-1].annotations = data_annotation
+                self._append_new_data_section(construct)
+                self.constructs[construct].data[-1].values = data[i, :]
+                self.constructs[construct].data[-1].annotations = data_annotation
 
         self.loaded = True
         self.save(filename)
