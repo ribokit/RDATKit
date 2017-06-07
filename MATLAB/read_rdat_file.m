@@ -198,36 +198,6 @@ else
   line = strrep(line, [tag,delim],'');
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% no longer in use
-function  d = fill_mutpos( d );
-
-% need to figure out where mutations are based on tags like "mutation:G64C" in data_annotation
-% Not actually in use...
-d.mutpos = []
-for k = 1:length( d.data_annotations )
-  d.mutpos(k) = NaN;
-  data_annotation = d.data_annotations{k};
-  for m = 1:length( data_annotation )
-    c = str2cell( data_annotation{m},':' );
-    if length(c)> 0 & strcmp( c{1}, 'mutation' )
-      num = str2num( remove_AGCTU( c{2} ) );
-      if length(num)>0;  d.mutpos(k) =  num; end;
-    end
-  end
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function x = remove_AGCTU( x )
-x = strrep( x, 'A', '');
-x = strrep( x, 'G', '');
-x = strrep( x, 'C', '');
-x = strrep( x, 'T', '');
-x = strrep( x, 'U', '');
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_data_annotations_if_empty( rdat );
 

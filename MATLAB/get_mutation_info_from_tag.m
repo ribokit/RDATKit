@@ -10,7 +10,12 @@ c = strsplit( annotation_tag,':' );
 start_seq = '';
 mut_seq = '';
 mut_num = '';
-tag = strjoin( c(2:end), ':' );
+if length( c ) == 0; return; end;
+if strcmp(c{1},'mutation' )
+    tag = strjoin( c(2:end), ':' );
+else
+    tag = annotation_tag;
+end
 
 q = 1;
 while ( q <= length(tag)  & isempty( str2num( tag(q) ) ) & tag(q)~='(' & tag(q)~='-' )
