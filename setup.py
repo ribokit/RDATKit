@@ -1,30 +1,11 @@
-from setuptools import setup, find_packages
+import subprocess
+import os
 
-from rdatkit.__init__ import __version__
+FILE =  os.path.abspath(__file__)
+DIR = "/".join(FILE.split("/")[:-1])
 
-setup(
-    name='rdatkit',
-    description='RNA Dataset Toolkit',
-    keywords='RNA Data RDAT Kit',
-    version=__version__,
+print "add this following line to your .bashrc (linux) or .base_profile (mac)"
+print "export  PYTHONPATH=$PYTHONPATH:"+DIR
 
-    author='Siqi Tian, Pablo Cordero, Rhiju Das',
-    author_email='rhiju@stanford.edu',
-
-    url='https://github.com/hitrace/rdatkit/',
-    license='https://rmdb.stanford.edu/rdatkit',
-
-    packages=find_packages(),
-    install_requires=open('requirements.txt', 'r').readlines(),
-    classifiers=(
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7'
-    ),
-
-    zip_safe=True
-)
+print "installing all required packages"
+subprocess.call('sudo pip install -r requirements.txt', shell=True)
