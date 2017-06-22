@@ -11,7 +11,7 @@
 
 - Download the zip or tar file of the repository and unpack; or 
 ```bash
-git clone https://github.com/hitrace/RDATKit.git
+git clone https://github.com/ribokit/RDATKit.git
 ```
 
 - In *MATLAB*, go to "**Set Path**". Then "**Add with Subfolders**" of the target `path/to/RDATKit/MATLAB/`.
@@ -40,13 +40,14 @@ xlwt >= 1.0.0
 
 ## Documentation
 
-Documentation is available at https://hitrace.github.io/RDATKit/.
+Documentation is available at https://ribokit.github.io/RDATKit/.
 
 ## License
 
-Copyright &copy; of **RDATKit** _Source Code_ is described in [LICENSE.md](https://github.com/hitrace/RDATKit/blob/master/LICENSE.md).
+Copyright &copy; of **RDATKit** _Source Code_ is described in [LICENSE.md](https://github.com/ribokit/RDATKit/blob/master/LICENSE.md).
 
-<br/>
+<hr/>
+
 Developed by **Das lab**, _Leland Stanford Junior University_.
-<br/>
+
 README by [**t47**](http://t47.io/), *March 2016*.
