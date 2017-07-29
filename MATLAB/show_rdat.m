@@ -49,7 +49,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show values, i..e. fitted peak intensities or reactivity.
-h = figure(1); clf;
+h = gcf; %figure(1); clf;
 set(h, 'Name', 'RDAT Preview');
 set(h, 'Position', [100, 100, 800, 600]);
 set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
@@ -194,7 +194,7 @@ if ~isempty( rdat.reactivity_error ) && num_lanes <= 16 % totally arbitrary cuto
     %if length( xlab ) >= i; title( xlab{i} ); end;
 
     if length( xlab_full ) >= i;
-      h = text( min_x, maxval+(maxval-minval)*0.2, xlab_full{i} ); 
+      h = text( min_x, maxval+(maxval-minval)*0.2, xlab_full{i}(3:end) ); 
       set(h,'interpreter','none','fontsize',8);
     end
     %set(gca,'xgrid','on','ytick',[]);
