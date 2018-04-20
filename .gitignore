@@ -3,4 +3,4 @@ dist/
 RDATkit.egg-info/
 rdatkit/path.py
 *.pyc
-
+*.DS_Store
