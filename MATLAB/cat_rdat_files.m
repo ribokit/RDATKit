@@ -1,6 +1,12 @@
 function new_rdat =  cat_rdat_files( new_file, rdat_files );
 %
-%   cat_rdat_files( new_file, rdat_files );
+%  new_rdat = cat_rdat_files( new_file, rdat_files );
+%
+% INPUT:
+%   new_file   = name of new file
+%   rdat_files = names of files to be concatenated in cell {'input1.rdat','input2.rdat'...} 
+%
+% (C) Das Lab, Stanford University, 2013, 2018
 %
 
 if nargin==0; help( mfilename ); return; end;
@@ -79,7 +85,7 @@ new_rdat.trace = [];
 
 
 for i = 2:length( rdats )
-  new_rdat.mutpos = [ new_rdat.mutpos, rdats{i}.mutpos ];
+  if isfield( new_rdat, 'mutpos' ) new_rdat.mutpos = [ new_rdat.mutpos, rdats{i}.mutpos ]; end;
   new_rdat.comments = [ new_rdat.comments, rdats{i}.comments ];
   new_rdat.reactivity = [new_rdat.reactivity, rdats{i}.reactivity ];
   new_rdat.reactivity_error = [new_rdat.reactivity_error, rdats{i}.reactivity_error ];
