@@ -27,6 +27,9 @@ rdat.trace            = [];
 rdat.xsel             = [];
 rdat.xsel_refine      = [];
 
+legacy_data_anot_sequences  = {};
+legacy_data_anot_structures = {};
+
 sequence_seqpos = '';
 
 fprintf( 1, 'Parsing file from rdat: %s\n', filename );
@@ -50,10 +53,10 @@ while 1
       rdat.name = remove_tag(line, 'NAME');
     elseif strfind(line, 'SEQUENCE') == 1
       cols = str2cell( remove_tag( line, 'SEQUENCE' ) );
-      if length( cols ) > 1
-	rdat.sequences{str2num(cols{1})} = cols(2:end);
+      if length( cols ) > 1          
+          rdat.sequences{str2num(cols{1})} = strjoin(cols(2:end));
       else  
-	rdat.sequence = strrep(cols{1}, ' ','');
+          rdat.sequence = strrep(cols{1}, ' ','');
       end
     elseif strfind(line, 'OFFSET') == 1
       rdat.offset = str2num( remove_tag(line,'OFFSET'));
@@ -67,9 +70,9 @@ while 1
     elseif strfind(line, 'STRUCTURE') == 1
       cols = str2cell( remove_tag( line, 'STRUCTURE' ) );
       if length( cols ) > 1
-	rdat.structures{str2num(cols{1})} = cols(2:end);
+          rdat.structures{str2num(cols{1})} = strjoin(cols(2:end));
       else  
-	rdat.structure = strrep(cols{1}, ' ','');
+          rdat.structure = strrep(cols{1}, ' ','');
       end
     elseif strfind(line, 'ANNOTATION_DATA') == 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
@@ -79,16 +82,26 @@ while 1
       rdat.data_annotations{idx} = remove_empty_cells( anot );
       % look for a 'sequence' tag.
       for j = 1:length( anot )
-	if ~isempty( strfind( anot{j}, 'sequence:' ) )
-	  [dummy, r ] = strtok( anot{j}, 'sequence:' );
-	  rdat.sequences{idx} = dummy;
-	end
+          if ~isempty( strfind( anot{j}, 'sequence:' ) )
+              [dummy, r ] = strtok( anot{j}, 'sequence:' );
+              if ~isnan( str2double( dummy ) )
+                  assert( length( rdat.sequences ) >= str2num(dummy) );
+                  legacy_data_anot_sequences{idx} = rdat.sequences{str2num(dummy)}; % old-style format.
+              else
+                  rdat.sequences{idx} = dummy;
+              end
+          end
       end
       for j = 1:length( anot )
-	if ~isempty( strfind( anot{j}, 'structure:' ) )
-	  [dummy, r ] = strtok( anot{j}, 'structure:' );
-	  rdat.structures{idx} = dummy;
-	end
+          if ~isempty( strfind( anot{j}, 'structure:' ) )
+              [dummy, r ] = strtok( anot{j}, 'structure:' );
+              if ~isnan( str2double( dummy ) )
+                  assert( length( rdat.structures ) >= str2num(dummy) );
+                  legacy_data_anot_structures{idx} = rdat.structures{str2num(dummy)}; % old-style format.
+              else
+                  rdat.structures{idx} = dummy;
+              end
+          end
       end
     elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
@@ -123,20 +136,21 @@ while 1
 	fprintf('\nError parsing file %s\n', line);
       end
     end 
-
 end
-
+if ~isempty( legacy_data_anot_sequences ) rdat.sequences = legacy_data_anot_sequences; end
+if ~isempty( legacy_data_anot_structures ) rdat.structures = legacy_data_anot_structures; end
 rdat = fill_data_annotations_if_empty( rdat );
 rdat = fill_sequences_and_structures( rdat );
 
-if strcmp(rdat.sequence, '')
+
+if length(rdat.sequence) == 0 
  if isempty(rdat.sequences)
   fprintf( 'No sequences detected or sequence indices do not start at one' );
  else
   rdat.sequence = rdat.sequences{1};
  end
 end
-if strcmp(rdat.structure, '')
+if length(rdat.structure) == 0
  if isempty(rdat.structures)
   fprintf( 'No structures detected or structure indices do not start at one' );
  else
@@ -236,6 +250,18 @@ c_new = {};
 for i = 1:length( c )
     if length( c{i} ) > 0 
         c_new = [ c_new, c{i} ];
+    end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function c_new = remove_sequence_structure_fields_if_number( c );
+c_new = {};
+for i = 1:length( c )
+    if length( c{i} ) > 0 
+        cols = str2cell( c{i},':' );
+        if length( cols ) > 1 & strcmp( cols{1}, 'sequence' ) & str2num( cols{2} ) ~= 0; continue; end;
+        if length( cols ) > 1 & strcmp( cols{1}, 'structure' ) & str2num( cols{2} ) ~= 0; continue; end;
+         c_new = [ c_new, c{i} ];
     end
 end
 

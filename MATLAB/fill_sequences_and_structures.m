@@ -8,7 +8,6 @@ rdat = fill_structures_if_empty( rdat );
 function rdat = fill_sequences_if_empty( rdat );
 
 if isempty( rdat.data_annotations ); return; end;
-
 for i = 1:size(  rdat.reactivity, 2 )
     if ( i > length( rdat.sequences )  |  isempty(rdat.sequences{i} ) ) & i <= length( rdat.data_annotations )
         rdat.sequences{i} = rdat.sequence;

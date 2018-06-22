@@ -24,7 +24,7 @@ if ( (min(rdat.seqpos) - rdat.offset) < 1 );
 end;
 
 if ( (max(rdat.seqpos) - rdat.offset > length(rdat.sequence)) ); 
-    fprintf( '\nWARNING! Offset/seqpos does not look right -- at least one index is too high for sequence\n' ); 
+    fprintf( '\nWARNING! Offset/seqpos does not look right -- at least one index %d is too high for sequence length %d\n', max(rdat.seqpos) - rdat.offset, length(rdat.sequence) ); 
     return;
 end;
 
