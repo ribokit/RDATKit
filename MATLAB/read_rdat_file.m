@@ -78,6 +78,11 @@ while 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
       cols = str2cell( line );
       idx = str2num( cols{1} );
+      if isempty( idx ) % weird edge case where str2cell fails
+          firstcols = str2cell(cols{1});
+          cols = [firstcols,cols(2:end)];
+          idx = str2num( cols{1} );
+      end
       anot = cols(2:end);
       rdat.data_annotations{idx} = remove_empty_cells( anot );
       % look for a 'sequence' tag.
