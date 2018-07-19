@@ -49,9 +49,9 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show values, i..e. fitted peak intensities or reactivity.
-h = gcf; %figure(1); clf;
+h = figure(); clf;
 set(h, 'Name', 'RDAT Preview');
-set(h, 'Position', [100, 100, 800, 600]);
+set(h, 'Position', [100, 100, 1200, 400]);
 set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
       'PaperSize', [11 8.5], 'PaperPosition', [-0.65 0.15 12 8], 'Color', 'White');
 colormap( 1 - gray(100));
@@ -101,7 +101,7 @@ end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show aligned 'traces' or electropherograms.
 if length( t ) > 0
-  figure(2)
+  figure()
   set(gcf,'color','white');
   clf;  colormap( 1 - gray(100));
 
@@ -151,9 +151,9 @@ end
 % show bargraph with errors
 num_lanes = size( rdat.reactivity, 2 );
 if ~isempty( rdat.reactivity_error ) && num_lanes <= 16 % totally arbitrary cutoff;
-  h = figure(3);
+  h = figure();
   set(h, 'Name', 'RDAT Plot');
-  set(h, 'Position', [100, 100, 800, 600]);
+  set(h, 'Position', [100, 100, 400, 800]);
   set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
       'PaperSize', [11 8.5], 'PaperPosition', [-0.65 0.15 12 8], 'Color', 'White');
     
