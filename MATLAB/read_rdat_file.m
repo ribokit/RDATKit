@@ -100,6 +100,7 @@ while 1
       for j = 1:length( anot )
           if ~isempty( strfind( anot{j}, 'structure:' ) )
               [dummy, r ] = strtok( anot{j}, 'structure:' );
+              if length( rdat.structures ) == 0 & length( rdat.structure ) > 0; rdat.structures{1} = rdat.structure; end;
               if ~isnan( str2double( dummy ) )
                   assert( length( rdat.structures ) >= str2num(dummy) );
                   legacy_data_anot_structures{idx} = rdat.structures{str2num(dummy)}; % old-style format.
