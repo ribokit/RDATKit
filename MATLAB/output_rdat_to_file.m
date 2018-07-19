@@ -1,11 +1,17 @@
-function output_rdat_to_file( filename, rdat );
+function output_rdat_to_file( filename, rdat, force_checks );
 %
 % output_rdat_to_file( filename, rdat );
 %
+%  filename     = name of output file
+%  rdat         = RDAT object
+%  force_checks = error out if checks do not pass (default = 0) 
+%
 % Copyright R. Das, P. Cordero, Stanford University, 2010,2011
+%           R. Das, Stanford University, 2018
 %
 
-if nargin == 0; help( mfilename ); return; end;
+if nargin < 2; help( mfilename ); return; end;
+if ~exist( 'force_checks', 'var' ) force_checks = 1; end;
 
 fprintf( 'About to create file: %s\n', filename );
 
@@ -161,10 +167,15 @@ fprintf(fid, s);
 fclose( fid );
 
 % quick check on names.
-check_filename_vs_annotation( rdat, filename );
-
+ok = check_filename_vs_annotation( rdat, filename );
+if ~ok && force_checks; error( 'check_filename_vs_annotation did not pass' ); end;
+    
 % quick check on any specified mutations
-check_mutations_vs_sequence( rdat );
+ok = check_mutations_vs_sequence( rdat );
+if ~ok && force_checks; error( 'check_mutations_vs_sequence did not pass' ); end;
+
+ok = check_rdat( rdat );
+if ~ok && force_checks; error( 'check_rdat did not pass' ); end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %function ok = is_ok_data_type( data_type )
@@ -219,8 +230,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function check_filename_vs_annotation( rdat, filename );
+function ok = check_filename_vs_annotation( rdat, filename );
 
+ok = 1;
 ok_data_types = {'DMS','CMCT','SHAPE','nomod','NOMOD'};
 
 for j = 1:length( ok_data_types )
@@ -228,7 +240,8 @@ for j = 1:length( ok_data_types )
     for k = 1:length( ok_data_types )      
       if isempty(strfind( ok_data_types{k}, ok_data_types{j} ))
 	for q = 1:length( rdat.annotations )
-	  if ~isempty( strfind( rdat.annotations{q}, ok_data_types{k} ) ) 
+	  if ~isempty( strfind( rdat.annotations{q}, ok_data_types{k} ) )
+          ok = 0;
 	    fprintf( 'WARNING! filename has %s in name, but annotations includes modifier: %s\n', ok_data_types{j}, rdat.annotations{q} );
 	  end
 	end
@@ -238,8 +251,9 @@ for j = 1:length( ok_data_types )
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function check_mutations_vs_sequence( rdat );
+function ok = check_mutations_vs_sequence( rdat );
 
+ok = 1;
 for i = 1:length( rdat.data_annotations )
   data_annotation = rdat.data_annotations{i};
 
@@ -249,7 +263,8 @@ for i = 1:length( rdat.data_annotations )
     if length( mutation_string ) > 0 & ~strfind( mutation_string, 'WT' )
       [seqchar, num ] = parse_seqchar_number( mutation_string );
       if ( seqchar ~= rdat.sequence( num-rdat.offset ) ) 
-	fprintf( 'WARNING! Mismatch in sequence! %c  vs.  %c', seqchar, mutation_string );
+          ok = 0;
+          fprintf( 'WARNING! Mismatch in sequence! %c  vs.  %c', seqchar, mutation_string );
       end
     end
   end

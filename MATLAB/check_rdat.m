@@ -1,8 +1,15 @@
-function check_rdat( rdat )
-% check_rdat( rdat )
+function ok = check_rdat( rdat )
+% ok = check_rdat( rdat )
 %
-% (C) R. Das, 2011-2013.
+% INPUT
+%  rdat = RDAT structure with chemical mapping data
+%
+% OUTPUT
+%   ok = passed all checks.
+%
+% (C) R. Das, 2011-2013, 2018.
 
+ok = 0;
 if nargin==0; help( mfilename ); return; end;
 
 % A bunch of consistency checks...
@@ -58,7 +65,21 @@ if ( ~isempty( rdat.xsel_refine ) );
   end;
 end;
 
-if ~isempty( rdat.annotations ); check_annotations( rdat.annotations ); end;
+if ( size( rdat.reactivity, 1 ) ~= size( rdat.reactivity_error, 1 ) );
+  fprintf( '\nWARNING! Number of bands in reactivity [%d] does not match length of reactivity_error [%d]\n', size( rdat.reactivity, 1), size( rdat.reactivity_error, 1 ) ); 
+  return;
+end;
+
+if ( all( rdat.reactivity_error(:) == 0.0 ) );
+  fprintf( '\nWARNING! Reactivity_error is all 0 \n' ); 
+  return;
+end;
+
+if ~isempty( rdat.annotations ); 
+    if ~check_annotations( rdat.annotations ); 
+        return;
+    end
+end;
 
 if ~isempty( rdat.data_annotations ) 
   for i = 1:length( rdat.data_annotations )
@@ -66,15 +87,19 @@ if ~isempty( rdat.data_annotations )
   end
 end
 
+ok = 1;
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ok = check_annotations( annotations )
-  
+ok = 0;
 for j = 1:length( annotations ) ;
   if ~check_annotation( annotations{j} ) ;
     fprintf( 'WARNING! Unrecognized annotation: %s\n', annotations{j} );
+    return;
   end;
 end;
+ok = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ok = check_annotation( annotation )
