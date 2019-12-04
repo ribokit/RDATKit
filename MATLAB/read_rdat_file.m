@@ -47,7 +47,7 @@ while 1
       rdat.version = remove_tag( line, 'RDAT_VERSION');
     elseif strfind(line, 'COMMENT') == 1
       rdat.comments = [ rdat.comments, remove_tag(line, 'COMMENT') ];
-    elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA'))
+    elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA')) && isempty(strfind(line, 'DATA_ANNOTATION'))
       rdat.annotations = remove_empty_cells( str2cell( remove_tag(line,'ANNOTATION') ) );
     elseif strfind(line, 'NAME') == 1
       rdat.name = remove_tag(line, 'NAME');
@@ -76,39 +76,10 @@ while 1
       end
     elseif strfind(line, 'ANNOTATION_DATA') == 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
-      cols = str2cell( line );
-      idx = str2num( cols{1} );
-      if isempty( idx ) % weird edge case where str2cell fails
-          firstcols = str2cell(cols{1});
-          cols = [firstcols,cols(2:end)];
-          idx = str2num( cols{1} );
-      end
-      anot = cols(2:end);
-      rdat.data_annotations{idx} = remove_empty_cells( anot );
-      % look for a 'sequence' tag.
-      for j = 1:length( anot )
-          if ~isempty( strfind( anot{j}, 'sequence:' ) )
-              [dummy, r ] = strtok( anot{j}, 'sequence:' );
-              if ~isnan( str2double( dummy ) )
-                  assert( length( rdat.sequences ) >= str2num(dummy) );
-                  legacy_data_anot_sequences{idx} = rdat.sequences{str2num(dummy)}; % old-style format.
-              else
-                  rdat.sequences{idx} = dummy;
-              end
-          end
-      end
-      for j = 1:length( anot )
-          if ~isempty( strfind( anot{j}, 'structure:' ) )
-              [dummy, r ] = strtok( anot{j}, 'structure:' );
-              if length( rdat.structures ) == 0 & length( rdat.structure ) > 0; rdat.structures{1} = rdat.structure; end;
-              if ~isnan( str2double( dummy ) )
-                  assert( length( rdat.structures ) >= str2num(dummy) );
-                  legacy_data_anot_structures{idx} = rdat.structures{str2num(dummy)}; % old-style format.
-              else
-                  rdat.structures{idx} = dummy;
-              end
-          end
-      end
+      rdat = get_data_annotation( rdat, line );
+    elseif strfind(line, 'DATA_ANNOTATION') == 1
+      line = remove_tag( line, 'DATA_ANNOTATION' );
+      rdat = get_data_annotation( rdat, line );
     elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
       line_read = strread( line );
@@ -117,6 +88,19 @@ while 1
       line = remove_tag( line, 'REACTIVITY' );
       line_read = strread( line );
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
+    elseif strfind(line, 'DATA_ERROR') == 1  % backwards compatibility
+      line = remove_tag( line, 'DATA_ERROR' );
+      line_read = strread( line );
+      rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
+    elseif strfind(line, 'DATA') == 1  % backwards compatibility
+      line = remove_tag( line, 'DATA' );
+      line_read = strread( line );
+      if length( line_read ) >  length( rdat.seqpos )
+          rdat.reactivity(:, line_read(1) ) = line_read((end-length(rdat.seqpos)+1):end);
+      else
+          rdat.reactivity(1:length(line_read)-1, line_read(1) ) = line_read(2:end);
+      end
+      
     elseif strfind(line, 'AREA_PEAK_ERROR') == 1 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
@@ -300,4 +284,40 @@ for i = 1:length( sequence_seqpos )
   end
 end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function rdat = get_data_annotation( rdat, line )
+cols = str2cell( line );
+idx = str2num( cols{1} );
+if isempty( idx ) % weird edge case where str2cell fails
+    firstcols = str2cell(cols{1});
+    cols = [firstcols,cols(2:end)];
+    idx = str2num( cols{1} );
+end
+anot = cols(2:end);
+rdat.data_annotations{idx} = remove_empty_cells( anot );
+% look for a 'sequence' tag.
+for j = 1:length( anot )
+    if ~isempty( strfind( anot{j}, 'sequence:' ) )
+        [dummy, r ] = strtok( anot{j}, 'sequence:' );
+        if ~isnan( str2double( dummy ) )
+            assert( length( rdat.sequences ) >= str2num(dummy) );
+            legacy_data_anot_sequences{idx} = rdat.sequences{str2num(dummy)}; % old-style format.
+        else
+            rdat.sequences{idx} = dummy;
+        end
+    end
+end
+for j = 1:length( anot )
+    if ~isempty( strfind( anot{j}, 'structure:' ) )
+        [dummy, r ] = strtok( anot{j}, 'structure:' );
+        if length( rdat.structures ) == 0 & length( rdat.structure ) > 0; rdat.structures{1} = rdat.structure; end;
+        if ~isnan( str2double( dummy ) )
+            assert( length( rdat.structures ) >= str2num(dummy) );
+            legacy_data_anot_structures{idx} = rdat.structures{str2num(dummy)}; % old-style format.
+        else
+            rdat.structures{idx} = dummy;
+        end
+    end
+end
 
