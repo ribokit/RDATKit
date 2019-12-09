@@ -1,8 +1,8 @@
 import subprocess
 
 if __package__ is None or not __package__:
-    from .util import *
-    from .secstr import SecondaryStructure
+    from util import *
+    from secstr import SecondaryStructure
 else:
     from .util import *
     from .secstr import SecondaryStructure

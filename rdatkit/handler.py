@@ -10,7 +10,7 @@ import xlwt
 import xlrd
 
 if __package__ is None or not __package__:
-    from .util import *
+    from util import *
 else:
     from .util import *
 

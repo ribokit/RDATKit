@@ -2,7 +2,7 @@ from numpy import *
 from random import *
 
 if __package__ is None or not __package__:
-    from . import secstr
+    import secstr
 else:
     from . import secstr
 

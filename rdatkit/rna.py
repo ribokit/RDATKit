@@ -2,7 +2,7 @@ from numpy import array, indices, zeros
 from numpy.random import randint
 
 if __package__ is None or not __package__:
-    from . import secstr
+    import secstr
 else:
     from . import secstr
 

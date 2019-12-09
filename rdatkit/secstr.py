@@ -7,8 +7,8 @@ import subprocess
 import tempfile
 
 if __package__ is None or not __package__:
-    from .util import *
-    from . import mapping
+    from util import *
+    import mapping
 else:
     from .util import *
     from . import mapping
