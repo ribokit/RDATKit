@@ -1,8 +1,8 @@
 import subprocess
 
 if __package__ is None or not __package__:
-    from util import *
-    from secstr import SecondaryStructure
+    from .util import *
+    from .secstr import SecondaryStructure
 else:
     from .util import *
     from .secstr import SecondaryStructure
@@ -49,7 +49,7 @@ class VARNA(object):
 
     def get_frames(self, overlap_structures):
         res = -1
-        for key, val in self.__dict__.items():
+        for key, val in list(self.__dict__.items()):
             if overlap_structures and key == 'structures':
                 continue
             if isinstance(val, list):
@@ -111,7 +111,7 @@ class VARNA(object):
                 bps = self.structures[0].base_pairs()
                 struct_string += '<param name="auxBPs" value="'
 
-                for i in xrange(1, len(self.structures)):
+                for i in range(1, len(self.structures)):
                     for bp in self.structures[i].base_pairs():
                         if bp not in bps:
                             bps.append(bp)
@@ -141,7 +141,7 @@ class VARNA(object):
                         name = 'structureDBN'
 
                         if reference_structure:
-                            for i in xrange(len(self.structures)):
+                            for i in range(len(self.structures)):
                                 frame_idx = str(i + 1) if len(self.structures) > 1 else ''
                                 param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, self.structures[i].dbn)
                                 auxbps_string = '<param name="auxBPs%s" value="' % frame_idx
@@ -171,7 +171,7 @@ class VARNA(object):
                             idx = i if len(self.sequences) == len(self.mapping_data) else 0
                             if is_default_colormap:
                                 param_string += '<param name="colorMapStyle%s" value="%s" />\n' % (frame_idx, VARNA.get_colormap(val, sequence=self.sequences[idx]))
-                            val = [map_data_function(val[x]) if (val[x] is not None) and val[x] > 0 else -0.001 for x in xrange(len(self.sequences[idx]))]
+                            val = [map_data_function(val[x]) if (val[x] is not None) and val[x] > 0 else -0.001 for x in range(len(self.sequences[idx]))]
                             val = str(val).strip('[]').replace(' ', '')
                         param_string += '<param name="%s%s" value="%s" />\n' % (name, frame_idx, val)
 

@@ -2,7 +2,7 @@ from numpy import array, indices, zeros
 from numpy.random import randint
 
 if __package__ is None or not __package__:
-    import secstr
+    from . import secstr
 else:
     from . import secstr
 
@@ -16,8 +16,8 @@ class RNA(object):
 
 
     def bootstrap(self, mapping_data, nboot, nsamples=-1, algorithm='rnastructure', bonus2d=False, is_replacement=False, fold_opts=''):
-        print 'Starting bootstrap...'
-        print 'Folding RNA with complete data'
+        print('Starting bootstrap...')
+        print('Folding RNA with complete data')
         if bonus2d:
             mapping_data = array(mapping_data)
         nsamples = max(0, len(self.sequence))
@@ -28,12 +28,12 @@ class RNA(object):
         # print full_bps
         full_bps = full_bps[0].base_pairs()
         bp_dict = dict([(bp, 0) for bp in full_bps])
-        for i in xrange(nboot):
-            print 'Doing bootstrap iteration %s' % i
+        for i in range(nboot):
+            print('Doing bootstrap iteration %s' % i)
             if bonus2d:
                 md = zeros(mapping_data.shape)
                 N_res = mapping_data.shape[0]
-                for x in xrange(N_res):
+                for x in range(N_res):
                     N_contrib = sum(randint(0, N_res, N_res) == x)
                     md[:, x] = mapping_data[:, x] * N_contrib
             else:

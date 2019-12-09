@@ -7,8 +7,8 @@ import subprocess
 import tempfile
 
 if __package__ is None or not __package__:
-    from util import *
-    import mapping
+    from .util import *
+    from . import mapping
 else:
     from .util import *
     from . import mapping
@@ -116,7 +116,7 @@ class SecondaryStructure(object):
                 if len(jun) and jun[0] - 1 == pos:
                     startj = i
                     break
-            for i in xrange(startj, len(junctions)):
+            for i in range(startj, len(junctions)):
                 ways += 1
                 junction += [x for x in junctions[i] if self.dbn[x] == '.' or self.dbn[x].lower() == 'a']
             newjunctions = junctions[:startj]
@@ -126,7 +126,7 @@ class SecondaryStructure(object):
             if start < 0:
                 return []
             else:
-                return range(start, i)
+                return list(range(start, i))
 
 
         for h in helices:
@@ -144,7 +144,7 @@ class SecondaryStructure(object):
                 if len(statestack):
                     s_state = statestack.pop()
                 if prev_state == '.' and s_state == '-':
-                    fragments['dangles'].append(range(i))
+                    fragments['dangles'].append(list(range(i)))
                 if s_state != '-':
                     if (prev_state == '.' or prev_state == ')') and s_state != '-':
                         jlist.append(_get_ssregion(ss_region_start, i))
@@ -162,7 +162,7 @@ class SecondaryStructure(object):
                 if prev_state == '.':
                     (junction, ways, jlist) = _close_junction(jlist, prev_base)
                     if ways > 0:
-                        for w in xrange(ways):
+                        for w in range(ways):
                             jstartstack.pop()
                         if ways == 1:
                             fragments['interiorloops'].append(junction + _get_ssregion(ss_region_start, i))
@@ -189,7 +189,7 @@ class SecondaryStructure(object):
                     else:
                         (junction, ways, jlist) = _close_junction(jlist, prev_base)
                         if ways > 0:
-                            for w in xrange(ways):
+                            for w in range(ways):
                                 jstartstack.pop()
                                 if ways == 1:
                                     fragments['interiorloops'].append(junction + _get_ssregion(ss_region_start, i))
@@ -206,7 +206,7 @@ class SecondaryStructure(object):
 
         # Eliminate spurious adds for single stranded regions and re-assign aptamer regions
         aptamers = []
-        for k, v in fragments.iteritems():
+        for k, v in fragments.items():
             if k != 'helices':
                 for i, ntlist in enumerate(v):
                     v[i] = [x for x in ntlist if self.dbn[x] == '.']
@@ -220,9 +220,9 @@ class SecondaryStructure(object):
         prev_i = -1
         sstrand_region = []
         fragments['sstrand'] = []
-        for i in xrange(len(self.dbn)):
+        for i in range(len(self.dbn)):
             found = False
-            for k, ntlists in fragments.iteritems():
+            for k, ntlists in fragments.items():
                 for ntlist in ntlists:
                     if i in ntlist:
                         found = True
@@ -299,7 +299,7 @@ def _get_fasta_structures(fname):
 def _get_dot_structs(ct_name, N_structs, unique=False):
     structs = []
     dbns = []
-    for i in xrange(N_structs):
+    for i in range(N_structs):
         dbnfile = tempfile.NamedTemporaryFile(delete=False)
         dbnname = dbnfile.name
         dbnfile.close()
@@ -328,7 +328,7 @@ def _to_ct_file(sequence, struct, filename):
     for s in structs:
         f.write('%s bla\n' % len(sequence))
         bps = s.base_pair_dict()
-        for i in xrange(len(sequence)):
+        for i in range(len(sequence)):
             pair = bps[i] + 1 if i in bps else 0
             n = 0 if i == len(sequence) - 1 else i + 1
             f.write('%s %s %s %s %s %s\n' % (i+1, sequence[i], i, i+2, pair, n))
@@ -437,8 +437,8 @@ def partition(sequence, algorithm='rnastructure', mapping_data=None, fold_opts='
         subprocess.check_call(CMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     bppm = loadtxt('bpp.txt')
-    for i in xrange(bppm.shape[0]):
-        for j in xrange(i, bppm.shape[1]):
+    for i in range(bppm.shape[0]):
+        for j in range(i, bppm.shape[1]):
             if bppm[i, j] != 0:
                 bppm[j, i] = bppm[i, j]
     remove_file(seq_name)
@@ -547,9 +547,9 @@ def subopt(sequence, algorithm='rnastructure', mapping_data=None, fraction=0.05,
 
 def random(N_structs, length, nbp):
     structs = []
-    for i in xrange(N_structs):
+    for i in range(N_structs):
         dbnlist = ['.'] * length
-        for j in xrange(nbp):
+        for j in range(nbp):
             b2 = randint(0, length - 1)
             b1 = randint(0, length - 1)
             if b1 <= b2:
@@ -576,7 +576,7 @@ def base_pair_fractions_in_structures(reference, structures, factors=None):
             if bp[::-1] in bp_dict:
                 bp_dict[bp[::-1]] = bp_dict[bp[::-1]] + factors[i]
 
-    for bp in bp_dict.keys():
+    for bp in list(bp_dict.keys()):
         if factors is None:
             bp_dict[bp] *= 100. / len(structures)
         else:

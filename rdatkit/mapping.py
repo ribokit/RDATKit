@@ -13,7 +13,7 @@ def normalize(bonuses):
     maxcount = 0
     maxav = 0.
 
-    for i in xrange(l):
+    for i in range(l):
         if wtdata[i] >= tenperc:
             maxav += wtdata[i]
             maxcount += 1
@@ -36,14 +36,14 @@ def maximum_likelihood_probabilities(X, Y):
     sum_X = sum(X)
     sum_Y = sum(Y)
 
-    for i in xrange(len(X)):
+    for i in range(len(X)):
         betas[i] = (X[i] / sum_X - Y[i] / sum_Y)/(1 - sum_Y)
         gammas[i] = Y[i] / sum_Y
     return (betas, gammas)
 
 def matrix_to_mapping(matrix):
     md = []
-    for i in xrange(shape(matrix)[0]):
+    for i in range(shape(matrix)[0]):
         md.append(MappingData(data=matrix[i, :]))
     return md
 
@@ -58,7 +58,7 @@ class MappingData(object):
                 self._data[pos] = data[i]
         else:
             self._data = data
-            self.seqpos = range(len(data))
+            self.seqpos = list(range(len(data)))
         if norm:
             self._data = normalize(self._data)
         self.type = type
@@ -100,7 +100,7 @@ class MappingData(object):
     def sample(self, N_samples, is_replacement=False):
         if is_replacement:
             nseqpos = [0] * N_samples
-            for i in xrange(N_samples):
+            for i in range(N_samples):
                 idx = random.choice(self.seqpos)
                 nseqpos[i] = idx
         else:
