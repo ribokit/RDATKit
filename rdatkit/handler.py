@@ -407,7 +407,7 @@ class RDATFile(object):
         self.loaded = True
 
 
-    def save_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32, seqpos=None):
+    def save_construct(self, construct, data, sequence, structure, offset, annotations, data_annotations, filename, comments='', version=0.32, seqpos=None, errors=None):
         self.version = version
         self.constructs[construct] = RDATSection()
         self.constructs[construct].sequences = defaultdict(int)
@@ -427,17 +427,22 @@ class RDATFile(object):
         self.constructs[construct].xsel = []
 
         self.constructs[construct].data = []
+        self.constructs[construct].errors = []
         if isinstance(data_annotations, dict):
             self.values[construct] = [data]
+            self.errors[construct] = [errors]
             self._append_new_data_section(construct)
             self.constructs[construct].data[0].values = data
             self.constructs[construct].data[0].annotations = data_annotations
+            self.constructs[construct].data[0].errors = errors
         else:
             for i, data_annotation in enumerate(data_annotations):
                 self.values[construct] = data
+                self.errors[construct] = errors
                 self._append_new_data_section(construct)
                 self.constructs[construct].data[-1].values = data[i, :]
                 self.constructs[construct].data[-1].annotations = data_annotation
+                self.constructs[construct].data[-1].errors = errors[i, :]
 
         self.loaded = True
         self.save(filename)
@@ -554,7 +559,7 @@ class RDATFile(object):
                             f.write('READS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     for i, row in enumerate(self.errors[name]):
                         if len(row):
-                            f.write('REACTIVITY_ERRORS:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
+                            f.write('REACTIVITY_ERROR:%s%s%s\n' % (i + 1, delim, delim.join([str(x) for x in row])))
                     if construct.xsel:
                         f.write('XSEL%s%s\n' % (delim, delim.join([str(x) for x in construct.xsel])))
                     for i, row in enumerate(self.xsels[name]):
