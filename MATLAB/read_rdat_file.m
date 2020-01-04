@@ -147,6 +147,10 @@ if length(rdat.structure) == 0
   rdat.structure = rdat.structures{1};
  end
 end
+%if length(rdat.reactivity_error) == 0
+%    rdat.reactivity_error = fill_reactivity_error_from_reads( rdat );
+%end
+
 
 % output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
 check_sequence_seqpos( sequence_seqpos, rdat.seqpos, rdat.sequence, rdat.offset );
@@ -320,4 +324,31 @@ for j = 1:length( anot )
         end
     end
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function reactivity_error = fill_reactivity_error_from_reads( rdat )
+% estimate errors based on Poisson [sqrt(reads)]
+% this is not actually exact --
+reactivity_error = [];
+for i = 1:size( rdat.reactivity, 2)
+    anot = rdat.data_annotations{i};
+    reads = get_tag( anot, 'reads' );
+    if isempty( reads ); 
+        reactivity_error(1:size(rdat.reactivity,1),i) = NaN;
+        continue;
+    end
+    reads = str2num(reads);
+    if reads > 0
+        rdat.reactivity(:,i) * sqrt(reads );
+        reactivity_error = sqrt(rdat.reactivity(:,i))/ sqrt(reads);
+        fprintf( 'WARNING! WARNING! Trying to fill in reactivity error from reads and reactivity -- this is not exact.' );
+    else
+        reactivity_error(1:size(rdat.reactivity,1),i) = 0.0;
+    end
+end
+
+
+
+
+
 
