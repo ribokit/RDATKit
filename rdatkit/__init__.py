@@ -5,4 +5,4 @@ from .secstr import SecondaryStructure
 from .varna import VARNA
 from .util import Ontology
 
-__version__ = '1.0.6'
+__version__ = '1.6'
