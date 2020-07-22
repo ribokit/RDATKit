@@ -56,7 +56,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if length( rdat.annotations )>0;    
-  s = [s, 'ANNOTATION\t', sanitize(cell2str( rdat.annotations,'\t')), '\n']; 
+  s = [s, 'ANNOTATION\t', sanitize(cell2str( rdat.annotations,sprintf('\t'))), sprintf('\n')]; 
 end
 
 fid = fopen(filename, 'w');
@@ -79,7 +79,7 @@ if  ~isempty( rdat.data_annotations )
     fprintf( fid, '\n' );
     for i=1:length( rdat.data_annotations )
       %s = [s, 'ANNOTATION_DATA:', int2str_exact(i,6),'        ',cell2str( rdat.data_annotations{i},' '),'\n'];
-      fprintf( fid, ['ANNOTATION_DATA:', int2str_exact(i,6),'\t',sanitize(cell2str( rdat.data_annotations{i},'\t')),'\n']);
+      fprintf( fid, ['ANNOTATION_DATA:', int2str_exact(i,6),'\t',sanitize(cell2str( rdat.data_annotations{i},sprintf('\t'))),sprintf('\n')]);
     end
   end
 end
