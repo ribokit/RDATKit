@@ -51,7 +51,7 @@ end
 % show values, i..e. fitted peak intensities or reactivity.
 h = figure(); clf;
 set(h, 'Name', 'RDAT Preview');
-set(h, 'Position', [100, 100, 1200, 400]);
+set(h, 'Position', [100, 100, 1200, 200 + 5*size(rdat.reactivity,2)]);
 set(h, 'PaperOrientation', 'Landscape', 'PaperPositionMode', 'Manual', ...
       'PaperSize', [11 8.5], 'PaperPosition', [-0.65 0.15 12 8], 'Color', 'White');
 colormap( 1 - gray(100));
