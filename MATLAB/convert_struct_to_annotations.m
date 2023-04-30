@@ -36,5 +36,7 @@ for n = 1:length( tags )
     elseif iscell(val) 
         assert( ischar(val{1}) );
         annotations = [annotations, {sprintf('%s%s:%s',pretag,tag,strjoin(val,','))} ];
+    elseif isstruct(val)
+        annotations = [annotations, convert_struct_to_annotations(val,[pretag,tag,':'])];
     end
 end
