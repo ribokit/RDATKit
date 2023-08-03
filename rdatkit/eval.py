@@ -39,8 +39,8 @@ def get_helices_from_structures(structures):
 def _find_helices_from_bppm(bppm):
     visited = []
     helices = []
-    for i in xrange(bppm.shape[0]):
-        for j in xrange(i + 1, bppm.shape[1]):
+    for i in range(bppm.shape[0]):
+        for j in range(i + 1, bppm.shape[1]):
             if (i, j) not in visited and bppm[i, j] != 0:
                 helix = [(i, j)]
                 ii = i + 1

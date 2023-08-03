@@ -101,7 +101,7 @@ class RDATFile(object):
         s = ''
         for k in a:
             if isinstance(a[k], list):
-                for i in xrange(len(a[k])):
+                for i in range(len(a[k])):
                     s += k + ':' + a[k][i] + delim
             else:
                 s += k + ':' + str(a[k]) + delim
@@ -153,7 +153,7 @@ class RDATFile(object):
                             except ValueError:
                                 pass
                     else:
-                        print 'Attribute :%s does not belong to a valid section' % line
+                        print('Attribute :%s does not belong to a valid section' % line)
 
                 elif 'CONSTRUCT' in line:
                     current_section = 'construct'
@@ -278,7 +278,7 @@ class RDATFile(object):
                         fields = split(fields[0], delims=' ')
                     data_idx = int(fields[0]) - 1
                     annotations = self._parse_annotations(fields[1:])
-                    for l in xrange(data_idx - len(self.constructs[this_construct].data) + 1):
+                    for l in range(data_idx - len(self.constructs[this_construct].data) + 1):
                         self._append_new_data_section(this_construct)
                     self.constructs[this_construct].data[data_idx].annotations = annotations
                     if 'mutation' in annotations:
@@ -372,7 +372,7 @@ class RDATFile(object):
                         fields = split(fields[0], delims=' ')
                     data_idx = int(fields[0]) - 1
                     annotations = self._parse_annotations(fields[1:])
-                    for l in xrange(data_idx - len(self.constructs[this_construct].data) + 1):
+                    for l in range(data_idx - len(self.constructs[this_construct].data) + 1):
                         self._append_new_data_section(this_construct)
                     self.constructs[this_construct].data[data_idx].annotations = annotations
 
@@ -419,7 +419,7 @@ class RDATFile(object):
         if seqpos is not None:
             self.constructs[construct].seqpos = seqpos
         else:
-            self.constructs[construct].seqpos = [i + offset for i in xrange(len(sequence))]
+            self.constructs[construct].seqpos = [i + offset for i in range(len(sequence))]
         self.constructs[construct].sequence = sequence
         self.constructs[construct].structure = structure
         self.constructs[construct].offset = offset
@@ -513,7 +513,7 @@ class RDATFile(object):
                 f.write('RDAT_VERSION%s%s\n' % (delim, str(version)))
 
                 if len(self.constructs) == 1:
-                    name = self.constructs.keys()[0]
+                    name = list(self.constructs.keys())[0]
                     construct = self.constructs[name]
                     f.write('NAME%s%s\n' % (delim, name))
                     f.write('SEQUENCE%s%s\n' % (delim, construct.sequence))
@@ -632,7 +632,7 @@ class RDATFile(object):
                 f.write('RDATVERSION%s%s\n' % (delim, str(version)))
 
                 if len(self.constructs) == 1:
-                    name = self.constructs.keys()[0]
+                    name = list(self.constructs.keys())[0]
                     construct = self.constructs[name]
                     f.write('NAME%s%s\n' % (delim, name))
 
@@ -743,7 +743,7 @@ class RDATFile(object):
 
         def parse_concentration(s):
             for i, ch in enumerate(s):
-                if not ch in [str(x) for x in xrange(10)] + ['.']:
+                if not ch in [str(x) for x in range(10)] + ['.']:
                     idx = i
                     break
             return s[:idx], s[idx:]
@@ -820,7 +820,7 @@ class RDATFile(object):
                 for j in construct.seqpos:
                     seq += construct.sequence[j - construct.offset - 1]
                 if 'mutation' in d.annotations:
-                    for j in xrange(len(d.annotations['mutation'])):
+                    for j in range(len(d.annotations['mutation'])):
                         mutlabel = d.annotations['mutation'][j].strip('\t')
                         name = name + '_' + mutlabel
                         if mutlabel != 'WT':
@@ -1010,7 +1010,7 @@ class ISATABFile(object):
             wb = xlrd.open_workbook(name)
             investigation_sh = wb.sheet_by_name('investigation')
 
-            for j in xrange(investigation_sh.nrows):
+            for j in range(investigation_sh.nrows):
                 fields = investigation_sh.row_values(j)
                 self.investigation_dict[fields[0]] = fields[1:]
 
@@ -1020,7 +1020,7 @@ class ISATABFile(object):
                 assays_sh = wb.sheet_by_name(self.investigation_dict['Study File Name'][0].replace('.txt', ''))
 
             assays_keys = assays_sh.row_values(0)
-            for j in xrange(1, assays_sh.nrows):
+            for j in range(1, assays_sh.nrows):
                 l = assays_sh.row_values(j)
                 for i, f in enumerate(l):
                     if assays_keys[i] in self.assays_dict:
@@ -1035,7 +1035,7 @@ class ISATABFile(object):
                 self.sample_id_name_map[k + '_' + str(i + 1)] = k
                 self.data_id_order.append(k + '_' + str(i + 1))
 
-            for j in xrange(1, datamatrix_sh.nrows):
+            for j in range(1, datamatrix_sh.nrows):
                 l = datamatrix_sh.row_values(j)
                 for i, f in enumerate(l):
                     if f:
@@ -1064,7 +1064,7 @@ class ISATABFile(object):
                 assays_file.write('Unit\t')
             assays_file.write('\n')
 
-            for i in xrange(len(self.assays_dict.values()[0])):
+            for i in range(len(list(self.assays_dict.values())[0])):
                 line = ''
                 for k in self.assays_keys:
                     if k in self.assays_dict:
@@ -1082,13 +1082,13 @@ class ISATABFile(object):
 
             for k in ISATAB_INVEST_KEYS:
                 line = k + '\t'
-                for i in xrange(len(self.investigation_dict[k])):
+                for i in range(len(self.investigation_dict[k])):
                     line += self.investigation_dict[k][i] + '\t'
                 investigation_file.write(line.strip('\t') + '\n')
 
-            maxlen = max([len(x) for x in self.data.values()])
+            maxlen = max([len(x) for x in list(self.data.values())])
             datamatrix_file.write('\t'.join(self.assays_dict['Source Name']) + '\n')
-            for i in xrange(maxlen):
+            for i in range(maxlen):
                 datamatrix_file.write('\t'.join(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]) + '\n')
 
             assays_file.close()
@@ -1118,7 +1118,7 @@ class ISATABFile(object):
                 assays_sh.write(assay_row, i, 'Unit\t')
 
             assay_row += 1
-            for i in xrange(len(self.assays_dict.values()[0])):
+            for i in range(len(list(self.assays_dict.values())[0])):
                 line = []
                 for k in self.assays_keys:
                     if k in self.assays_dict:
@@ -1133,24 +1133,24 @@ class ISATABFile(object):
                         line .append(self.assays_factors[k]['accession'][i])
                         line .append(self.assays_factors[k]['concentration'][i])
                         line .append(self.assays_factors[k]['unit'][i])
-                for j in xrange(len(line)):
+                for j in range(len(line)):
                     assays_sh.write(assay_row, j, line[j])
                 assay_row += 1
 
             for i, k in enumerate(ISATAB_INVEST_KEYS):
                 line = [k]
-                for j in xrange(len(self.investigation_dict[k])):
+                for j in range(len(self.investigation_dict[k])):
                     line.append(self.investigation_dict[k][j])
-                for j in xrange(len(line)):
+                for j in range(len(line)):
                     investigation_sh.write(inv_row, j, line[j])
                 inv_row += 1
 
-            maxlen = max([len(x) for x in self.data.values()])
+            maxlen = max([len(x) for x in list(self.data.values())])
             for i, k in enumerate(self.assays_dict['Source Name']):
                 datamatrix_sh.write(data_row, i, k)
             data_row += 1
 
-            for i in xrange(maxlen):
+            for i in range(maxlen):
                 for j, k in enumerate(['' if i >= len(self.data[k]) else str(self.data[k][i]) for k in self.data_id_order]):
                     datamatrix_sh.write(data_row, j, k)
                 data_row += 1
@@ -1234,11 +1234,11 @@ class ISATABFile(object):
             c = RDATSection(['values', 'traces', 'mutpos', 'data_types', 'xsel'])
             c.name = name
             c.annotations = {}
-            for k, v in general_annotations.iteritems():
+            for k, v in general_annotations.items():
                 c._annotation_strtations[k] = v
 
             c.sequence = self.assays_dict['Characteristics[Nucleotide Sequence]'][i]
-            c.seqpos = range(len(c.sequence))
+            c.seqpos = list(range(len(c.sequence)))
             c.data = [d]
             c.offset = 0
             c.structure = '.' * len(c.sequence)

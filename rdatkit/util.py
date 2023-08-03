@@ -1,5 +1,4 @@
 from scipy.stats import gamma
-
 if __package__ is None or not __package__:
     from path import *
 else:
