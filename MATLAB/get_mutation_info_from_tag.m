@@ -16,6 +16,10 @@ if strcmp(c{1},'mutation' )
 else
     tag = annotation_tag;
 end
+if length(tag)>3 & strcmp(tag(1:3),'Lib') % edge case TRP4P6_SHP_0002
+    assert(strcmp(tag(5),'-'));
+    tag = tag(6:end);
+end
 
 q = 1;
 while ( q <= length(tag)  & isempty( str2num( tag(q) ) ) & tag(q)~='(' & tag(q)~='-' )
@@ -34,26 +38,25 @@ while q <= length( tag );
 end
 
 if  length( mut_num ) == 0
-    if ~strcmp( start_seq, 'WT' )
-        fprintf( 'WARNING! Could not find mutation position in mutation annotation: %s\n', tag );
+    if ~contains( tag, 'WT' )
+        warning(sprintf('Could not find mutation position in mutation annotation: %s\n', tag ));
     end
     mutpos = NaN;
     return;
 end
 if isempty( start_seq );
-    fprintf( 'WARNING! Could not find starting nucleotide in mutation annotation: %s\n', tag );
+    warning(sprintf('Could not find starting nucleotide in mutation annotation: %s\n', tag ));
 end
 if isempty( mut_seq );
-    fprintf( 'WARNING! Could not find mutation nucleotide in mutation annotation: %s\n', tag );
+    warning(sprintf('Could not find mutation nucleotide in mutation annotation: %s\n', tag ));
 end
-
 mutpos = str2num( mut_num ) - rdat.offset;
 if ( mutpos < 1 | ~strcmp( rdat.sequence( mutpos ), start_seq ) )
-    mutpos = str2num( mut_num ); % perhaps specified without offset...
-    fprintf( 'WARNING! Mismatch between mutation nucleotides: %s (mutation annotation) vs. %s. (sequence) in mutation %s.\n', rdat.sequence(mutpos), start_seq, tag );
-    if ( strcmp( rdat.sequence( mutpos ), start_seq ) )
-        fprintf( 'OK, specified mutpos without taking into account offset...\n' );
+    mutpos_alt = str2num( mut_num ); % perhaps specified without offset...
+    if ( strcmp( rdat.sequence( mutpos_alt ), start_seq ) )
+        % Specified mutpos without taking into account offset...
+        mutpos = mutpos_alt;
     else
-        fprintf( 'WARNING! Mismatch between mutation nucleotides: %s (mutation annotation) vs. %s. (sequence)\n', rdat.sequence(mutpos), start_seq );
+        warning(sprintf('Mismatch between mutation nucleotides: %s (mutation annotation) vs. %s. (sequence) in mutation %s.\n', start_seq, rdat.sequence(mutpos), tag ));
     end
 end

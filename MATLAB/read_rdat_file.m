@@ -45,10 +45,13 @@ while 1
       rdat.version = remove_tag( line, 'VERSION');
     elseif strfind(line, 'RDAT_VERSION') == 1 
       rdat.version = remove_tag( line, 'RDAT_VERSION');
-    elseif strfind(line, 'COMMENT') == 1
+    elseif strfind(line, 'COMMENT') > 0
       rdat.comments = [ rdat.comments, remove_tag(line, 'COMMENT') ];
-    elseif ~isempty(strfind(line, 'ANNOTATION')) && isempty(strfind(line, 'ANNOTATION_DATA')) && isempty(strfind(line, 'DATA_ANNOTATION'))
-      rdat.annotations = remove_empty_cells( str2cell( remove_tag(line,'ANNOTATION') ) );
+    elseif ~isempty(strfind(line, 'ANNOTATION')) & ...
+            isempty(strfind(line, 'ANNOTATION_DATA')) & ....
+            isempty(strfind(line, 'DATA_ANNOTATION'))
+        if ~contains(line,sprintf('\t')) & contains(line,'pH '); line = strrep(line,'pH ','pH'); end; %edge case, RNASEP_SHP_0000.rdat
+        rdat.annotations = strip(remove_empty_cells( str2cell( remove_tag(line,'ANNOTATION') )));
     elseif strfind(line, 'NAME') == 1
       rdat.name = remove_tag(line, 'NAME');
     elseif strfind(line, 'SEQUENCE') == 1
@@ -64,7 +67,6 @@ while 1
       %rdat.seqpos = strread( remove_tag(line, 'SEQPOS') );
       [ rdat.seqpos, sequence_seqpos ] = get_seqpos( remove_tag(line, 'SEQPOS') );
     elseif strfind(line, 'MUTPOS') == 1
-      
       %rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
       fprintf( 'No longer reading in MUTPOS\n' );
     elseif strfind(line, 'STRUCTURE') == 1
@@ -82,12 +84,26 @@ while 1
       rdat = get_data_annotation( rdat, line );
     elseif strfind(line, 'REACTIVITY_ERROR') == 1
       line = remove_tag( line, 'REACTIVITY_ERROR' );
-      line_read = strread( line );
+      line_read = strread( line, '%f' );
+      nval = size(rdat.reactivity_error,1);
+      if nval & length(line_read)-1 ~= nval;  % edge case, e.g.,_H101_0001.rdat
+          warning(sprintf('Number of values in reactivity_error line %d != reactivity_error length %d!',length(line_read)-1,nval));
+          line_read = line_read(1:(nval+1)); 
+      end 
       rdat.reactivity_error(:, line_read(1) ) = line_read(2:end);
     elseif strfind(line, 'REACTIVITY') == 1
       line = remove_tag( line, 'REACTIVITY' );
-      line_read = strread( line );
+      line_read = strread( line,'%f');
+      nval = size(rdat.reactivity,1);
+      if nval & length(line_read)-1 ~= nval;  % edge case, e.g.,_H101_0001.rdat
+          warning(sprintf('Number of values in reactivity line %d != reactivity length %d!',length(line_read)-1,nval));
+          line_read = line_read(1:(nval+1)); 
+      end  
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
+      nval = size(rdat.reactivity,1);
+      if nval & nval ~= length(rdat.seqpos)
+          warning(sprintf('seqpos length %d != reactivity length %d!\n',rdat.seqpos,nval));
+      end
     elseif strfind(line, 'DATA_ERROR') == 1  % backwards compatibility
       line = remove_tag( line, 'DATA_ERROR' );
       line_read = strread( line );
@@ -96,11 +112,10 @@ while 1
       line = remove_tag( line, 'DATA' );
       line_read = strread( line );
       if length( line_read ) >  length( rdat.seqpos )
-          rdat.reactivity(:, line_read(1) ) = line_read((end-length(rdat.seqpos)+1):end);
+          rdat.reactivity(1:length(rdat.seqpos), line_read(1) ) = line_read((end-length(rdat.seqpos)+1):end);
       else
           rdat.reactivity(1:length(line_read)-1, line_read(1) ) = line_read(2:end);
-      end
-      
+      end      
     elseif strfind(line, 'AREA_PEAK_ERROR') == 1 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
@@ -123,7 +138,7 @@ while 1
     else % might be a blank line
       [t,r] = strtok( line,' ' );
       if length(r) > 0
-	fprintf('\nError parsing file %s\n', line);
+      	fprintf('\nError parsing file %s\n', line);
       end
     end 
 end
@@ -168,6 +183,7 @@ function c = str2cell(s, delim)
 
 if ~exist( 'delim' ) 
   tabchar = sprintf( '\t' );
+  if length(s)>0 & strcmp(s(1),tabchar); s = s(2:end); end; % edge case 23SRR_H101_0001
   if ~isempty(strfind( s, tabchar ) ) 
     delim = tabchar;
   else
@@ -175,15 +191,18 @@ if ~exist( 'delim' )
   end
 end;
 
-rest = s;
-i = 1;
-c = {};
-while length(rest)
-    [t, rest] = strtok(rest, delim);
-    c{i} = t;
-    i = i + 1;
-end
+c = remove_empty_cells(strsplit(s,delim));
 
+% rest = s;
+% i = 1;
+% c = {};
+% while length(rest)
+%     [t, rest] = strtok(rest, delim);
+%     if length(t)>0
+%         c{i} = t;
+%         i = i + 1;
+%     end
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function s = cell2str(c, delim)
@@ -199,11 +218,12 @@ delim = ' ';
 % does this line include tabs between fields or spaces?
 tabchar = sprintf( '\t' );
 if ~isempty(strfind( line, tabchar ) );  delim = tabchar; end;
-
 if strfind( line, [tag,':'] ) % new format v0.23
   line = strrep(line, [tag,':'],'');
-else
+elseif strfind( line, [tag,delim] ) 
   line = strrep(line, [tag,delim],'');
+else
+  line = strrep(line,tag,''); % edge case
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -226,7 +246,7 @@ seqpos = [];
 for i = 1:length( seqpos_tags )
 
   tag = seqpos_tags{i};
-
+  if isempty(tag) continue; end; % edge case 5SRRNA_1M7_0007
   if isempty( str2num( tag(1) ) ) & tag(1) ~= '-' % first letter is a character not a number of minus sign.
     sequence_seqpos = [sequence_seqpos, tag(1) ]; 
     tag = tag(2:end);
@@ -277,13 +297,13 @@ for i = 1:length( sequence_seqpos )
   c1 = lower( sequence_seqpos(i) );
   m = seqpos(i) - offset;
   if ( m < 1 | m > length( sequence ) )
-    fprintf( 'Warning: seqpos %d is not inside sequence, given offset %d\n', seqpos(i), offset );
+    warning(sprintf( 'seqpos %d is not inside sequence, given offset %d\n', seqpos(i), offset ));
     ok = 0;
     continue;
   end
   c2 = lower( sequence( m ) );
-  if ( c1 ~= 'X' & c2 ~= 'X' & c1 ~= c2 )
-    fprintf( 'Warning: mismatch at seqpos %d, between SEQPOS nucleotide %s and SEQUENCE nucleotide %s\n', seqpos(i), sequence_seqpos(i),  sequence( seqpos(i) - offset ) );
+  if ( c1 ~= 'X' & c2 ~= 'X' & c1 ~= c2 & ~(c1=='u' & c2=='t')  & ~(c1=='t' & c2=='u')  )
+    warning(sprintf( 'Mismatch at seqpos %d, between SEQPOS nucleotide %s and SEQUENCE nucleotide %s\n', seqpos(i), sequence_seqpos(i),  sequence( seqpos(i) - offset ) ));
     ok = 0;
   end
 end
@@ -299,6 +319,7 @@ if isempty( idx ) % weird edge case where str2cell fails
     idx = str2num( cols{1} );
 end
 anot = cols(2:end);
+anot = strrep(anot,'ligpos:','lig_pos:'); % old MOHCA like RNAPZ5_MCA_0002.rdat
 rdat.data_annotations{idx} = remove_empty_cells( anot );
 % look for a 'sequence' tag.
 for j = 1:length( anot )
@@ -341,7 +362,7 @@ for i = 1:size( rdat.reactivity, 2)
     if reads > 0
         rdat.reactivity(:,i) * sqrt(reads );
         reactivity_error = sqrt(rdat.reactivity(:,i))/ sqrt(reads);
-        fprintf( 'WARNING! WARNING! Trying to fill in reactivity error from reads and reactivity -- this is not exact.' );
+        warning(sprintf( 'WARNING! WARNING! Trying to fill in reactivity error from reads and reactivity -- this is not exact.' ));
     else
         reactivity_error(1:size(rdat.reactivity,1),i) = 0.0;
     end

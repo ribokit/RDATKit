@@ -9,7 +9,7 @@ function values = get_tag( annotations, tag )
 %
 % for use in parsing data_annotations or annotations cells.
 %
-
+values = '';
 if isobject( annotations ) & sum( strcmp( fieldnames( annotations ), 'data_annotations' ) ) > 0; annotations = annotations.data_annotations; end;
 if isobject( tag ) & sum( strcmp( fieldnames( tag ), 'data_annotations' ) ) > 0; tag = tag.data_annotations; end;
 
