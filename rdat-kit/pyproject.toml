@@ -1,6 +1,6 @@
 [project]
 name = "rdat_kit"
-version = "1.6.2"
+version = "1.6.3"
 authors = [
   { name="Das Lab", email="thedaslab@stanford.edu" },
 ]
