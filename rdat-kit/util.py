@@ -1,26 +1,26 @@
-from scipy.stats import gamma
-if __package__ is None or not __package__:
-    from path import *
-else:
-    from .path import *
+# from scipy.stats import gamma
+# if __package__ is None or not __package__:
+#     from path import *
+# else:
+#     from .path import *
 
 
-PATH_RNA_STRUCTURE_FOLD = PATH_RNA_STRUCTURE + 'exe/Fold'
-PATH_RNA_STRUCTURE_ALLSUB = PATH_RNA_STRUCTURE + 'exe/AllSub'
-PATH_RNA_STRUCTURE_STOCHASTIC = PATH_RNA_STRUCTURE + 'exe/stochastic'
-PATH_RNA_STRUCTURE_ENERGY = PATH_RNA_STRUCTURE + 'exe/efn2'
-PATH_RNA_STRUCTURE_PARTITION = PATH_RNA_STRUCTURE + 'exe/partition'
-PATH_RNA_STRUCTURE_CT2DOT = PATH_RNA_STRUCTURE + 'exe/ct2dot'
+# PATH_RNA_STRUCTURE_FOLD = PATH_RNA_STRUCTURE + 'exe/Fold'
+# PATH_RNA_STRUCTURE_ALLSUB = PATH_RNA_STRUCTURE + 'exe/AllSub'
+# PATH_RNA_STRUCTURE_STOCHASTIC = PATH_RNA_STRUCTURE + 'exe/stochastic'
+# PATH_RNA_STRUCTURE_ENERGY = PATH_RNA_STRUCTURE + 'exe/efn2'
+# PATH_RNA_STRUCTURE_PARTITION = PATH_RNA_STRUCTURE + 'exe/partition'
+# PATH_RNA_STRUCTURE_CT2DOT = PATH_RNA_STRUCTURE + 'exe/ct2dot'
 
-# these do not work. orphans by creator. no longer supported
-PATH_VIENNA_RNA_FOLD = PATH_VIENNA_RNA + 'RNAfold'
-PATH_VIENNA_RNA_ENERGY = PATH_VIENNA_RNA + 'RNA2Dfold'
-PATH_VIENNA_RNA_SUBOPT = PATH_VIENNA_RNA + 'RNAsubopt'
+# # these do not work. orphans by creator. no longer supported
+# PATH_VIENNA_RNA_FOLD = PATH_VIENNA_RNA + 'RNAfold'
+# PATH_VIENNA_RNA_ENERGY = PATH_VIENNA_RNA + 'RNA2Dfold'
+# PATH_VIENNA_RNA_SUBOPT = PATH_VIENNA_RNA + 'RNAsubopt'
 
 
-DIST = {}
-for k in ['all', 'dangles', 'bulges', 'hairpins', 'interiorloops', 'helices', '3wayjunctions', '4wayjunctions', '5wayjunctions', 'unpaired', 'internalpairs', 'edgepairs']:
-    DIST[k] = gamma
+# DIST = {}
+# for k in ['all', 'dangles', 'bulges', 'hairpins', 'interiorloops', 'helices', '3wayjunctions', '4wayjunctions', '5wayjunctions', 'unpaired', 'internalpairs', 'edgepairs']:
+#     DIST[k] = gamma
 
 
 class Ontology(object):
