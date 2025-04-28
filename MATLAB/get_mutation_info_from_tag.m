@@ -1,9 +1,15 @@
-function [ mutpos, mut_seq ] = get_mutation_info_from_tag( annotation_tag, rdat );
-% [mutpos,mut_seq] = get_mutation_info_from_tag( annotation_tag );
+function [ mutpos, mut_seq, start_seq ] = get_mutation_info_from_tag( annotation_tag, rdat );
+% [mutpos,mut_seq] = get_mutation_info_from_tag( annotation_tag, rdat);
+%
 %
 % annotation_tag = string like "mutation:A25C"
+% rdat = RDAT object that holds offset and sequence for checks. If
+%         specified, output mutpos is shifted by rdat.offset
+%         to get numbering corresponding to 1,2,... in sequence 
 %
-% (C) R. Das, Stanford University, 2017.
+% (C) R. Das, Stanford University, 2017, 2023
+
+if ~exist('apply_offset','var') apply_offset = 0; end
 
 c = strsplit( annotation_tag,':' );
 
@@ -50,6 +56,12 @@ end
 if isempty( mut_seq );
     warning(sprintf('Could not find mutation nucleotide in mutation annotation: %s\n', tag ));
 end
+
+if ~exist('rdat','var') | isempty(rdat)
+    mutpos = str2num(mut_num);
+    return;
+end
+
 mutpos = str2num( mut_num ) - rdat.offset;
 if ( mutpos < 1 | ~strcmp( rdat.sequence( mutpos ), start_seq ) )
     mutpos_alt = str2num( mut_num ); % perhaps specified without offset...

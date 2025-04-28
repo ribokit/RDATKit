@@ -22,7 +22,11 @@ for n = 1:length( tags )
     val = getfield(s,tag);
     if isnumeric(val) 
         if (length(val) == 1)
-            annotations = [annotations, {sprintf('%s%s:%f',pretag,tag,val)} ];
+            if isa(val,'uint32')
+                annotations = [annotations, {sprintf('%s%s:%d',pretag,tag,val)} ];
+            else
+                annotations = [annotations, {sprintf('%s%s:%f',pretag,tag,val)} ];
+            end
         else
             assert( length(val) > 1);
             annotation = sprintf('%s%s:%f',pretag,tag,val(1));

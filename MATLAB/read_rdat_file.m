@@ -55,7 +55,7 @@ while 1
     elseif strfind(line, 'NAME') == 1
       rdat.name = remove_tag(line, 'NAME');
     elseif strfind(line, 'SEQUENCE') == 1
-      cols = str2cell( remove_tag( line, 'SEQUENCE' ) );
+      cols = strip(str2cell( remove_tag( line, 'SEQUENCE' ) ));
       if length( cols ) > 1          
           rdat.sequences{str2num(cols{1})} = strjoin(cols(2:end));
       else  
@@ -68,13 +68,17 @@ while 1
       [ rdat.seqpos, sequence_seqpos ] = get_seqpos( remove_tag(line, 'SEQPOS') );
     elseif strfind(line, 'MUTPOS') == 1
       %rdat.mutpos = strread(remove_tag(strrep(line, 'WT', 'NaN'), 'MUTPOS'), '');
-      fprintf( 'No longer reading in MUTPOS\n' );
+      warning( 'No longer reading in MUTPOS' );
     elseif strfind(line, 'STRUCTURE') == 1
       cols = str2cell( remove_tag( line, 'STRUCTURE' ) );
       if length( cols ) > 1
           rdat.structures{str2num(cols{1})} = strjoin(cols(2:end));
       else  
-          rdat.structure = strrep(cols{1}, ' ','');
+          if length(cols) > 0
+              rdat.structure = strrep(cols{1}, ' ','');
+          else
+              rdat.structure = repmat('.',1,length(rdat.sequence));
+          end
       end
     elseif strfind(line, 'ANNOTATION_DATA') == 1
       line = remove_tag( line, 'ANNOTATION_DATA' );
@@ -100,10 +104,6 @@ while 1
           line_read = line_read(1:(nval+1)); 
       end  
       rdat.reactivity(:, line_read(1) ) = line_read(2:end);
-      nval = size(rdat.reactivity,1);
-      if nval & nval ~= length(rdat.seqpos)
-          warning(sprintf('seqpos length %d != reactivity length %d!\n',rdat.seqpos,nval));
-      end
     elseif strfind(line, 'DATA_ERROR') == 1  % backwards compatibility
       line = remove_tag( line, 'DATA_ERROR' );
       line_read = strread( line );
@@ -111,11 +111,18 @@ while 1
     elseif strfind(line, 'DATA') == 1  % backwards compatibility
       line = remove_tag( line, 'DATA' );
       line_read = strread( line );
-      if length( line_read ) >  length( rdat.seqpos )
-          rdat.reactivity(1:length(rdat.seqpos), line_read(1) ) = line_read((end-length(rdat.seqpos)+1):end);
+      if length( line_read ) >  length( rdat.seqpos ) 
+          n = line_read(1);
+          rdat.reactivity(1:length(rdat.seqpos), n) = line_read((end-length(rdat.seqpos)+1):end);
       else
           rdat.reactivity(1:length(line_read)-1, line_read(1) ) = line_read(2:end);
+          rdat.reactivity(length(line_read):length(rdat.seqpos), line_read(1) ) = 0;
       end      
+      rdat = check_for_legacy_datatype_reads(rdat, line_read);
+    elseif strfind(line, 'READS') == 1  % backwards compatibility
+      line = remove_tag( line, 'READS' );
+      line_read = strread( line );
+      reads(:,line_read(1)) = line_read(2:end);
     elseif strfind(line, 'AREA_PEAK_ERROR') == 1 % backwards compatibility
       line = remove_tag( line, 'AREA_PEAK_ERROR' );
       line_read = strread( line );
@@ -166,6 +173,36 @@ end
 %    rdat.reactivity_error = fill_reactivity_error_from_reads( rdat );
 %end
 
+% backwards compatibility with old Lucks format. Could do a better job
+%  by actually recovering reactivity from reads and tracking Poisson
+%  errors.
+if all(rdat.reactivity_error(:)==0) & exist('reads','var') & size(reads,1)==size(rdat.reactivity,1)+1 & size(reads,2)==size(rdat.reactivity,2)
+    warning('Trying to figure out errors based on READS lines!');
+    rdat.reactivity_error = 0*rdat.reactivity;
+    for i = 1:2:size(reads,2) % assume lines alternate between signal and noise...
+        rdat.reactivity_error(:,i) = estimate_error_from_reads(rdat.reactivity(:,i), reads(:,i),reads(:,i+1) );
+    end
+end
+
+datatype = get_tag(rdat,'datatype');
+if ~isempty(datatype) & ~isempty(datatype{1}) & any(contains(datatype,'REACTIVITY:rho')) & any(contains(datatype,'READS')) ;
+    warning('Trying to figure out errors based on datatype:READS lines!');
+    rdat.reactivity_error = 0*rdat.reactivity;
+    reads = get_tag(rdat,'reads');
+    for i = find(contains(datatype,'REACTIVITY:rho')) % assume rho lines are followed by READS lines.    
+        reads_mod   = [str2num(reads{i+1})-sum(rdat.reactivity(2:end,i+1)); rdat.reactivity(:,i+1)];
+        reads_nomod = [str2num(reads{i+2})-sum(rdat.reactivity(2:end,i+2)); rdat.reactivity(:,i+2)];
+        rdat.reactivity_error(:,i) = estimate_error_from_reads(rdat.reactivity(:,i), reads_mod,reads_nomod );
+    end
+end
+
+if length(rdat.seqpos)>1 & (rdat.seqpos(2) < rdat.seqpos(1))
+    warning('SEQPOS has wrong ordering; will try to correct SEQPOS, REACTIVITY, and REACTIVITY_ERROR')
+    rdat.seqpos = rdat.seqpos(end:-1:1);
+    rdat.reactivity = rdat.reactivity(end:-1:1,:);
+    rdat.reactivity_error = rdat.reactivity_error(end:-1:1,:);
+    sequence_seqpos = sequence_seqpos(end:-1:1);
+end
 
 % output a warning of the sequence characters in 'SEQPOS' don't match up with the given sequence...
 check_sequence_seqpos( sequence_seqpos, rdat.seqpos, rdat.sequence, rdat.offset );
@@ -225,6 +262,7 @@ elseif strfind( line, [tag,delim] )
 else
   line = strrep(line,tag,''); % edge case
 end
+line = strip(line);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = fill_data_annotations_if_empty( rdat );
@@ -311,7 +349,9 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function rdat = get_data_annotation( rdat, line )
-cols = str2cell( line );
+if contains(line,sprintf('\t')) & contains(line,' sequence:'); line = strrep(line,' ',sprintf('\t')); end; % edge case ETERNA_R44_0001
+%if contains(line,sprintf('\t')) & contains(line,' modifier:'); line = strrep(line,' ',sprintf('\t')); end; % edge case ETERNA_R44_0001
+cols = strip(str2cell( line ));
 idx = str2num( cols{1} );
 if isempty( idx ) % weird edge case where str2cell fails
     firstcols = str2cell(cols{1});
@@ -329,6 +369,11 @@ for j = 1:length( anot )
             assert( length( rdat.sequences ) >= str2num(dummy) );
             legacy_data_anot_sequences{idx} = rdat.sequences{str2num(dummy)}; % old-style format.
         else
+            if strcmp(dummy(end),'.'); dummy = dummy(1:end-1); end; %two sequences each in ETERNA_R83_0000.rdat and ETERNA_R83_0003.rdat?
+            if contains(dummy,'('); % edge case NEIL1_DMS_0001.rdat
+                cols = strsplit(dummy,' '); %AGCCUGCCCUCUGAUCUCUGCCUGUUCCUCUGUCCCACAGGGGGCAAUGGCUACGGGUGAGAGAGCGGGGAGGAGGAC (A48U, C59G)
+                dummy = cols{1};
+            end
             rdat.sequences{idx} = dummy;
         end
     end
@@ -347,29 +392,33 @@ for j = 1:length( anot )
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function reactivity_error = fill_reactivity_error_from_reads( rdat )
-% estimate errors based on Poisson [sqrt(reads)]
-% this is not actually exact --
-reactivity_error = [];
-for i = 1:size( rdat.reactivity, 2)
-    anot = rdat.data_annotations{i};
-    reads = get_tag( anot, 'reads' );
-    if isempty( reads ); 
-        reactivity_error(1:size(rdat.reactivity,1),i) = NaN;
-        continue;
+function rdat = check_for_legacy_datatype_reads(rdat, line_read);
+n = line_read(1);
+if n <= length(rdat.data_annotations) & any(strcmp(rdat.data_annotations{n},'datatype:READS'))
+    if length(line_read(2:end))==length(rdat.seqpos) % weird shift in early Lucks lab cases.
+        rdat.reactivity(1:length(rdat.seqpos), n) = [line_read(3:end),0];
     end
-    reads = str2num(reads);
-    if reads > 0
-        rdat.reactivity(:,i) * sqrt(reads );
-        reactivity_error = sqrt(rdat.reactivity(:,i))/ sqrt(reads);
-        warning(sprintf( 'WARNING! WARNING! Trying to fill in reactivity error from reads and reactivity -- this is not exact.' ));
-    else
-        reactivity_error(1:size(rdat.reactivity,1),i) = 0.0;
-    end
+    total_reads = sum(line_read(2:end));
+    rdat.data_annotations{n} = [rdat.data_annotations{n},sprintf('reads:%d',total_reads)];
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function estimated_error = estimate_error_from_reads(reactivity,reads_mod,reads_nomod );
+[profile_mod,profile_error_mod] = get_reactivity_from_reads(reads_mod,sqrt(reads_mod));
+[profile_nomod,profile_error_nomod] = get_reactivity_from_reads(reads_nomod,sqrt(reads_nomod));
+signal = profile_mod - profile_nomod;
+err = sqrt(profile_error_mod.^2 + profile_error_nomod.^2);
+positive_pos = find(reactivity>0);
+negative_pos = find(reactivity<=0);
+scalefactor = mean( reactivity(positive_pos))/mean(signal(positive_pos));
+%clf; plot([reactivity,scalefactor*signal]); pause;
+estimated_error = scalefactor * err;
+%[reads_mod(1), reads_nomod(1), max(estimated_error)]
 
-
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [profile,profile_error] = get_reactivity_from_reads(reads,reads_error);
+x = reads./cumsum(reads);
+x_err = reads_error./cumsum(reads);
+profile = x(2:end);
+profile_error = x_err(2:end);
 

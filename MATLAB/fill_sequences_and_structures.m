@@ -24,6 +24,15 @@ for i = 1:size(  rdat.reactivity, 2 )
             
             if ~isempty(c) & strcmp( c{1}, 'mutation' )
                 [mutpos,mut_seq] = get_mutation_info_from_tag( data_annotation{m}, rdat );
+                if strfind(mut_seq,':') % old style mutation:A14U:C20G
+                    for q = 2:length(c)
+                        [mutpos,mut_seq] = get_mutation_info_from_tag( c{q}, rdat );
+                        if isnan( mutpos ) continue; end;
+                        rdat.sequences{i} = [rdat.sequence(1: (min(mutpos)-1) ), mut_seq, rdat.sequence( max(mutpos)+1 : end )];
+                        continue
+                    end
+                    continue;
+                end
                 if isnan( mutpos ) continue; end;
                 rdat.sequences{i} = [rdat.sequence(1: (min(mutpos)-1) ), mut_seq, rdat.sequence( max(mutpos)+1 : end )];
             end
