@@ -32,6 +32,24 @@ xlrd >= 0.9.2
 xlwt >= 1.0.0
 ```
 
+## Command-line interface
+
+As of v1.7.0, `rdat_kit` registers a CLI with two subcommands:
+
+```bash
+# Validate one or more RDAT files (parses + runs RDATFile.validate())
+rdat_kit validate path/to/entry.rdat
+
+# Emit a Jekyll/RMDB front-matter .md stub for use in
+# https://github.com/DasLab/rmdb.github.io
+rdat_kit to_md path/to/entry.rdat > _entries/RMDB_ID.md
+```
+
+`validate` exits with code 0 on success, 1 on parse failure, 2 if
+RDATFile.validate() returned warnings. `to_md` derives the RMDB_ID
+from the filename (`<PREFIX>_<CHEM>_<NNNN>` pattern) and accepts
+`--rmdb-id` to override.
+
 ## Documentation
 
 Documentation is available at https://ribokit.github.io/RDATKit/.

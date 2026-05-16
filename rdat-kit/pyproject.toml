@@ -1,6 +1,6 @@
 [project]
 name = "rdat_kit"
-version = "1.6.3"
+version = "1.7.0"
 authors = [
   { name="Das Lab", email="thedaslab@stanford.edu" },
 ]
@@ -21,6 +21,9 @@ dependencies = [
 "Homepage" = "https://github.com/ribokit/rdatkit"
 "Documentation" = "https://ribokit.github.io/RDATKit/"
 "Bug Tracker" = "https://github.com/ribokit/rdatkit/issues"
+
+[project.scripts]
+rdat_kit = "rdat_kit.cli:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
