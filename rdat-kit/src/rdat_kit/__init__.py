@@ -1,4 +1,4 @@
 from .handler import RDATFile, ISATABFile, RDATSection
 from .util import Ontology
 
-__version__ = '1.8.0'
+__version__ = '1.8.1'

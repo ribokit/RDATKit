@@ -245,7 +245,15 @@ def cmd_thumbnail(args: argparse.Namespace) -> int:
 
     total_rows = len(c.data)
     use_rows = min(total_rows, args.max_rows)
-    values = np.array([d.values for d in c.data[:use_rows]], dtype=float)
+    # Some legacy RDATs have inhomogeneous rows (different value-list
+    # lengths per data row — usually partial reactivity profiles).
+    # Pad shorter rows with NaN so np.array succeeds.
+    raw_rows = [d.values for d in c.data[:use_rows]]
+    max_cols = max(len(r) for r in raw_rows) if raw_rows else 0
+    if any(len(r) != max_cols for r in raw_rows):
+        raw_rows = [list(r) + [float("nan")] * (max_cols - len(r))
+                    for r in raw_rows]
+    values = np.array(raw_rows, dtype=float)
     n_rows, n_cols = values.shape
 
     print(f"{rmdb_id}: {use_rows}/{total_rows} rows × {n_cols} cols, "
