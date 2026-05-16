@@ -186,8 +186,114 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Override the RMDB_ID (default: derived from filename)")
     t.set_defaults(func=cmd_to_md)
 
+    th = sub.add_parser(
+        "thumbnail",
+        help="Render a reactivity heatmap PNG from an RDAT.",
+    )
+    th.add_argument("file", help="*.rdat path")
+    th.add_argument("--out", default=".",
+                    help="Output directory (default: .)")
+    th.add_argument("--rmdb-id", default=None,
+                    help="Override the RMDB_ID (default: derived from filename)")
+    th.add_argument("--max-rows", type=int, default=1000,
+                    help="Truncate to first N data rows (default 1000)")
+    th.add_argument("--short-px", type=int, default=440,
+                    help="Short-axis target pixel count (default 440)")
+    th.add_argument("--long-max-px", type=int, default=2400,
+                    help="Long-axis cap in pixels (default 2400)")
+    th.set_defaults(func=cmd_thumbnail)
+
     return p
 
+
+# ── thumbnail ──────────────────────────────────────────────────────── #
+#
+# Render a reactivity heatmap from an RDAT. matplotlib + numpy are
+# imported lazily so users who only need validate / to_md don't pay
+# for the heavy dependencies. If they're missing we emit a clear
+# install hint.
+
+def cmd_thumbnail(args: argparse.Namespace) -> int:
+    try:
+        import numpy as np
+        import matplotlib
+        matplotlib.use("Agg")
+        matplotlib.rcParams['font.family'] = 'Helvetica'
+        import matplotlib.pyplot as plt
+    except ImportError as e:
+        print(
+            "rdat_kit thumbnail requires matplotlib + numpy.\n"
+            "  pip install matplotlib numpy\n"
+            f"(missing: {e})",
+            file=sys.stderr,
+        )
+        return 1
+
+    rdat = RDATFile()
+    try:
+        with open(args.file) as f:
+            rdat.load(f)
+    except Exception as e:
+        print(f"{args.file}: PARSE FAIL — {e}", file=sys.stderr)
+        return 1
+    if not rdat.constructs:
+        print(f"{args.file}: no constructs found", file=sys.stderr)
+        return 1
+
+    name, c = next(iter(rdat.constructs.items()))
+    rmdb_id = args.rmdb_id or _slug_from_path(args.file)
+
+    total_rows = len(c.data)
+    use_rows = min(total_rows, args.max_rows)
+    values = np.array([d.values for d in c.data[:use_rows]], dtype=float)
+    n_rows, n_cols = values.shape
+
+    print(f"{rmdb_id}: {use_rows}/{total_rows} rows × {n_cols} cols, "
+          f"value range [{np.nanmin(values):.2f}…{np.nanmax(values):.2f}]"
+          + (f"; truncated to first {use_rows:,}"
+             if total_rows > use_rows else ""))
+
+    # Robust contrast: 0 to 90th percentile of finite values
+    finite = values[np.isfinite(values)]
+    vmax = max(0.05, float(np.percentile(finite, 90))) if finite.size else 1.0
+    arr = np.where(np.isfinite(values), values, 0.0)
+
+    # Legacy aspect logic (matches Server_RMDB media.py):
+    # - eterna libraries OR <3 rows → 'auto' (stretch into default figure)
+    # - otherwise → 'equal' (square cells)
+    is_eterna = "ETERNA" in rmdb_id.upper()
+    legacy_aspect = "auto" if (is_eterna or n_rows < 3) else "equal"
+
+    dpi = 100
+    if legacy_aspect == "auto":
+        fig, ax = plt.subplots(dpi=dpi, facecolor="white")
+    else:
+        short_cells = min(n_rows, n_cols)
+        long_cells = max(n_rows, n_cols)
+        px = min(args.short_px / short_cells,
+                 args.long_max_px / long_cells)
+        w = max(int(round(n_cols * px)), 1)
+        h = max(int(round(n_rows * px)), 1)
+        fig, ax = plt.subplots(figsize=(w / dpi, h / dpi),
+                               dpi=dpi, facecolor="white")
+
+    ax.imshow(arr, cmap="Greys", vmin=0, vmax=vmax,
+              aspect=legacy_aspect, interpolation="nearest")
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+
+    out_dir = os.path.abspath(args.out)
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, f"{rmdb_id}.png")
+    plt.savefig(out_path, dpi=dpi, facecolor="white",
+                bbox_inches="tight",
+                pil_kwargs={"optimize": True, "compress_level": 9})
+    plt.close(fig)
+    print(f"  wrote {out_path} ({os.path.getsize(out_path)/1024:.1f} KB)")
+    return 0
+
+
+# ── main ────────────────────────────────────────────────────────────── #
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
